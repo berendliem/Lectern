@@ -6,6 +6,7 @@ import { PageTabs } from "@/components/page-detail/PageTabs";
 import { TranscriptTab } from "@/components/page-detail/TranscriptTab";
 import { NotesView } from "@/components/page-detail/NotesView";
 import { FlashcardList } from "@/components/flashcards/FlashcardList";
+import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
 export default async function PageDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -78,13 +79,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             label: `Quiz${page.quizQuestions.length ? ` (${page.quizQuestions.length})` : ""}`,
             content:
               page.quizQuestions.length > 0 ? (
-                <ul className="flex flex-col gap-2">
-                  {page.quizQuestions.map((q) => (
-                    <li key={q.id} className="rounded-lg border border-slate-200 bg-white p-3">
-                      <p className="text-sm font-medium text-slate-900">{q.prompt}</p>
-                    </li>
-                  ))}
-                </ul>
+                <QuizRunner questions={sanitizeQuizQuestions(page.quizQuestions)} />
               ) : (
                 <EmptyState message="Quiz questions will appear here once the learning guide has been generated." />
               ),
@@ -101,4 +96,15 @@ function EmptyState({ message }: { message: string }) {
       {message}
     </div>
   );
+}
+
+function sanitizeQuizQuestions(
+  questions: { id: string; type: "SHORT_ANSWER" | "MULTIPLE_CHOICE"; prompt: string; options: string | null }[]
+): QuizQuestionForRunner[] {
+  return questions.map((q) => ({
+    id: q.id,
+    type: q.type,
+    prompt: q.prompt,
+    options: q.options ? JSON.parse(q.options) : null,
+  }));
 }
