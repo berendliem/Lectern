@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum PageStatus {
+  DRAFT
+  TRANSCRIBING
+  TRANSCRIBED
+  SUMMARIZING
+  SUMMARIZED
+  GENERATING_GUIDE
+  READY
+  ERROR
+}
+
+enum QuestionType {
+  SHORT_ANSWER
+  MULTIPLE_CHOICE
+}
+
+model Folder {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  pages Page[]
+}
+
+model Page {
+  id            String     @id @default(cuid())
+  title         String
+  folderId      String?
+  audioFilePath String?
+  audioDuration Float?
+  status        PageStatus @default(DRAFT)
+  errorMessage  String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  folder        Folder?        @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  transcript    Transcript?
+  notes         Notes?
+  flashcards    Flashcard[]
+  quizQuestions QuizQuestion[]
+  tags          TagsOnPages[]
+
+  @@index([folderId])
+  @@index([status])
+}
+
+model Transcript {
+  id        String   @id @default(cuid())
+  pageId    String   @unique
+  rawText   String
+  segments  String
+  language  String?
+  modelUsed String?
+  createdAt DateTime @default(now())
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model Notes {
+  id        String   @id @default(cuid())
+  pageId    String   @unique
+  markdown  String
+  keyTerms  String
+  modelUsed String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model Flashcard {
+  id               String   @id @default(cuid())
+  pageId           String
+  prompt           String
+  idealExplanation String
+  sourceTerm       String?
+
+  easeFactor     Float     @default(2.5)
+  intervalDays   Int       @default(0)
+  repetitions    Int       @default(0)
+  nextReviewAt   DateTime  @default(now())
+  lastReviewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([nextReviewAt])
+}
+
+model QuizQuestion {
+  id            String       @id @default(cuid())
+  pageId        String
+  type          QuestionType
+  prompt        String
+  correctAnswer String
+  options       String?
+  explanation   String?
+  createdAt     DateTime     @default(now())
+
+  page     Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  attempts QuizAttempt[]
+
+  @@index([pageId])
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  questionId  String
+  userAnswer  String
+  isCorrect   Boolean
+  scoreDetail String?
+  attemptedAt DateTime @default(now())
+
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+model Tag {
+  id   String @id @default(cuid())
+  name String @unique
+
+  pages TagsOnPages[]
+}
+
+model TagsOnPages {
+  pageId String
+  tagId  String
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([pageId, tagId])
+}

@@ -46,6 +46,9 @@ next-env.d.ts
 /prisma/dev.db
 /prisma/dev.db-journal
 
+# generated prisma client
+/src/generated/prisma
+
 # recorded/uploaded audio
 /storage/audio/*
 !/storage/audio/.gitkeep
