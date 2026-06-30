@@ -1,5 +1,10 @@
-from fastapi import FastAPI, UploadFile, File
+import tempfile
+from pathlib import Path
+
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+from model import get_model
 
 app = FastAPI(title="AI Notetaker Whisper Service")
 
@@ -18,17 +23,45 @@ def health() -> dict:
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)) -> dict:
-    # Stub: proves the Next.js <-> sidecar wiring before faster-whisper is wired in.
-    await file.read()
+    suffix = Path(file.filename or "").suffix or ".bin"
+    contents = await file.read()
+    if not contents:
+        raise HTTPException(status_code=422, detail="Uploaded file is empty")
+
+    with tempfile.NamedTemporaryFile(suffix=suffix) as tmp:
+        tmp.write(contents)
+        tmp.flush()
+
+        try:
+            model = get_model()
+            segments_iter, info = model.transcribe(tmp.name, word_timestamps=True)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Transcription failed: {e}")
+
+        segments = []
+        full_text_parts = []
+        for segment in segments_iter:
+            text = segment.text.strip()
+            full_text_parts.append(text)
+            segments.append(
+                {
+                    "start": segment.start,
+                    "end": segment.end,
+                    "text": text,
+                    "words": [
+                        {
+                            "word": w.word,
+                            "start": w.start,
+                            "end": w.end,
+                            "probability": w.probability,
+                        }
+                        for w in (segment.words or [])
+                    ],
+                }
+            )
+
     return {
-        "language": "en",
-        "text": "This is a stub transcript. Replace with real faster-whisper output.",
-        "segments": [
-            {
-                "start": 0.0,
-                "end": 3.0,
-                "text": "This is a stub transcript.",
-                "words": [],
-            }
-        ],
+        "language": info.language,
+        "text": " ".join(full_text_parts),
+        "segments": segments,
     }
