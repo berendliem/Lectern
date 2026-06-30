@@ -14,7 +14,7 @@ type Folder = {
   _count: { pages: number };
 };
 
-export function FolderSidebar() {
+export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -65,11 +65,11 @@ export function FolderSidebar() {
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-slate-50/60 p-4">
-      <Link href="/" className="mb-6 text-lg font-semibold text-slate-900">
+      <Link href="/" className="mb-6 text-lg font-semibold text-slate-900" onClick={onNavigate}>
         AI Notetaker
       </Link>
 
-      <nav className="flex flex-col gap-1 text-sm">
+      <nav className="flex flex-col gap-1 text-sm" onClick={onNavigate}>
         <Link
           href="/"
           className={clsx(
@@ -110,7 +110,7 @@ export function FolderSidebar() {
         </button>
       </div>
 
-      <nav className="mt-1 flex flex-1 flex-col gap-0.5 overflow-y-auto text-sm">
+      <nav className="mt-1 flex flex-1 flex-col gap-0.5 overflow-y-auto text-sm" onClick={onNavigate}>
         {loading && <p className="px-3 py-2 text-slate-400">Loading…</p>}
         {!loading && folders.length === 0 && (
           <p className="px-3 py-2 text-slate-400">No folders yet</p>

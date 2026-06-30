@@ -4,6 +4,8 @@ import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
 import { FolderHeader } from "@/components/dashboard/FolderHeader";
 
+export const dynamic = "force-dynamic";
+
 export default async function FolderPage({
   params,
 }: {

@@ -9,6 +9,8 @@ import { FlashcardList } from "@/components/flashcards/FlashcardList";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export default async function PageDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const page = await db.page.findUnique({
