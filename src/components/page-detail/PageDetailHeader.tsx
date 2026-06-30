@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { TagEditor } from "@/components/page-detail/TagEditor";
+import { ExportMenu } from "@/components/export/ExportMenu";
 import { PAGE_STATUS_LABEL, PAGE_STATUS_TONE } from "@/lib/page-status";
 import type { PageStatus } from "@/generated/prisma/enums";
 
@@ -53,9 +54,12 @@ export function PageDetailHeader({
           <TagEditor pageId={pageId} initialTags={tags} />
         </div>
       </div>
-      <Button variant="danger" size="sm" onClick={handleDelete} disabled={deleting}>
-        Delete
-      </Button>
+      <div className="flex items-center gap-2">
+        <ExportMenu pageId={pageId} />
+        <Button variant="danger" size="sm" onClick={handleDelete} disabled={deleting}>
+          Delete
+        </Button>
+      </div>
     </div>
   );
 }
