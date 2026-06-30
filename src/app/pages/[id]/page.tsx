@@ -5,6 +5,7 @@ import { PipelineStatusBanner } from "@/components/page-detail/PipelineStatusBan
 import { PageTabs } from "@/components/page-detail/PageTabs";
 import { TranscriptTab } from "@/components/page-detail/TranscriptTab";
 import { NotesView } from "@/components/page-detail/NotesView";
+import { FlashcardList } from "@/components/flashcards/FlashcardList";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
 export default async function PageDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -67,14 +68,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             label: `Flashcards${page.flashcards.length ? ` (${page.flashcards.length})` : ""}`,
             content:
               page.flashcards.length > 0 ? (
-                <ul className="flex flex-col gap-2">
-                  {page.flashcards.map((card) => (
-                    <li key={card.id} className="rounded-lg border border-slate-200 bg-white p-3">
-                      <p className="text-sm font-medium text-slate-900">{card.prompt}</p>
-                      <p className="mt-1 text-sm text-slate-500">{card.idealExplanation}</p>
-                    </li>
-                  ))}
-                </ul>
+                <FlashcardList flashcards={page.flashcards} />
               ) : (
                 <EmptyState message="Flashcards will appear here once the learning guide has been generated." />
               ),
