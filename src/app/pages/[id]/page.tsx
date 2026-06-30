@@ -29,7 +29,13 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
 
   return (
     <div className="flex max-w-4xl flex-col gap-5">
-      <PageDetailHeader pageId={page.id} title={page.title} status={page.status} folder={page.folder} />
+      <PageDetailHeader
+        pageId={page.id}
+        title={page.title}
+        status={page.status}
+        folder={page.folder}
+        tags={page.tags.map((t) => t.tag)}
+      />
 
       <PipelineStatusBanner
         pageId={page.id}

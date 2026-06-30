@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { TagEditor } from "@/components/page-detail/TagEditor";
 import { PAGE_STATUS_LABEL, PAGE_STATUS_TONE } from "@/lib/page-status";
 import type { PageStatus } from "@/generated/prisma/enums";
 
@@ -13,11 +14,13 @@ export function PageDetailHeader({
   title,
   status,
   folder,
+  tags,
 }: {
   pageId: string;
   title: string;
   status: PageStatus;
   folder: { id: string; name: string } | null;
+  tags: { id: string; name: string }[];
 }) {
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
@@ -45,6 +48,9 @@ export function PageDetailHeader({
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
           <Badge tone={PAGE_STATUS_TONE[status]}>{PAGE_STATUS_LABEL[status]}</Badge>
+        </div>
+        <div className="mt-2">
+          <TagEditor pageId={pageId} initialTags={tags} />
         </div>
       </div>
       <Button variant="danger" size="sm" onClick={handleDelete} disabled={deleting}>
