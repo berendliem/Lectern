@@ -19,6 +19,18 @@ export function extensionForMimeType(mimeType: string, fallbackName?: string): s
   return fromName && fromName.length <= 5 ? fromName : "bin";
 }
 
+const MIME_BY_EXTENSION: Record<string, string> = {
+  webm: "audio/webm",
+  ogg: "audio/ogg",
+  m4a: "audio/mp4",
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+};
+
+export function mimeTypeForExtension(extension: string): string {
+  return MIME_BY_EXTENSION[extension.toLowerCase()] ?? "application/octet-stream";
+}
+
 export async function saveAudioFile(pageId: string, buffer: Buffer, extension: string): Promise<string> {
   await mkdir(AUDIO_DIR, { recursive: true });
   const filename = `${pageId}.${extension}`;

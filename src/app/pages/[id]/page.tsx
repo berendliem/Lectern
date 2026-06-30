@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { PageDetailHeader } from "@/components/page-detail/PageDetailHeader";
 import { PipelineStatusBanner } from "@/components/page-detail/PipelineStatusBanner";
 import { PageTabs } from "@/components/page-detail/PageTabs";
-import { TranscriptView } from "@/components/page-detail/TranscriptView";
+import { TranscriptTab } from "@/components/page-detail/TranscriptTab";
 import { NotesView } from "@/components/page-detail/NotesView";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
@@ -44,10 +44,13 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
           {
             id: "transcript",
             label: "Transcript",
-            content: page.transcript ? (
-              <TranscriptView rawText={page.transcript.rawText} segments={segments} />
-            ) : (
-              <EmptyState message="No audio recorded or uploaded yet." />
+            content: (
+              <TranscriptTab
+                pageId={page.id}
+                hasAudio={!!page.audioFilePath}
+                transcript={page.transcript?.rawText ?? null}
+                segments={segments}
+              />
             ),
           },
           {
