@@ -41,12 +41,12 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
 
       <PipelineStatusBanner
         pageId={page.id}
-        status={page.status}
         errorMessage={page.errorMessage}
         hasAudio={!!page.audioFilePath}
         hasTranscript={!!page.transcript}
         hasNotes={!!page.notes}
-        hasGuide={page.flashcards.length > 0 && page.quizQuestions.length > 0}
+        hasFlashcards={page.flashcards.length > 0}
+        hasQuiz={page.quizQuestions.length > 0}
       />
 
       <PageTabs

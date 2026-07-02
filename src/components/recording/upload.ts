@@ -18,6 +18,15 @@ export async function uploadAudio(
   return { ok: true };
 }
 
+export async function transcribePage(pageId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await fetch(`/api/pages/${pageId}/transcribe`, { method: "POST" });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    return { ok: false, error: body.error ?? "Transcription failed" };
+  }
+  return { ok: true };
+}
+
 export function readAudioDuration(file: Blob): Promise<number | undefined> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);

@@ -3,9 +3,14 @@ import { PageCard, type PageCardData } from "@/components/dashboard/PageCard";
 export function PageList({ pages }: { pages: PageCardData[] }) {
   if (pages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 py-16 text-center">
-        <p className="text-slate-500">No pages yet.</p>
-        <p className="text-sm text-slate-400">Create a page to start recording a lecture.</p>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 py-16 text-center">
+        <span className="text-3xl" aria-hidden="true">
+          🎙️
+        </span>
+        <p className="font-medium text-slate-600">No pages yet</p>
+        <p className="max-w-xs text-sm text-slate-400">
+          Create a page, record or upload a lecture, and it becomes notes, flashcards, and a quiz.
+        </p>
       </div>
     );
   }

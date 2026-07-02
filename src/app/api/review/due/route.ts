@@ -6,15 +6,20 @@ export async function GET(req: NextRequest) {
   const limitParam = req.nextUrl.searchParams.get("limit");
   const limit = limitParam ? Math.min(100, Math.max(1, Number(limitParam))) : 20;
 
-  const cards = await db.flashcard.findMany({
-    where: {
-      nextReviewAt: { lte: new Date() },
-      ...(folderId ? { page: { folderId } } : {}),
-    },
-    orderBy: { nextReviewAt: "asc" },
-    take: limit,
-    include: { page: { select: { id: true, title: true } } },
-  });
+  const where = {
+    nextReviewAt: { lte: new Date() },
+    ...(folderId ? { page: { folderId } } : {}),
+  };
 
-  return NextResponse.json({ cards });
+  const [cards, total] = await Promise.all([
+    db.flashcard.findMany({
+      where,
+      orderBy: { nextReviewAt: "asc" },
+      take: limit,
+      include: { page: { select: { id: true, title: true } } },
+    }),
+    db.flashcard.count({ where }),
+  ]);
+
+  return NextResponse.json({ cards, total });
 }

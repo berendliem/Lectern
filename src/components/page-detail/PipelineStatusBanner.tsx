@@ -3,104 +3,151 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import type { PageStatus } from "@/generated/prisma/enums";
+import clsx from "@/lib/clsx";
 
 type Props = {
   pageId: string;
-  status: PageStatus;
   errorMessage: string | null;
   hasAudio: boolean;
   hasTranscript: boolean;
   hasNotes: boolean;
-  hasGuide: boolean;
+  hasFlashcards: boolean;
+  hasQuiz: boolean;
 };
 
-type Stage = "transcribe" | "summarize" | "guide";
+type StageId = "transcribe" | "summarize" | "generate-flashcards" | "generate-quiz";
 
-const STAGE_ENDPOINT: Record<Stage, string> = {
-  transcribe: "transcribe",
-  summarize: "summarize",
-  guide: "generate-flashcards",
-};
+const STAGES: { id: StageId; label: string; runningLabel: string }[] = [
+  { id: "transcribe", label: "Transcript", runningLabel: "Transcribing audio…" },
+  { id: "summarize", label: "Notes", runningLabel: "Summarizing into notes…" },
+  { id: "generate-flashcards", label: "Flashcards", runningLabel: "Writing flashcards…" },
+  { id: "generate-quiz", label: "Quiz", runningLabel: "Writing quiz questions…" },
+];
 
 export function PipelineStatusBanner({
   pageId,
-  status,
   errorMessage,
   hasAudio,
   hasTranscript,
   hasNotes,
-  hasGuide,
+  hasFlashcards,
+  hasQuiz,
 }: Props) {
-  const [loading, setLoading] = useState<Stage | null>(null);
+  const [runningStage, setRunningStage] = useState<StageId | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const router = useRouter();
 
-  async function runStage(stage: Stage) {
-    setLoading(stage);
+  const done: Record<StageId, boolean> = {
+    transcribe: hasTranscript,
+    summarize: hasNotes,
+    "generate-flashcards": hasFlashcards,
+    "generate-quiz": hasQuiz,
+  };
+  const remaining = STAGES.filter((stage) => !done[stage.id]);
+  const allDone = remaining.length === 0;
+
+  async function runRemaining() {
     setLocalError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/${STAGE_ENDPOINT[stage]}`, { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setLocalError(body.error ?? "Something went wrong. You can retry this step.");
-      } else if (stage === "guide") {
-        // flashcards and quiz are generated as two separate, independently-retriable calls
-        const quizRes = await fetch(`/api/pages/${pageId}/generate-quiz`, { method: "POST" });
-        if (!quizRes.ok) {
-          const body = await quizRes.json().catch(() => ({}));
-          setLocalError(body.error ?? "Quiz generation failed. You can retry this step.");
+    for (const stage of remaining) {
+      setRunningStage(stage.id);
+      try {
+        const res = await fetch(`/api/pages/${pageId}/${stage.id}`, { method: "POST" });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          setLocalError(body.error ?? `${stage.label} generation failed. You can retry from here.`);
+          setRunningStage(null);
+          router.refresh();
+          return;
         }
+      } catch {
+        setLocalError("Lost connection to the local server mid-step. You can retry from here.");
+        setRunningStage(null);
+        router.refresh();
+        return;
       }
-    } catch {
-      setLocalError("Network error talking to the local server. Is it still running?");
-    } finally {
-      setLoading(null);
       router.refresh();
     }
+    setRunningStage(null);
   }
 
   const message = localError ?? errorMessage;
-
-  if (status === "READY" && !message) {
-    return (
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
-        This page is ready to study.
-      </div>
-    );
-  }
+  const running = runningStage !== null;
+  const runningInfo = STAGES.find((s) => s.id === runningStage);
 
   if (!hasAudio) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-500">
-        Record or upload audio in the Transcript tab to get started.
+      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+        Record or upload lecture audio below — transcription starts automatically once it&apos;s saved.
       </div>
     );
   }
 
-  let stage: Stage | null = null;
-  let cta = "";
-  if (!hasTranscript) {
-    stage = "transcribe";
-    cta = "Transcribe audio";
-  } else if (!hasNotes) {
-    stage = "summarize";
-    cta = "Generate notes";
-  } else if (!hasGuide) {
-    stage = "guide";
-    cta = "Generate flashcards & quiz";
-  }
-
-  if (!stage) return null;
-
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5">
-      <p className="text-sm text-amber-800">
-        {message ? <span className="font-medium text-red-700">{message}</span> : `Next step: ${cta.toLowerCase()}.`}
-      </p>
-      <Button size="sm" onClick={() => runStage(stage!)} disabled={loading !== null}>
-        {loading === stage ? "Working…" : message ? `Retry: ${cta}` : cta}
-      </Button>
+    <div
+      className={clsx(
+        "flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        allDone
+          ? "border-emerald-200 bg-emerald-50"
+          : message && !running
+            ? "border-red-200 bg-red-50"
+            : "border-slate-200 bg-white"
+      )}
+    >
+      <div className="flex flex-col gap-2">
+        <ol className="flex flex-wrap items-center gap-x-1 gap-y-1.5">
+          {STAGES.map((stage, i) => {
+            const isDone = done[stage.id];
+            const isRunning = runningStage === stage.id;
+            return (
+              <li key={stage.id} className="flex items-center gap-1">
+                {i > 0 && <span className="mx-1 h-px w-4 bg-slate-300" aria-hidden="true" />}
+                <span
+                  className={clsx(
+                    "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+                    isDone
+                      ? "bg-emerald-100 text-emerald-700"
+                      : isRunning
+                        ? "bg-indigo-100 text-indigo-700"
+                        : "bg-slate-100 text-slate-400"
+                  )}
+                >
+                  {isDone ? "✓" : isRunning ? <Spinner /> : "○"} {stage.label}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        {running && runningInfo && (
+          <p className="text-xs text-indigo-600">{runningInfo.runningLabel}</p>
+        )}
+        {!running && message && <p className="text-xs font-medium text-red-700">{message}</p>}
+        {!running && !message && allDone && (
+          <p className="text-xs text-emerald-700">This page is ready to study.</p>
+        )}
+      </div>
+
+      {!allDone && (
+        <Button onClick={runRemaining} disabled={running} className="shrink-0 self-start sm:self-auto">
+          {running
+            ? "Working…"
+            : message
+              ? "Retry"
+              : remaining.length === STAGES.length - 1 && done.transcribe
+                ? "Generate study materials"
+                : remaining.length === STAGES.length
+                  ? "Transcribe & generate"
+                  : "Finish remaining steps"}
+        </Button>
+      )}
     </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <span
+      className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"
+      aria-hidden="true"
+    />
   );
 }

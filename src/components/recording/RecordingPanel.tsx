@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
-import { uploadAudio } from "@/components/recording/upload";
+import { uploadAudio, transcribePage } from "@/components/recording/upload";
 import { Button } from "@/components/ui/Button";
 
 function formatElapsed(seconds: number): string {
@@ -25,23 +25,29 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
     resumeRecording,
     reset,
   } = useMediaRecorder();
-  const [uploading, setUploading] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "uploading" | "transcribing">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const router = useRouter();
   const previewUrl = useMemo(() => (audioBlob ? URL.createObjectURL(audioBlob) : null), [audioBlob]);
+  const busy = saveState !== "idle";
 
   async function handleSave() {
     if (!audioBlob) return;
-    setUploading(true);
+    setSaveState("uploading");
     setUploadError(null);
     const result = await uploadAudio(pageId, audioBlob, "recording.webm", elapsedSeconds);
-    setUploading(false);
-    if (result.ok) {
-      reset();
-      router.refresh();
-    } else {
+    if (!result.ok) {
+      setSaveState("idle");
       setUploadError(result.error);
+      return;
     }
+    router.refresh();
+    setSaveState("transcribing");
+    const transcribed = await transcribePage(pageId);
+    setSaveState("idle");
+    if (!transcribed.ok) setUploadError(transcribed.error);
+    reset();
+    router.refresh();
   }
 
   return (
@@ -80,10 +86,14 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
         {status === "stopped" && audioBlob && previewUrl && (
           <>
             <audio controls src={previewUrl} className="h-9" />
-            <Button onClick={handleSave} disabled={uploading}>
-              {uploading ? "Saving…" : "Save recording"}
+            <Button onClick={handleSave} disabled={busy}>
+              {saveState === "uploading"
+                ? "Saving…"
+                : saveState === "transcribing"
+                  ? "Transcribing…"
+                  : "Save & transcribe"}
             </Button>
-            <Button variant="secondary" onClick={reset} disabled={uploading}>
+            <Button variant="secondary" onClick={reset} disabled={busy}>
               Discard
             </Button>
           </>

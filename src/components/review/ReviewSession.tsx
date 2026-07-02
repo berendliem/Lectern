@@ -58,8 +58,16 @@ export function ReviewSession() {
 
   if (index >= cards.length) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 px-4 py-16 text-center">
-        <p className="text-slate-600">Session complete — reviewed {reviewedCount} card{reviewedCount === 1 ? "" : "s"}.</p>
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-16 text-center">
+        <span className="text-3xl" aria-hidden="true">
+          🎉
+        </span>
+        <p className="font-medium text-slate-700">
+          Session complete — reviewed {reviewedCount} card{reviewedCount === 1 ? "" : "s"}.
+        </p>
+        <Link href="/" className="text-sm text-indigo-600 hover:underline">
+          Back to your pages
+        </Link>
       </div>
     );
   }

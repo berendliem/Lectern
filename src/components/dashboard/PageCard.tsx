@@ -13,6 +13,10 @@ export type PageCardData = {
   _count: { flashcards: number; quizQuestions: number };
 };
 
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
 export function PageCard({ page }: { page: PageCardData }) {
   return (
     <Link
@@ -37,7 +41,7 @@ export function PageCard({ page }: { page: PageCardData }) {
 
       <div className="mt-auto flex items-center justify-between text-xs text-slate-400">
         <span>
-          {page._count.flashcards} cards · {page._count.quizQuestions} questions
+          {plural(page._count.flashcards, "card")} · {plural(page._count.quizQuestions, "question")}
         </span>
         <span>{new Date(page.updatedAt).toLocaleDateString()}</span>
       </div>
