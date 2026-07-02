@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const MIME_TYPE_CANDIDATES = [
   "audio/webm;codecs=opus",
@@ -10,6 +10,10 @@ const MIME_TYPE_CANDIDATES = [
   "audio/mp4",
 ];
 
+// How often the live-preview segment recorder rolls over. Each segment is a
+// complete, standalone audio file, so it can be transcribed on its own.
+const LIVE_SEGMENT_MS = 15_000;
+
 function pickSupportedMimeType(): string | undefined {
   if (typeof MediaRecorder === "undefined") return undefined;
   return MIME_TYPE_CANDIDATES.find((type) => MediaRecorder.isTypeSupported(type));
@@ -17,7 +21,7 @@ function pickSupportedMimeType(): string | undefined {
 
 export type RecorderStatus = "idle" | "recording" | "paused" | "stopped";
 
-export function useMediaRecorder() {
+export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => void }) {
   const [status, setStatus] = useState<RecorderStatus>("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
@@ -30,6 +34,62 @@ export function useMediaRecorder() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const animationRef = useRef<number | null>(null);
+
+  // Live segment recorder state. Kept in refs (not state) because the cycle
+  // is driven by recorder events, not renders.
+  const onLiveSegmentRef = useRef(options?.onLiveSegment);
+  const segmentRecorderRef = useRef<MediaRecorder | null>(null);
+  const segmentTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const segmentActiveRef = useRef(false);
+
+  useEffect(() => {
+    onLiveSegmentRef.current = options?.onLiveSegment;
+  }, [options?.onLiveSegment]);
+
+  const startSegmentLoop = useCallback((stream: MediaStream, mimeType: string | undefined) => {
+    if (!onLiveSegmentRef.current) return;
+    segmentActiveRef.current = true;
+
+    const spawnSegmentRecorder = () => {
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const segmentChunks: Blob[] = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) segmentChunks.push(e.data);
+      };
+      recorder.onstop = () => {
+        if (segmentChunks.length > 0) {
+          onLiveSegmentRef.current?.(new Blob(segmentChunks, { type: mimeType ?? "audio/webm" }));
+        }
+        // Roll straight into the next segment while the session is live.
+        if (segmentActiveRef.current) spawnSegmentRecorder();
+      };
+      recorder.start();
+      segmentRecorderRef.current = recorder;
+    };
+
+    spawnSegmentRecorder();
+    segmentTimerRef.current = setInterval(() => {
+      if (segmentRecorderRef.current?.state === "recording") {
+        segmentRecorderRef.current.stop();
+      }
+    }, LIVE_SEGMENT_MS);
+  }, []);
+
+  const stopSegmentLoop = useCallback((flush: boolean) => {
+    segmentActiveRef.current = false;
+    if (segmentTimerRef.current) clearInterval(segmentTimerRef.current);
+    segmentTimerRef.current = null;
+    const recorder = segmentRecorderRef.current;
+    segmentRecorderRef.current = null;
+    if (recorder && recorder.state !== "inactive") {
+      if (flush) recorder.stop();
+      else {
+        recorder.ondataavailable = null;
+        recorder.onstop = null;
+        recorder.stop();
+      }
+    }
+  }, []);
 
   const stopLevelMeter = useCallback(() => {
     if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
@@ -79,6 +139,7 @@ export function useMediaRecorder() {
       recorder.start(1000);
       mediaRecorderRef.current = recorder;
       startLevelMeter(stream);
+      startSegmentLoop(stream, mimeType);
 
       setElapsedSeconds(0);
       timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
@@ -86,27 +147,32 @@ export function useMediaRecorder() {
     } catch {
       setError("Microphone access was denied or is unavailable.");
     }
-  }, [startLevelMeter, stopLevelMeter]);
+  }, [startLevelMeter, stopLevelMeter, startSegmentLoop]);
 
   const stopRecording = useCallback(() => {
+    stopSegmentLoop(true);
     mediaRecorderRef.current?.stop();
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     setStatus("stopped");
-  }, []);
+  }, [stopSegmentLoop]);
 
   const pauseRecording = useCallback(() => {
+    stopSegmentLoop(true);
     mediaRecorderRef.current?.pause();
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     setStatus("paused");
-  }, []);
+  }, [stopSegmentLoop]);
 
   const resumeRecording = useCallback(() => {
     mediaRecorderRef.current?.resume();
+    if (streamRef.current) {
+      startSegmentLoop(streamRef.current, pickSupportedMimeType());
+    }
     timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
     setStatus("recording");
-  }, []);
+  }, [startSegmentLoop]);
 
   const reset = useCallback(() => {
     setAudioBlob(null);

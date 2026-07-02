@@ -2,6 +2,8 @@
 
 A local-first notetaker for lectures: record or upload audio, transcribe it locally with Whisper, summarize it into structured notes with a free OpenRouter model, and study with a Feynman-style learning guide (flashcards with spaced repetition, plus a self-test quiz). Organize pages into folders/tags and search across everything.
 
+It also has a **live assistant** for use *during* a lecture: while you record, a rolling transcript appears in real time, an "Explain this" button catches you up on whatever's being discussed right now, and every page has an **Ask AI** chat tab grounded in that lecture's transcript and notes.
+
 ## How it's built
 
 - **Web app**: Next.js (App Router, TypeScript) + Tailwind CSS, at the repo root.
@@ -28,7 +30,7 @@ A local-first notetaker for lectures: record or upload audio, transcribe it loca
    cp .env.example .env
    ```
 
-   Edit `.env` and set `OPENROUTER_API_KEY` to your key from [openrouter.ai/keys](https://openrouter.ai/keys). The default models (`OPENROUTER_MODEL_SUMMARY`, `OPENROUTER_MODEL_FLASHCARDS`, `OPENROUTER_MODEL_QUIZ`) point at a free Llama model — OpenRouter's free-tier roster changes over time, so double-check `https://openrouter.ai/models?order=top-weekly` filtered to `:free` and swap in whatever's current if the default stops working.
+   Edit `.env` and set `OPENROUTER_API_KEY` to your key from [openrouter.ai/keys](https://openrouter.ai/keys). The default models (`OPENROUTER_MODEL_SUMMARY`, `OPENROUTER_MODEL_FLASHCARDS`, `OPENROUTER_MODEL_QUIZ`, `OPENROUTER_MODEL_CHAT`) point at a free Llama model — OpenRouter's free-tier roster changes over time, so double-check `https://openrouter.ai/models?order=top-weekly` filtered to `:free` and swap in whatever's current if the default stops working.
 
 2. **Initialize the database**
 
@@ -77,9 +79,11 @@ Open http://localhost:3000.
 3. Click **Transcribe audio** in the status banner once audio is saved.
 4. Click **Generate notes** once transcribed — this calls OpenRouter to produce structured Markdown notes + key terms.
 5. Click **Generate flashcards & quiz** once notes exist — this generates Feynman-style flashcards (explain-it-back prompts, not term/definition pairs) and a mixed short-answer/multiple-choice quiz.
-6. Study via **Review** (spaced-repetition flashcard session, SM-2 scheduling) or the page's **Quiz** tab (self-test with instant grading).
+6. Study via **Review** (spaced-repetition flashcard session, SM-2 scheduling) or the page's **Quiz** tab (self-test with instant grading), or open the **Chat** tab to ask the assistant anything about the lecture.
 7. Organize with folders (sidebar) and tags (page header); **Search** looks across transcripts, notes, and flashcards.
 8. **Export** a page to Markdown or PDF from the page header.
+
+**During a live lecture:** while recording, a rolling transcript builds up under the timer (each ~15s of audio is transcribed by the local whisper service as you go), and **Explain this** sends the recent transcript to OpenRouter for a quick plain-language catch-up. This live preview is best-effort and separate from the authoritative transcript, which is produced from the full recording when you hit **Save & transcribe**.
 
 Each pipeline stage (transcribe / summarize / generate guide) is independently retriable — if one fails (e.g. a free model returns malformed output, or you hit a rate limit), the status banner shows the error and a retry button for just that step.
 

@@ -7,6 +7,7 @@ import { TranscriptTab } from "@/components/page-detail/TranscriptTab";
 import { NotesView } from "@/components/page-detail/NotesView";
 import { FlashcardList } from "@/components/flashcards/FlashcardList";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
+import { ChatTab } from "@/components/page-detail/ChatTab";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -91,6 +92,11 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
               ) : (
                 <EmptyState message="Quiz questions will appear here once the learning guide has been generated." />
               ),
+          },
+          {
+            id: "chat",
+            label: "Chat",
+            content: <ChatTab pageId={page.id} hasMaterial={!!page.transcript || !!page.notes} />,
           },
         ]}
       />

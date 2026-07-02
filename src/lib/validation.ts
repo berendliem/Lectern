@@ -32,6 +32,22 @@ export const quizAnswerSchema = z.object({
   answer: z.string().trim().min(0).max(2000),
 });
 
+export const liveExplainSchema = z.object({
+  context: z.string().trim().min(10).max(8000),
+});
+
+export const chatRequestSchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().trim().min(1).max(8000),
+      })
+    )
+    .min(1)
+    .max(30),
+});
+
 export const summaryResponseSchema = z.object({
   markdown: z.string().min(1),
   keyTerms: z.array(z.object({ term: z.string().min(1), definition: z.string().min(1) })),

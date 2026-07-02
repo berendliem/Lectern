@@ -1,10 +1,12 @@
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-export async function callOpenRouterJSON(opts: {
+export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
+async function callOpenRouter(opts: {
   model: string;
-  systemPrompt: string;
-  userPrompt: string;
-}): Promise<unknown> {
+  messages: ChatMessage[];
+  jsonMode?: boolean;
+}): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is not set. Copy .env.example to .env and add your OpenRouter key.");
@@ -20,11 +22,8 @@ export async function callOpenRouterJSON(opts: {
       },
       body: JSON.stringify({
         model: opts.model,
-        messages: [
-          { role: "system", content: opts.systemPrompt },
-          { role: "user", content: opts.userPrompt },
-        ],
-        response_format: { type: "json_object" },
+        messages: opts.messages,
+        ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
       }),
     });
   } catch {
@@ -42,6 +41,29 @@ export async function callOpenRouterJSON(opts: {
   if (typeof content !== "string" || !content.trim()) {
     throw new Error("OpenRouter returned an empty response. You can retry this step.");
   }
+  return content;
+}
+
+export async function callOpenRouterText(opts: {
+  model: string;
+  messages: ChatMessage[];
+}): Promise<string> {
+  return (await callOpenRouter(opts)).trim();
+}
+
+export async function callOpenRouterJSON(opts: {
+  model: string;
+  systemPrompt: string;
+  userPrompt: string;
+}): Promise<unknown> {
+  const content = await callOpenRouter({
+    model: opts.model,
+    messages: [
+      { role: "system", content: opts.systemPrompt },
+      { role: "user", content: opts.userPrompt },
+    ],
+    jsonMode: true,
+  });
 
   // Some smaller free models wrap JSON in markdown code fences despite
   // response_format: json_object; strip them defensively before parsing.
