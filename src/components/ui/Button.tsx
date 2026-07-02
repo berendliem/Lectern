@@ -1,14 +1,15 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 import clsx from "@/lib/clsx";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "brand" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md";
 
 const variantClasses: Record<Variant, string> = {
-  primary: "bg-indigo-600 text-white hover:bg-indigo-500 disabled:bg-indigo-300",
+  primary: "bg-zinc-900 text-white hover:bg-zinc-700 disabled:bg-zinc-400",
+  brand: "bg-brand text-white hover:bg-brand-hover disabled:bg-brand/40",
   secondary:
-    "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 disabled:text-slate-400",
-  ghost: "text-slate-600 hover:bg-slate-100 disabled:text-slate-300",
+    "bg-white text-zinc-700 border border-zinc-300 hover:bg-zinc-50 disabled:text-zinc-400",
+  ghost: "text-zinc-600 hover:bg-zinc-100 disabled:text-zinc-300",
   danger: "bg-red-600 text-white hover:bg-red-500 disabled:bg-red-300",
 };
 

@@ -27,20 +27,20 @@ export function StatsRow({
       {tiles.map((tile) => {
         const inner = (
           <>
-            <p className="text-sm text-slate-500">{tile.label}</p>
-            <p className="mt-1 text-2xl font-semibold text-slate-900">{compact(tile.value)}</p>
+            <p className="text-sm text-zinc-500">{tile.label}</p>
+            <p className="mt-1 text-2xl font-semibold text-zinc-900">{compact(tile.value)}</p>
           </>
         );
         return tile.href ? (
           <Link
             key={tile.label}
             href={tile.href}
-            className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-4 transition-colors hover:bg-indigo-50"
+            className="rounded-xl border border-brand-border bg-brand-soft/60 p-4 transition-colors hover:bg-brand-soft"
           >
             {inner}
           </Link>
         ) : (
-          <div key={tile.label} className="rounded-xl border border-slate-200 bg-white p-4">
+          <div key={tile.label} className="rounded-xl border border-zinc-200 bg-white p-4">
             {inner}
           </div>
         );

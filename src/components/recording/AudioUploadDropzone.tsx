@@ -51,10 +51,10 @@ export function AudioUploadDropzone({ pageId }: { pageId: string }) {
       }}
       className={clsx(
         "flex flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors",
-        dragActive ? "border-indigo-400 bg-indigo-50" : "border-slate-300"
+        dragActive ? "border-brand-border bg-brand-soft" : "border-zinc-300"
       )}
     >
-      <p className="text-sm text-slate-500">Drag an audio file here, or</p>
+      <p className="text-sm text-zinc-500">Drag an audio file here, or</p>
       <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading}>
         {state === "uploading" ? "Uploading…" : state === "transcribing" ? "Transcribing…" : "Choose file"}
       </Button>

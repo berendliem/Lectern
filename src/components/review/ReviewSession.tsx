@@ -44,28 +44,28 @@ export function ReviewSession() {
   }
 
   if (cards === null) {
-    return <p className="text-sm text-slate-400">Loading…</p>;
+    return <p className="text-sm text-zinc-400">Loading…</p>;
   }
 
   if (cards.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 px-4 py-16 text-center">
-        <p className="text-slate-600">No cards are due for review right now.</p>
-        <p className="mt-1 text-sm text-slate-400">Come back later, or generate a learning guide on a new page.</p>
+      <div className="rounded-xl border border-dashed border-zinc-300 px-4 py-16 text-center">
+        <p className="text-zinc-600">No cards are due for review right now.</p>
+        <p className="mt-1 text-sm text-zinc-400">Come back later, or generate a learning guide on a new page.</p>
       </div>
     );
   }
 
   if (index >= cards.length) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-16 text-center">
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-zinc-300 px-4 py-16 text-center">
         <span className="text-3xl" aria-hidden="true">
           🎉
         </span>
-        <p className="font-medium text-slate-700">
+        <p className="font-medium text-zinc-700">
           Session complete — reviewed {reviewedCount} card{reviewedCount === 1 ? "" : "s"}.
         </p>
-        <Link href="/" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/" className="text-sm text-brand hover:underline">
           Back to your pages
         </Link>
       </div>
@@ -76,9 +76,9 @@ export function ReviewSession() {
 
   return (
     <div className="mx-auto flex max-w-xl flex-col items-center gap-4">
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-zinc-400">
         Card {index + 1} of {cards.length} ·{" "}
-        <Link href={`/pages/${card.page.id}`} className="hover:text-indigo-600">
+        <Link href={`/pages/${card.page.id}`} className="hover:text-brand">
           {card.page.title}
         </Link>
       </p>

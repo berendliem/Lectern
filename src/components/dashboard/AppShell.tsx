@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex h-full min-h-screen">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/40 md:hidden"
+          className="fixed inset-0 z-30 bg-zinc-900/40 md:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
@@ -26,10 +26,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <FolderSidebar onNavigate={() => setSidebarOpen(false)} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6">
+        <header className="flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3 sm:px-6">
           <button
             onClick={() => setSidebarOpen((o) => !o)}
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 md:hidden"
+            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 md:hidden"
             aria-label="Toggle navigation"
           >
             ☰

@@ -3,11 +3,11 @@ import clsx from "@/lib/clsx";
 type Tone = "neutral" | "blue" | "green" | "amber" | "red";
 
 const toneClasses: Record<Tone, string> = {
-  neutral: "bg-slate-100 text-slate-600",
-  blue: "bg-blue-100 text-blue-700",
-  green: "bg-emerald-100 text-emerald-700",
-  amber: "bg-amber-100 text-amber-700",
-  red: "bg-red-100 text-red-700",
+  neutral: "bg-zinc-100 text-zinc-600",
+  blue: "bg-lavender-soft text-lavender-ink",
+  green: "bg-moss-soft text-moss-ink",
+  amber: "bg-daisy-soft text-daisy-ink",
+  red: "bg-blush-soft text-blush-ink",
 };
 
 export function Badge({

@@ -74,9 +74,9 @@ export function PipelineStatusBanner({
   const running = runningStage !== null;
   const runningInfo = STAGES.find((s) => s.id === runningStage);
 
-  if (!hasAudio) {
+  if (!hasAudio && !hasTranscript && !hasNotes) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-500">
         Record or upload lecture audio below — transcription starts automatically once it&apos;s saved.
       </div>
     );
@@ -90,7 +90,7 @@ export function PipelineStatusBanner({
           ? "border-emerald-200 bg-emerald-50"
           : message && !running
             ? "border-red-200 bg-red-50"
-            : "border-slate-200 bg-white"
+            : "border-zinc-200 bg-white"
       )}
     >
       <div className="flex flex-col gap-2">
@@ -100,15 +100,15 @@ export function PipelineStatusBanner({
             const isRunning = runningStage === stage.id;
             return (
               <li key={stage.id} className="flex items-center gap-1">
-                {i > 0 && <span className="mx-1 h-px w-4 bg-slate-300" aria-hidden="true" />}
+                {i > 0 && <span className="mx-1 h-px w-4 bg-zinc-300" aria-hidden="true" />}
                 <span
                   className={clsx(
                     "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
                     isDone
                       ? "bg-emerald-100 text-emerald-700"
                       : isRunning
-                        ? "bg-indigo-100 text-indigo-700"
-                        : "bg-slate-100 text-slate-400"
+                        ? "bg-brand-soft text-brand"
+                        : "bg-zinc-100 text-zinc-400"
                   )}
                 >
                   {isDone ? "✓" : isRunning ? <Spinner /> : "○"} {stage.label}
@@ -118,7 +118,7 @@ export function PipelineStatusBanner({
           })}
         </ol>
         {running && runningInfo && (
-          <p className="text-xs text-indigo-600">{runningInfo.runningLabel}</p>
+          <p className="text-xs text-brand">{runningInfo.runningLabel}</p>
         )}
         {!running && message && <p className="text-xs font-medium text-red-700">{message}</p>}
         {!running && !message && allDone && (
@@ -146,7 +146,7 @@ export function PipelineStatusBanner({
 function Spinner() {
   return (
     <span
-      className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent"
+      className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-brand border-t-transparent"
       aria-hidden="true"
     />
   );

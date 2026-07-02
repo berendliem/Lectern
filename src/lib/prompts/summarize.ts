@@ -7,9 +7,10 @@ Respond with ONLY a JSON object (no markdown code fences, no commentary) matchin
 }
 
 Guidelines for "markdown":
-- Start with a single "## " heading summarizing the lecture topic.
-- Use "### " subheadings to break the lecture into its main sections/topics.
-- Use bullet points for facts, definitions, and examples. Keep bullets concise.
+- Start with a single "## " heading summarizing the lecture topic, prefixed with one fitting emoji (e.g. "## 🧬 Cell Division").
+- Use "### " subheadings to break the lecture into its main sections/topics, each prefixed with one fitting emoji.
+- Use bullet points for facts, definitions, and examples. Keep bullets concise. Bold the key term in a bullet where it helps scanning.
+- When the lecture compares things (two processes, pros/cons, before/after, categories with properties), present that as a Markdown table instead of bullets.
 - Do not invent information that wasn't in the transcript.
 - Do not include a "Key Terms" section in the markdown itself; key terms go only in the keyTerms array.`;
 

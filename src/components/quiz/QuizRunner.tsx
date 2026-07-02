@@ -57,7 +57,7 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-zinc-400">
         Question {index + 1} of {questions.length}
       </p>
 
@@ -80,7 +80,7 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
         >
           <p className="font-medium">{feedback.isCorrect ? "Correct" : "Not quite"}</p>
           {!feedback.isCorrect && <p>Correct answer: {feedback.correctAnswer}</p>}
-          {feedback.explanation && <p className="mt-1 text-slate-600">{feedback.explanation}</p>}
+          {feedback.explanation && <p className="mt-1 text-zinc-600">{feedback.explanation}</p>}
           <Button size="sm" onClick={handleNext} className="mt-3">
             {index + 1 < questions.length ? "Next question" : "See results"}
           </Button>

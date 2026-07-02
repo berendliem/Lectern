@@ -17,7 +17,7 @@ export function ShortAnswerQuestion({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-lg text-slate-900">{prompt}</p>
+      <p className="text-lg text-zinc-900">{prompt}</p>
       <Textarea
         rows={3}
         value={answer}

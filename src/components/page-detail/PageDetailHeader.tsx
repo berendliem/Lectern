@@ -42,12 +42,12 @@ export function PageDetailHeader({
     <div className="flex items-start justify-between gap-4">
       <div>
         {folder && (
-          <Link href={`/folders/${folder.id}`} className="text-xs font-medium text-slate-400 hover:text-indigo-600">
+          <Link href={`/folders/${folder.id}`} className="text-xs font-medium text-zinc-400 hover:text-brand">
             {folder.name}
           </Link>
         )}
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
+          <h1 className="text-2xl font-semibold text-zinc-900">{title}</h1>
           <Badge tone={PAGE_STATUS_TONE[status]}>{PAGE_STATUS_LABEL[status]}</Badge>
         </div>
         <div className="mt-2">

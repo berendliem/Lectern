@@ -13,7 +13,7 @@ function renderSnippet(snippet: string) {
   while ((match = MARK_PATTERN.exec(snippet)) !== null) {
     if (match.index > lastIndex) parts.push(snippet.slice(lastIndex, match.index));
     parts.push(
-      <mark key={key++} className="rounded bg-amber-200 px-0.5 text-slate-900">
+      <mark key={key++} className="rounded bg-amber-200 px-0.5 text-zinc-900">
         {match[1]}
       </mark>
     );
@@ -25,7 +25,7 @@ function renderSnippet(snippet: string) {
 
 export function SearchResults({ results }: { results: SearchResult[] }) {
   if (results.length === 0) {
-    return <p className="text-sm text-slate-400">No results.</p>;
+    return <p className="text-sm text-zinc-400">No results.</p>;
   }
 
   return (
@@ -34,10 +34,10 @@ export function SearchResults({ results }: { results: SearchResult[] }) {
         <li key={r.pageId}>
           <Link
             href={`/pages/${r.pageId}`}
-            className="block rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-md"
+            className="block rounded-xl border border-zinc-200 bg-white p-4 transition-shadow hover:shadow-md"
           >
-            <p className="font-medium text-slate-900">{r.title}</p>
-            <p className="mt-1 text-sm text-slate-600">{renderSnippet(r.snippet)}</p>
+            <p className="font-medium text-zinc-900">{r.title}</p>
+            <p className="mt-1 text-sm text-zinc-600">{renderSnippet(r.snippet)}</p>
           </Link>
         </li>
       ))}

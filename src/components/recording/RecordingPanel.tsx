@@ -51,11 +51,11 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-xl border border-slate-200 bg-white p-6">
-      <div className="font-mono text-3xl tabular-nums text-slate-900">{formatElapsed(elapsedSeconds)}</div>
+    <div className="flex flex-col items-center gap-4 rounded-xl border border-zinc-200 bg-white p-6">
+      <div className="font-mono text-3xl tabular-nums text-zinc-900">{formatElapsed(elapsedSeconds)}</div>
 
       {status === "recording" && (
-        <div className="h-2 w-48 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-2 w-48 overflow-hidden rounded-full bg-zinc-100">
           <div
             className="h-full rounded-full bg-red-500 transition-all"
             style={{ width: `${Math.min(100, level * 220)}%` }}

@@ -1,9 +1,11 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Turbo AI-inspired theme: warm off-white surfaces, warm ink, electric-violet
+   brand accent, near-black primary actions, pastel content families. */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #fdfcfc;
+  --foreground: #37352f;
 }
 
 @theme inline {
@@ -11,6 +13,27 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+  --color-brand: #6923ff;
+  --color-brand-hover: #5a1de0;
+  --color-brand-soft: #f1eaff;
+  --color-brand-border: #d9c4ff;
+
+  /* Turbo pastel families (light values from their design tokens) */
+  --color-blush: #ffb9ad;
+  --color-blush-soft: #fcd6d0;
+  --color-blush-ink: #ae5041;
+  --color-daisy: #fce39f;
+  --color-daisy-soft: #f6eeaf;
+  --color-daisy-ink: #947312;
+  --color-lavender: #d9c4ff;
+  --color-lavender-soft: #e8defd;
+  --color-lavender-ink: #7556ab;
+  --color-moss: #afdfae;
+  --color-moss-soft: #c0f1bf;
+  --color-moss-ink: #468447;
 }
 
 body {

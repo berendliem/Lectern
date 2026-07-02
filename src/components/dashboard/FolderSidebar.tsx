@@ -7,10 +7,12 @@ import clsx from "@/lib/clsx";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { folderFamily, FOLDER_DOT_CLASSES } from "@/lib/folder-colors";
 
 type Folder = {
   id: string;
   name: string;
+  color: string | null;
   _count: { pages: number };
 };
 
@@ -72,10 +74,10 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-slate-50/60 p-4">
-      <Link href="/" className="mb-6 flex items-center gap-2 text-lg font-semibold text-slate-900" onClick={onNavigate}>
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-zinc-200 bg-[#fafafa] p-4">
+      <Link href="/" className="mb-6 flex items-center gap-2 text-lg font-semibold text-zinc-900" onClick={onNavigate}>
         <span
-          className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-sm text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#6923ff] to-[#a06dff] text-sm text-white"
           aria-hidden="true"
         >
           ✎
@@ -88,7 +90,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           href="/"
           className={clsx(
             "rounded-lg px-3 py-2 font-medium transition-colors",
-            pathname === "/" ? "bg-indigo-100 text-indigo-700" : "text-slate-600 hover:bg-slate-100"
+            pathname === "/" ? "bg-[#efeded] text-zinc-900" : "text-zinc-600 hover:bg-zinc-100"
           )}
         >
           All pages
@@ -97,12 +99,12 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           href="/review"
           className={clsx(
             "flex items-center justify-between rounded-lg px-3 py-2 font-medium transition-colors",
-            pathname === "/review" ? "bg-indigo-100 text-indigo-700" : "text-slate-600 hover:bg-slate-100"
+            pathname === "/review" ? "bg-[#efeded] text-zinc-900" : "text-zinc-600 hover:bg-zinc-100"
           )}
         >
           Review
           {dueCount > 0 && (
-            <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-semibold text-white">
+            <span className="rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white">
               {dueCount}
             </span>
           )}
@@ -111,7 +113,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           href="/search"
           className={clsx(
             "rounded-lg px-3 py-2 font-medium transition-colors",
-            pathname === "/search" ? "bg-indigo-100 text-indigo-700" : "text-slate-600 hover:bg-slate-100"
+            pathname === "/search" ? "bg-[#efeded] text-zinc-900" : "text-zinc-600 hover:bg-zinc-100"
           )}
         >
           Search
@@ -119,10 +121,10 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="mt-6 flex items-center justify-between px-3">
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Folders</span>
+        <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Folders</span>
         <button
           onClick={() => setModalOpen(true)}
-          className="text-lg leading-none text-slate-400 hover:text-indigo-600"
+          className="text-lg leading-none text-zinc-400 hover:text-brand"
           aria-label="New folder"
         >
           +
@@ -130,9 +132,9 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="mt-1 flex flex-1 flex-col gap-0.5 overflow-y-auto text-sm" onClick={onNavigate}>
-        {loading && <p className="px-3 py-2 text-slate-400">Loading…</p>}
+        {loading && <p className="px-3 py-2 text-zinc-400">Loading…</p>}
         {!loading && folders.length === 0 && (
-          <p className="px-3 py-2 text-slate-400">No folders yet</p>
+          <p className="px-3 py-2 text-zinc-400">No folders yet</p>
         )}
         {folders.map((folder) => (
           <Link
@@ -141,12 +143,18 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
             className={clsx(
               "flex items-center justify-between rounded-lg px-3 py-2 transition-colors",
               pathname === `/folders/${folder.id}`
-                ? "bg-indigo-100 text-indigo-700"
-                : "text-slate-600 hover:bg-slate-100"
+                ? "bg-[#efeded] text-zinc-900"
+                : "text-zinc-600 hover:bg-zinc-100"
             )}
           >
-            <span className="truncate">{folder.name}</span>
-            <span className="text-xs text-slate-400">{folder._count.pages}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              <span
+                className={clsx("h-2.5 w-2.5 shrink-0 rounded-full", FOLDER_DOT_CLASSES[folderFamily(folder.color)])}
+                aria-hidden="true"
+              />
+              <span className="truncate">{folder.name}</span>
+            </span>
+            <span className="text-xs text-zinc-400">{folder._count.pages}</span>
           </Link>
         ))}
       </nav>

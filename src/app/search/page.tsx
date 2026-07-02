@@ -11,8 +11,8 @@ export default async function SearchPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold text-slate-900">Search</h1>
-      {q.trim() ? <SearchResults results={results} /> : <p className="text-sm text-slate-400">Search across transcripts, notes, and flashcards.</p>}
+      <h1 className="text-2xl font-semibold text-zinc-900">Search</h1>
+      {q.trim() ? <SearchResults results={results} /> : <p className="text-sm text-zinc-400">Search across transcripts, notes, and flashcards.</p>}
     </div>
   );
 }

@@ -28,7 +28,7 @@ export function TranscriptTab({
       {transcript ? (
         <TranscriptView rawText={transcript} segments={segments} />
       ) : hasAudio ? (
-        <div className="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-400">
+        <div className="rounded-lg border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-400">
           Audio saved. Use the banner above to transcribe it and generate study materials.
         </div>
       ) : null}
