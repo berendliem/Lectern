@@ -18,6 +18,13 @@ export const FOLDER_DOT_CLASSES: Record<FolderFamily, string> = {
   moss: "bg-moss",
 };
 
+export const FOLDER_ICON_CLASSES: Record<FolderFamily, string> = {
+  lavender: "text-lavender-ink",
+  blush: "text-blush-ink",
+  daisy: "text-daisy-ink",
+  moss: "text-moss-ink",
+};
+
 export function folderFamily(color: string | null | undefined): FolderFamily {
   return (FOLDER_FAMILIES as readonly string[]).includes(color ?? "")
     ? (color as FolderFamily)

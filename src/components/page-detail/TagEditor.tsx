@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 
@@ -52,8 +53,12 @@ export function TagEditor({ pageId, initialTags }: { pageId: string; initialTags
       {tags.map((tag) => (
         <Badge key={tag.id} tone="blue" className="gap-1">
           #{tag.name}
-          <button onClick={() => removeTag(tag.id)} aria-label={`Remove tag ${tag.name}`} className="hover:text-blue-900">
-            ×
+          <button
+            onClick={() => removeTag(tag.id)}
+            aria-label={`Remove tag ${tag.name}`}
+            className="opacity-60 transition-opacity hover:opacity-100"
+          >
+            <X className="h-3 w-3" strokeWidth={2.5} />
           </button>
         </Badge>
       ))}

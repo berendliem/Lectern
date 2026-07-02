@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { FileAudio, HelpCircle, Layers } from "lucide-react";
 import type { PageStatus } from "@/generated/prisma/enums";
 import { Badge } from "@/components/ui/Badge";
 import { PAGE_STATUS_LABEL, PAGE_STATUS_TONE } from "@/lib/page-status";
 import { folderFamily, FOLDER_CHIP_CLASSES } from "@/lib/folder-colors";
+import { shortDate } from "@/lib/format";
 import clsx from "@/lib/clsx";
 
 export type PageCardData = {
@@ -15,46 +17,55 @@ export type PageCardData = {
   _count: { flashcards: number; quizQuestions: number };
 };
 
-function plural(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? "" : "s"}`;
-}
-
 export function PageCard({ page }: { page: PageCardData }) {
+  const family = folderFamily(page.folder?.color);
+
   return (
     <Link
       href={`/pages/${page.id}`}
-      className="flex flex-col gap-3 rounded-2xl border border-zinc-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+      className="group flex flex-col rounded-xl border border-zinc-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
     >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="line-clamp-2 font-medium text-zinc-900">{page.title}</h3>
-        <Badge tone={PAGE_STATUS_TONE[page.status]} className="shrink-0">
-          {PAGE_STATUS_LABEL[page.status]}
-        </Badge>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
-        {page.folder && (
-          <span
-            className={clsx(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-              FOLDER_CHIP_CLASSES[folderFamily(page.folder.color)]
-            )}
-          >
-            {page.folder.name}
-          </span>
-        )}
-        {page.tags.map(({ tag }) => (
-          <Badge key={tag.id} tone="blue">
-            #{tag.name}
-          </Badge>
-        ))}
-      </div>
-
-      <div className="mt-auto flex items-center justify-between text-xs text-zinc-400">
-        <span>
-          {plural(page._count.flashcards, "card")} · {plural(page._count.quizQuestions, "question")}
+      <div className="flex items-start gap-3">
+        <span
+          className={clsx(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+            page.folder ? FOLDER_CHIP_CLASSES[family] : "bg-zinc-100 text-zinc-500"
+          )}
+        >
+          <FileAudio className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
-        <span>{new Date(page.updatedAt).toLocaleDateString()}</span>
+        <div className="min-w-0 flex-1">
+          <h3 className="line-clamp-2 text-[14.5px] font-semibold leading-5 text-zinc-900 group-hover:text-black">
+            {page.title}
+          </h3>
+          <p className="mt-0.5 truncate text-xs text-zinc-400">
+            {page.folder ? page.folder.name : "No folder"} · {shortDate(page.updatedAt)}
+          </p>
+        </div>
+      </div>
+
+      {page.tags.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-1">
+          {page.tags.map(({ tag }) => (
+            <Badge key={tag.id} tone="blue">
+              #{tag.name}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3">
+        <span className="flex items-center gap-3 text-xs text-zinc-400">
+          <span className="flex items-center gap-1">
+            <Layers className="h-3.5 w-3.5" strokeWidth={2} />
+            {page._count.flashcards}
+          </span>
+          <span className="flex items-center gap-1">
+            <HelpCircle className="h-3.5 w-3.5" strokeWidth={2} />
+            {page._count.quizQuestions}
+          </span>
+        </span>
+        <Badge tone={PAGE_STATUS_TONE[page.status]}>{PAGE_STATUS_LABEL[page.status]}</Badge>
       </div>
     </Link>
   );

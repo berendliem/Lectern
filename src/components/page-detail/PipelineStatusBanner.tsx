@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import clsx from "@/lib/clsx";
 
@@ -87,7 +88,7 @@ export function PipelineStatusBanner({
       className={clsx(
         "flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
         allDone
-          ? "border-emerald-200 bg-emerald-50"
+          ? "border-moss bg-moss-soft/40"
           : message && !running
             ? "border-red-200 bg-red-50"
             : "border-zinc-200 bg-white"
@@ -100,18 +101,25 @@ export function PipelineStatusBanner({
             const isRunning = runningStage === stage.id;
             return (
               <li key={stage.id} className="flex items-center gap-1">
-                {i > 0 && <span className="mx-1 h-px w-4 bg-zinc-300" aria-hidden="true" />}
+                {i > 0 && <span className="mx-1 h-px w-3.5 bg-zinc-200" aria-hidden="true" />}
                 <span
                   className={clsx(
-                    "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+                    "flex items-center gap-1.5 rounded-full py-1 pl-2 pr-2.5 text-xs font-medium",
                     isDone
-                      ? "bg-emerald-100 text-emerald-700"
+                      ? "bg-moss-soft text-moss-ink"
                       : isRunning
                         ? "bg-brand-soft text-brand"
                         : "bg-zinc-100 text-zinc-400"
                   )}
                 >
-                  {isDone ? "✓" : isRunning ? <Spinner /> : "○"} {stage.label}
+                  {isDone ? (
+                    <Check className="h-3 w-3" strokeWidth={2.5} />
+                  ) : isRunning ? (
+                    <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2.5} />
+                  ) : (
+                    <span className="h-1.5 w-1.5 rounded-full bg-current opacity-50" aria-hidden="true" />
+                  )}
+                  {stage.label}
                 </span>
               </li>
             );
@@ -122,32 +130,31 @@ export function PipelineStatusBanner({
         )}
         {!running && message && <p className="text-xs font-medium text-red-700">{message}</p>}
         {!running && !message && allDone && (
-          <p className="text-xs text-emerald-700">This page is ready to study.</p>
+          <p className="text-xs text-moss-ink">This page is ready to study.</p>
         )}
       </div>
 
       {!allDone && (
         <Button onClick={runRemaining} disabled={running} className="shrink-0 self-start sm:self-auto">
-          {running
-            ? "Working…"
-            : message
-              ? "Retry"
-              : remaining.length === STAGES.length - 1 && done.transcribe
+          {running ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.2} />
+              Working…
+            </>
+          ) : message ? (
+            "Retry"
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" strokeWidth={2.2} />
+              {remaining.length === STAGES.length - 1 && done.transcribe
                 ? "Generate study materials"
                 : remaining.length === STAGES.length
                   ? "Transcribe & generate"
                   : "Finish remaining steps"}
+            </>
+          )}
         </Button>
       )}
     </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <span
-      className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-brand border-t-transparent"
-      aria-hidden="true"
-    />
   );
 }

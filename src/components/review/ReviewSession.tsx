@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CheckCheck, PartyPopper } from "lucide-react";
 import { FlashcardFlip } from "@/components/flashcards/FlashcardFlip";
 import { ReviewGradeButtons } from "@/components/review/ReviewGradeButtons";
 
@@ -49,39 +50,54 @@ export function ReviewSession() {
 
   if (cards.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 px-4 py-16 text-center">
-        <p className="text-zinc-600">No cards are due for review right now.</p>
-        <p className="mt-1 text-sm text-zinc-400">Come back later, or generate a learning guide on a new page.</p>
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 px-4 py-16 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-moss-soft text-moss-ink">
+          <CheckCheck className="h-5 w-5" strokeWidth={2} />
+        </span>
+        <div>
+          <p className="text-sm font-medium text-zinc-700">All caught up</p>
+          <p className="mt-1 text-[13px] text-zinc-400">No cards are due right now — come back later.</p>
+        </div>
       </div>
     );
   }
 
   if (index >= cards.length) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-zinc-300 px-4 py-16 text-center">
-        <span className="text-3xl" aria-hidden="true">
-          🎉
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 px-4 py-16 text-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
+          <PartyPopper className="h-5 w-5" strokeWidth={2} />
         </span>
-        <p className="font-medium text-zinc-700">
-          Session complete — reviewed {reviewedCount} card{reviewedCount === 1 ? "" : "s"}.
-        </p>
-        <Link href="/" className="text-sm text-brand hover:underline">
-          Back to your pages
-        </Link>
+        <div>
+          <p className="text-sm font-medium text-zinc-700">
+            Session complete — {reviewedCount} card{reviewedCount === 1 ? "" : "s"} reviewed.
+          </p>
+          <Link href="/" className="mt-1 inline-block text-[13px] font-medium text-brand hover:underline">
+            Back to your library
+          </Link>
+        </div>
       </div>
     );
   }
 
   const card = cards[index];
+  const progress = (index / cards.length) * 100;
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col items-center gap-4">
-      <p className="text-sm text-zinc-400">
-        Card {index + 1} of {cards.length} ·{" "}
-        <Link href={`/pages/${card.page.id}`} className="hover:text-brand">
-          {card.page.title}
-        </Link>
-      </p>
+    <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5">
+      <div className="w-full">
+        <div className="mb-1.5 flex items-center justify-between text-xs text-zinc-400">
+          <span>
+            Card {index + 1} of {cards.length}
+          </span>
+          <Link href={`/pages/${card.page.id}`} className="truncate font-medium hover:text-brand">
+            {card.page.title}
+          </Link>
+        </div>
+        <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
+          <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
       <FlashcardFlip
         prompt={card.prompt}
         idealExplanation={card.idealExplanation}

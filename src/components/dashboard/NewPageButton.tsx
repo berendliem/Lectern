@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
@@ -32,7 +33,10 @@ export function NewPageButton({ folderId }: { folderId?: string }) {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>New Page</Button>
+      <Button onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4" strokeWidth={2.2} />
+        New lecture
+      </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="New page">
         <form onSubmit={handleCreate} className="flex flex-col gap-3">
           <Input

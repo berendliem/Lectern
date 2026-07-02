@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { TagEditor } from "@/components/page-detail/TagEditor";
@@ -56,8 +57,8 @@ export function PageDetailHeader({
       </div>
       <div className="flex items-center gap-2">
         <ExportMenu pageId={pageId} />
-        <Button variant="danger" size="sm" onClick={handleDelete} disabled={deleting}>
-          Delete
+        <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleting} aria-label="Delete page">
+          <Trash2 className="h-4 w-4 text-zinc-400" strokeWidth={2} />
         </Button>
       </div>
     </div>

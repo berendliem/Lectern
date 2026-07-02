@@ -17,7 +17,7 @@ export function FlashcardFlip({
     <button
       onClick={onFlip}
       className={clsx(
-        "w-full rounded-2xl border p-8 text-left shadow-sm transition-shadow hover:shadow-md",
+        "min-h-44 w-full rounded-2xl border p-8 text-left shadow-sm transition-shadow hover:shadow-md",
         flipped ? "border-brand-border bg-brand-soft/50" : "border-zinc-200 bg-white"
       )}
     >

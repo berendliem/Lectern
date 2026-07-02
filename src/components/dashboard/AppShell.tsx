@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Menu } from "lucide-react";
 import { FolderSidebar } from "@/components/dashboard/FolderSidebar";
 import { SearchBox } from "@/components/search/SearchBox";
 import clsx from "@/lib/clsx";
@@ -26,17 +27,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <FolderSidebar onNavigate={() => setSidebarOpen(false)} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3 sm:px-6">
+        <header className="flex items-center gap-3 border-b border-zinc-200/80 bg-white/90 px-4 py-2.5 backdrop-blur sm:px-8">
           <button
             onClick={() => setSidebarOpen((o) => !o)}
             className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 md:hidden"
             aria-label="Toggle navigation"
           >
-            ☰
+            <Menu className="h-5 w-5" strokeWidth={2} />
           </button>
           <SearchBox />
         </header>
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</div>
+        </main>
       </div>
     </div>
   );
