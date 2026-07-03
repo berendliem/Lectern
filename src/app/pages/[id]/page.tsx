@@ -8,6 +8,8 @@ import { NotesView } from "@/components/page-detail/NotesView";
 import { FlashcardList } from "@/components/flashcards/FlashcardList";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
 import { ChatTab } from "@/components/page-detail/ChatTab";
+import { InterviewLaunch } from "@/components/interview/InterviewLaunch";
+import { isVideoExtension } from "@/lib/audio-storage";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,8 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
 
   const segments: TranscriptSegment[] = page.transcript ? JSON.parse(page.transcript.segments) : [];
   const keyTerms: KeyTerm[] = page.notes ? JSON.parse(page.notes.keyTerms) : [];
+  const audioExt = page.audioFilePath?.split(".").pop() ?? "";
+  const isVideo = isVideoExtension(audioExt);
 
   return (
     <div className="flex max-w-4xl flex-col gap-5">
@@ -50,6 +54,8 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
         hasQuiz={page.quizQuestions.length > 0}
       />
 
+      {page.notes && <InterviewLaunch pageId={page.id} pageTitle={page.title} />}
+
       <PageTabs
         tabs={[
           {
@@ -59,6 +65,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
               <TranscriptTab
                 pageId={page.id}
                 hasAudio={!!page.audioFilePath}
+                isVideo={isVideo}
                 transcript={page.transcript?.rawText ?? null}
                 segments={segments}
               />

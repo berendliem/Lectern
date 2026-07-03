@@ -3,7 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { AudioLines, Folder as FolderIcon, GraduationCap, LayoutGrid, Plus, Search } from "lucide-react";
+import {
+  AudioLines,
+  Folder as FolderIcon,
+  GraduationCap,
+  LayoutGrid,
+  MessagesSquare,
+  Plus,
+  Radio,
+  Search,
+} from "lucide-react";
 import clsx from "@/lib/clsx";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -20,6 +29,8 @@ type Folder = {
 const NAV_ITEMS = [
   { href: "/", label: "Library", icon: LayoutGrid },
   { href: "/review", label: "Review", icon: GraduationCap },
+  { href: "/interview", label: "Interview", icon: MessagesSquare },
+  { href: "/copilot", label: "Live copilot", icon: Radio },
   { href: "/search", label: "Search", icon: Search },
 ];
 

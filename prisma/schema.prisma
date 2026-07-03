@@ -23,6 +23,16 @@ enum QuestionType {
   MULTIPLE_CHOICE
 }
 
+enum InterviewSource {
+  LECTURE
+  TOPIC
+}
+
+enum InterviewStatus {
+  ACTIVE
+  COMPLETED
+}
+
 model Folder {
   id          String   @id @default(cuid())
   name        String
@@ -45,12 +55,13 @@ model Page {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
-  folder        Folder?        @relation(fields: [folderId], references: [id], onDelete: SetNull)
-  transcript    Transcript?
-  notes         Notes?
-  flashcards    Flashcard[]
-  quizQuestions QuizQuestion[]
-  tags          TagsOnPages[]
+  folder            Folder?            @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  transcript        Transcript?
+  notes             Notes?
+  flashcards        Flashcard[]
+  quizQuestions     QuizQuestion[]
+  tags              TagsOnPages[]
+  interviewSessions InterviewSession[]
 
   @@index([folderId])
   @@index([status])
@@ -129,6 +140,38 @@ model QuizAttempt {
   question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([questionId])
+}
+
+model InterviewSession {
+  id        String          @id @default(cuid())
+  title     String
+  source    InterviewSource
+  status    InterviewStatus @default(ACTIVE)
+  pageId    String?
+  topicText String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  page  Page?           @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  turns InterviewTurn[]
+
+  @@index([pageId])
+  @@index([status])
+}
+
+model InterviewTurn {
+  id              String   @id @default(cuid())
+  sessionId       String
+  order           Int
+  question        String
+  answer          String?
+  answerAudioPath String?
+  feedback        String?
+  createdAt       DateTime @default(now())
+
+  session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
 }
 
 model Tag {

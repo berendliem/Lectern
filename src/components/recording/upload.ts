@@ -30,15 +30,18 @@ export async function transcribePage(pageId: string): Promise<{ ok: true } | { o
 export function readAudioDuration(file: Blob): Promise<number | undefined> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
-    const audio = new Audio(url);
+    // A <video> element reads metadata for both audio and video containers.
+    const el = document.createElement("video");
+    el.preload = "metadata";
     const cleanup = () => URL.revokeObjectURL(url);
-    audio.addEventListener("loadedmetadata", () => {
+    el.addEventListener("loadedmetadata", () => {
       cleanup();
-      resolve(Number.isFinite(audio.duration) ? audio.duration : undefined);
+      resolve(Number.isFinite(el.duration) ? el.duration : undefined);
     });
-    audio.addEventListener("error", () => {
+    el.addEventListener("error", () => {
       cleanup();
       resolve(undefined);
     });
+    el.src = url;
   });
 }

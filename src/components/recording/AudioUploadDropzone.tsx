@@ -15,8 +15,8 @@ export function AudioUploadDropzone({ pageId }: { pageId: string }) {
   const uploading = state !== "idle";
 
   async function handleFile(file: File) {
-    if (!file.type.startsWith("audio/")) {
-      setError("Please choose an audio file (mp3, m4a, wav, webm…).");
+    if (!file.type.startsWith("audio/") && !file.type.startsWith("video/")) {
+      setError("Please choose an audio or video file (mp3, m4a, wav, mp4, mov…).");
       return;
     }
     setState("uploading");
@@ -54,14 +54,14 @@ export function AudioUploadDropzone({ pageId }: { pageId: string }) {
         dragActive ? "border-brand-border bg-brand-soft" : "border-zinc-300"
       )}
     >
-      <p className="text-sm text-zinc-500">Drag an audio file here, or</p>
+      <p className="text-sm text-zinc-500">Drag an audio or video file here, or</p>
       <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading}>
         {state === "uploading" ? "Uploading…" : state === "transcribing" ? "Transcribing…" : "Choose file"}
       </Button>
       <input
         ref={inputRef}
         type="file"
-        accept="audio/*"
+        accept="audio/*,video/*"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];

@@ -11,6 +11,12 @@ const EXTENSION_BY_MIME: Record<string, string> = {
   "audio/mp3": "mp3",
   "audio/wav": "wav",
   "audio/x-wav": "wav",
+  // Video containers: the whisper service (ffmpeg/PyAV) decodes the audio track.
+  "video/mp4": "mp4",
+  "video/quicktime": "mov",
+  "video/webm": "webm",
+  "video/x-matroska": "mkv",
+  "video/x-msvideo": "avi",
 };
 
 export function extensionForMimeType(mimeType: string, fallbackName?: string): string {
@@ -25,10 +31,20 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   m4a: "audio/mp4",
   mp3: "audio/mpeg",
   wav: "audio/wav",
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  mkv: "video/x-matroska",
+  avi: "video/x-msvideo",
 };
+
+const VIDEO_EXTENSIONS = new Set(["mp4", "mov", "mkv", "avi"]);
 
 export function mimeTypeForExtension(extension: string): string {
   return MIME_BY_EXTENSION[extension.toLowerCase()] ?? "application/octet-stream";
+}
+
+export function isVideoExtension(extension: string): boolean {
+  return VIDEO_EXTENSIONS.has(extension.toLowerCase());
 }
 
 export async function saveAudioFile(pageId: string, buffer: Buffer, extension: string): Promise<string> {

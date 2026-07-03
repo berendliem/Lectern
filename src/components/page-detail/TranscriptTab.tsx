@@ -6,17 +6,25 @@ import type { TranscriptSegment } from "@/types";
 export function TranscriptTab({
   pageId,
   hasAudio,
+  isVideo,
   transcript,
   segments,
 }: {
   pageId: string;
   hasAudio: boolean;
+  isVideo: boolean;
   transcript: string | null;
   segments: TranscriptSegment[];
 }) {
+  const src = `/api/pages/${pageId}/audio`;
   return (
     <div className="flex flex-col gap-5">
-      {hasAudio && <audio controls src={`/api/pages/${pageId}/audio`} className="w-full" />}
+      {hasAudio &&
+        (isVideo ? (
+          <video controls src={src} className="max-h-80 w-full rounded-xl bg-black" />
+        ) : (
+          <audio controls src={src} className="w-full" />
+        ))}
 
       {!hasAudio && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
