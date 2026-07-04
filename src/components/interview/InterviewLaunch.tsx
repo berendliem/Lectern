@@ -1,8 +1,5 @@
 "use client";
 
-// NOTE: minimal foundation stub. The interview feature subagent replaces this
-// with a working launcher that creates a session from this lecture and routes
-// to /interview/[id].
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessagesSquare } from "lucide-react";

@@ -33,7 +33,7 @@ export function NewPageButton({ folderId }: { folderId?: string }) {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
+      <Button variant="brand" onClick={() => setOpen(true)} className="shadow-sm shadow-brand/20">
         <Plus className="h-4 w-4" strokeWidth={2.2} />
         New lecture
       </Button>

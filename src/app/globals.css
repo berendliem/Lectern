@@ -34,10 +34,20 @@
   --color-moss: #afdfae;
   --color-moss-soft: #c0f1bf;
   --color-moss-ink: #468447;
+  --color-sky: #a5d8ff;
+  --color-sky-soft: #dbeafe;
+  --color-sky-ink: #1f6fb2;
+  --color-coral: #ffc4a3;
+  --color-coral-soft: #ffe4d1;
+  --color-coral-ink: #c05f2e;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(60rem 40rem at 100% -10%, rgba(105, 35, 255, 0.06), transparent 60%),
+    radial-gradient(50rem 40rem at -10% 0%, rgba(31, 111, 178, 0.05), transparent 55%),
+    var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
 }
 
@@ -46,4 +56,12 @@ body {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Gradient text for hero headings — one system-wide accent. */
+.text-gradient {
+  background: linear-gradient(100deg, #6923ff 0%, #9b5cff 50%, #1f6fb2 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
