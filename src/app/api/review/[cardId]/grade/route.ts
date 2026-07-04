@@ -21,5 +21,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ car
     data: { ...schedule, lastReviewedAt: now },
   });
 
+  // Record the review event so the Study Planner can compute streaks and
+  // daily review counts (lastReviewedAt only keeps the most recent review).
+  await db.reviewLog.create({ data: { flashcardId: cardId, reviewedAt: now } });
+
   return NextResponse.json({ card: updated });
 }

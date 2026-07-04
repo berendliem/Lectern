@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   AudioLines,
+  CalendarDays,
   Folder as FolderIcon,
   GraduationCap,
   LayoutGrid,
@@ -29,6 +30,7 @@ type Folder = {
 const NAV_ITEMS = [
   { href: "/", label: "Library", icon: LayoutGrid },
   { href: "/review", label: "Review", icon: GraduationCap },
+  { href: "/planner", label: "Planner", icon: CalendarDays },
   { href: "/interview", label: "Interview", icon: MessagesSquare },
   { href: "/copilot", label: "Live copilot", icon: Radio },
   { href: "/search", label: "Search", icon: Search },

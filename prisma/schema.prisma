@@ -107,10 +107,21 @@ model Flashcard {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  page       Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  reviewLogs ReviewLog[]
 
   @@index([pageId])
   @@index([nextReviewAt])
+}
+
+model ReviewLog {
+  id          String   @id @default(cuid())
+  flashcardId String?
+  reviewedAt  DateTime @default(now())
+
+  flashcard Flashcard? @relation(fields: [flashcardId], references: [id], onDelete: SetNull)
+
+  @@index([reviewedAt])
 }
 
 model QuizQuestion {
