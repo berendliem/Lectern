@@ -1,7 +1,27 @@
 import { mkdir, writeFile, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 
 const AUDIO_DIR = path.join(process.cwd(), "storage", "audio");
+
+/**
+ * Reduce an untrusted string to a safe filename segment. Some callers pass
+ * user-controlled values (e.g. a turnId from form data) as the filename stem,
+ * so strip anything that could traverse directories or otherwise escape
+ * AUDIO_DIR before it reaches the filesystem.
+ */
+function safeSegment(value: string, fallback: string): string {
+  const cleaned = value.replace(/[^a-zA-Z0-9_-]/g, "");
+  return cleaned.length > 0 ? cleaned.slice(0, 64) : fallback;
+}
+
+/** Throws if `absolute` is not contained within AUDIO_DIR. */
+function assertInsideAudioDir(absolute: string): void {
+  const root = path.resolve(AUDIO_DIR) + path.sep;
+  if (!path.resolve(absolute).startsWith(root)) {
+    throw new Error("Refusing to access a path outside the audio storage directory");
+  }
+}
 
 const EXTENSION_BY_MIME: Record<string, string> = {
   "audio/webm": "webm",
@@ -47,10 +67,13 @@ export function isVideoExtension(extension: string): boolean {
   return VIDEO_EXTENSIONS.has(extension.toLowerCase());
 }
 
-export async function saveAudioFile(pageId: string, buffer: Buffer, extension: string): Promise<string> {
+export async function saveAudioFile(stem: string, buffer: Buffer, extension: string): Promise<string> {
   await mkdir(AUDIO_DIR, { recursive: true });
-  const filename = `${pageId}.${extension}`;
+  const safeStem = safeSegment(stem, randomUUID());
+  const safeExt = safeSegment(extension, "bin").toLowerCase().slice(0, 5);
+  const filename = `${safeStem}.${safeExt}`;
   const filePath = path.join(AUDIO_DIR, filename);
+  assertInsideAudioDir(filePath);
   await writeFile(filePath, buffer);
   return path.join("storage", "audio", filename);
 }
@@ -58,6 +81,11 @@ export async function saveAudioFile(pageId: string, buffer: Buffer, extension: s
 export async function deleteAudioFile(relativePath: string | null): Promise<void> {
   if (!relativePath) return;
   const absolute = path.join(process.cwd(), relativePath);
+  try {
+    assertInsideAudioDir(absolute);
+  } catch {
+    return;
+  }
   await unlink(absolute).catch(() => undefined);
 }
 
