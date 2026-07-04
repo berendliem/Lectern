@@ -13,6 +13,12 @@ export const createPageSchema = z.object({
   folderId: z.string().trim().min(1).optional(),
 });
 
+export const createPageFromTextSchema = z.object({
+  title: z.string().trim().min(1).max(300),
+  text: z.string().trim().min(1).max(500_000),
+  folderId: z.string().trim().min(1).optional(),
+});
+
 export const updatePageSchema = z.object({
   title: z.string().trim().min(1).max(300).optional(),
   folderId: z.string().trim().min(1).nullable().optional(),

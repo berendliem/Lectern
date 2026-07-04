@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
+import { ImportButton } from "@/components/dashboard/ImportButton";
 import { StatsRow } from "@/components/dashboard/StatsRow";
 
 // This page reads directly from the local SQLite DB via Prisma, which Next
@@ -30,7 +31,10 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gradient">Library</h1>
           <p className="mt-0.5 text-[13px] text-zinc-500">Every lecture you&apos;ve captured, ready to study.</p>
         </div>
-        <NewPageButton />
+        <div className="flex items-center gap-2">
+          <ImportButton />
+          <NewPageButton />
+        </div>
       </div>
       <StatsRow
         pageCount={pages.length}
