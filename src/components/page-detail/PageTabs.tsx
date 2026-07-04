@@ -20,7 +20,7 @@ export function PageTabs({
             className={clsx(
               "border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
               active === tab.id
-                ? "border-brand text-zinc-900"
+                ? "border-brand text-brand"
                 : "border-transparent text-zinc-500 hover:text-zinc-700"
             )}
           >

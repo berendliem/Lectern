@@ -92,16 +92,16 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-zinc-200/80 bg-[#fafafa]">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-brand-border/40 bg-gradient-to-b from-white to-[#f4efff]">
       <div className="px-4 pb-2 pt-5">
         <Link href="/" className="flex items-center gap-2.5" onClick={onNavigate}>
           <span
-            className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#7b3aff] to-[#5a14e8] shadow-sm"
+            className="flex h-8 w-8 items-center justify-center rounded-[10px] grad-brand shadow-brand"
             aria-hidden="true"
           >
             <AudioLines className="h-4.5 w-4.5 text-white" strokeWidth={2.2} />
           </span>
-          <span className="text-[15px] font-semibold tracking-tight text-zinc-900">Notetaker</span>
+          <span className="text-[15px] font-semibold tracking-tight text-gradient">Notetaker</span>
         </Link>
       </div>
 
@@ -113,14 +113,21 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               key={href}
               href={href}
               className={clsx(
-                "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-colors",
-                active ? "bg-[#ececea] text-zinc-900" : "text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-800"
+                "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-all",
+                active
+                  ? "grad-brand text-white shadow-brand"
+                  : "text-zinc-500 hover:bg-white/70 hover:text-zinc-800"
               )}
             >
-              <Icon className="h-4 w-4" strokeWidth={active ? 2.2 : 2} />
+              <Icon className="h-4 w-4" strokeWidth={active ? 2.4 : 2} />
               <span className="flex-1">{label}</span>
               {label === "Review" && dueCount > 0 && (
-                <span className="rounded-full bg-brand px-1.5 py-px text-[11px] font-semibold leading-4 text-white">
+                <span
+                  className={clsx(
+                    "rounded-full px-1.5 py-px text-[11px] font-semibold leading-4",
+                    active ? "bg-white/25 text-white" : "bg-brand text-white"
+                  )}
+                >
                   {dueCount}
                 </span>
               )}
@@ -153,7 +160,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               href={`/folders/${folder.id}`}
               className={clsx(
                 "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors",
-                active ? "bg-[#ececea] font-medium text-zinc-900" : "text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-800"
+                active ? "bg-brand-soft font-medium text-brand" : "text-zinc-500 hover:bg-white/70 hover:text-zinc-800"
               )}
             >
               <FolderIcon

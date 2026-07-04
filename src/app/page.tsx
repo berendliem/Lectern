@@ -27,8 +27,8 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Library</h1>
-          <p className="mt-0.5 text-[13px] text-zinc-400">Every lecture you&apos;ve captured, ready to study.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gradient">Library</h1>
+          <p className="mt-0.5 text-[13px] text-zinc-500">Every lecture you&apos;ve captured, ready to study.</p>
         </div>
         <NewPageButton />
       </div>
