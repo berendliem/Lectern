@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Command as CommandIcon, Menu } from "lucide-react";
 import { FolderSidebar } from "@/components/dashboard/FolderSidebar";
 import { SearchBox } from "@/components/search/SearchBox";
+import { CommandPalette } from "@/components/command/CommandPalette";
 import clsx from "@/lib/clsx";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -36,11 +37,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="h-5 w-5" strokeWidth={2} />
           </button>
           <SearchBox />
+          <button
+            onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+            className="ml-auto hidden items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[12.5px] font-medium text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50 sm:flex"
+            aria-label="Open command palette"
+          >
+            <CommandIcon className="h-3.5 w-3.5" strokeWidth={2.2} />
+            <kbd className="font-sans">⌘K</kbd>
+          </button>
         </header>
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</div>
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

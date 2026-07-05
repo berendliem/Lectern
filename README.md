@@ -85,6 +85,8 @@ Open http://localhost:3000.
 
 **Study tools (in the sidebar):**
 
+- **Ask your library** — one AI assistant across *every* lecture. Ask a question and it full-text-searches your notes/transcripts, answers grounded in the most relevant lectures, and links the pages it drew from as citations.
+- **Command palette** — press <kbd>⌘K</kbd> / <kbd>Ctrl-K</kbd> (or the button in the header) to jump to any section or open any page by name, keyboard-only.
 - **Focus timer** — an automatic Pomodoro timer: a focus block, then a short break, and a long break after every few sessions, cycling on its own. Durations are configurable, it counts your focus sessions for the day, and it keeps ticking accurately even in a background tab.
 - **Feynman coach** — pick a concept and explain it in plain words, by typing or by speaking (your voice is transcribed by the local whisper service). A free OpenRouter model scores how clearly a beginner would understand it and calls out gaps, hidden jargon, and a follow-up question to push you deeper. Paste your notes as optional reference material to have it check accuracy too. Refine and re-score as many times as you like.
 - **Planner** — review streaks, cards due, and a 7-day upcoming-review schedule.
