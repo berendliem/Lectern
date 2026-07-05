@@ -54,6 +54,22 @@ export const chatRequestSchema = z.object({
     .max(30),
 });
 
+export const feynmanEvaluateSchema = z.object({
+  concept: z.string().trim().min(1).max(300),
+  reference: z.string().trim().max(20_000).optional(),
+  explanation: z.string().trim().min(1).max(8000),
+  priorExplanations: z.array(z.string().trim().min(1).max(8000)).max(10).optional(),
+});
+
+export const feynmanFeedbackSchema = z.object({
+  score: z.number().min(0).max(100),
+  verdict: z.string().min(1),
+  strengths: z.array(z.string().min(1)).default([]),
+  gaps: z.array(z.string().min(1)).default([]),
+  jargon: z.array(z.string().min(1)).default([]),
+  followUp: z.string().default(""),
+});
+
 export const summaryResponseSchema = z.object({
   markdown: z.string().min(1),
   keyTerms: z.array(z.object({ term: z.string().min(1), definition: z.string().min(1) })),

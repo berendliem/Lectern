@@ -9,10 +9,12 @@ import {
   Folder as FolderIcon,
   GraduationCap,
   LayoutGrid,
+  Lightbulb,
   MessagesSquare,
   Plus,
   Radio,
   Search,
+  Timer,
 } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +33,8 @@ const NAV_ITEMS = [
   { href: "/", label: "Library", icon: LayoutGrid },
   { href: "/review", label: "Review", icon: GraduationCap },
   { href: "/planner", label: "Planner", icon: CalendarDays },
+  { href: "/focus", label: "Focus timer", icon: Timer },
+  { href: "/feynman", label: "Feynman coach", icon: Lightbulb },
   { href: "/interview", label: "Interview", icon: MessagesSquare },
   { href: "/copilot", label: "Live copilot", icon: Radio },
   { href: "/search", label: "Search", icon: Search },
