@@ -80,6 +80,8 @@ Open http://localhost:3000.
 4. Click **Generate notes** once transcribed — this calls OpenRouter to produce structured Markdown notes + key terms.
 5. Click **Generate flashcards & quiz** once notes exist — this generates Feynman-style flashcards (explain-it-back prompts, not term/definition pairs) and a mixed short-answer/multiple-choice quiz.
 6. Study via **Review** (spaced-repetition flashcard session, SM-2 scheduling) or the page's **Quiz** tab (self-test with instant grading), or open the **Chat** tab to ask the assistant anything about the lecture.
+   - On the **Transcript** tab, pages with audio get a synced player: click any transcript line to jump the audio there, and the line being spoken is highlighted as it plays (with a 1×–2× speed toggle).
+   - The **Concept map** tab draws an AI-generated map of the lecture's key concepts and how they relate — hover a concept to spotlight its connections.
 7. Organize with folders (sidebar) and tags (page header); **Search** looks across transcripts, notes, and flashcards.
 8. **Export** a page to Markdown or PDF from the page header.
 

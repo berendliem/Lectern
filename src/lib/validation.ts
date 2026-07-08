@@ -70,6 +70,28 @@ export const feynmanFeedbackSchema = z.object({
   followUp: z.string().default(""),
 });
 
+export const conceptMapResponseSchema = z.object({
+  nodes: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        label: z.string().min(1).max(80),
+        group: z.number().int().min(0).max(4).catch(0),
+      })
+    )
+    .min(3)
+    .max(24),
+  edges: z
+    .array(
+      z.object({
+        from: z.string().min(1),
+        to: z.string().min(1),
+        label: z.string().max(40).default(""),
+      })
+    )
+    .default([]),
+});
+
 export const summaryResponseSchema = z.object({
   markdown: z.string().min(1),
   keyTerms: z.array(z.object({ term: z.string().min(1), definition: z.string().min(1) })),

@@ -8,6 +8,7 @@ import { NotesView } from "@/components/page-detail/NotesView";
 import { FlashcardList } from "@/components/flashcards/FlashcardList";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
 import { ChatTab } from "@/components/page-detail/ChatTab";
+import { ConceptMapTab } from "@/components/page-detail/ConceptMapTab";
 import { InterviewLaunch } from "@/components/interview/InterviewLaunch";
 import { isVideoExtension } from "@/lib/audio-storage";
 import type { TranscriptSegment, KeyTerm } from "@/types";
@@ -99,6 +100,11 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
               ) : (
                 <EmptyState message="Quiz questions will appear here once the learning guide has been generated." />
               ),
+          },
+          {
+            id: "concept-map",
+            label: "Concept map",
+            content: <ConceptMapTab pageId={page.id} hasMaterial={!!page.transcript || !!page.notes} />,
           },
           {
             id: "chat",
