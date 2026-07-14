@@ -1,0 +1,39 @@
+import { NextRequest, NextResponse } from "next/server";
+import { jsonError, withValidation } from "@/lib/api-utils";
+import { callOpenRouterJSON } from "@/lib/openrouter";
+import { feynmanEvaluateSchema, feynmanFeedbackSchema } from "@/lib/validation";
+import { FEYNMAN_SYSTEM_PROMPT, buildFeynmanUserPrompt } from "@/lib/prompts/feynman";
+
+const MODEL =
+  process.env.OPENROUTER_MODEL_FEYNMAN ??
+  process.env.OPENROUTER_MODEL_CHAT ??
+  process.env.OPENROUTER_MODEL_SUMMARY ??
+  "meta-llama/llama-3.3-70b-instruct:free";
+
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+  const result = await withValidation(feynmanEvaluateSchema, body);
+  if ("error" in result) return result.error;
+
+  const { concept, reference, explanation, priorExplanations } = result.data;
+
+  const userPrompt = buildFeynmanUserPrompt({
+    concept,
+    reference,
+    explanation,
+    priorExplanations: priorExplanations ?? [],
+  });
+
+  try {
+    const raw = await callOpenRouterJSON({ model: MODEL, systemPrompt: FEYNMAN_SYSTEM_PROMPT, userPrompt });
+    const parsed = await feynmanFeedbackSchema.parseAsync(raw).catch(() => null);
+    if (!parsed) {
+      return jsonError("The coach returned an unexpected response. Please try again.", 502);
+    }
+    // Clamp to an integer score for a clean UI.
+    return NextResponse.json({ feedback: { ...parsed, score: Math.round(parsed.score) } });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Evaluation failed";
+    return jsonError(message, 502);
+  }
+}

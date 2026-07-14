@@ -1,0 +1,39 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { db } from "@/lib/db";
+import { InterviewRunner } from "@/components/interview/InterviewRunner";
+import { MAX_INTERVIEW_QUESTIONS } from "@/lib/interview";
+
+export const dynamic = "force-dynamic";
+
+export default async function InterviewSessionPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const session = await db.interviewSession.findUnique({
+    where: { id },
+    include: { turns: { orderBy: { order: "asc" } } },
+  });
+  if (!session) notFound();
+
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+      <Link href="/interview" className="flex items-center gap-1 self-start text-[13px] font-medium text-zinc-400 hover:text-brand">
+        <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+        All interviews
+      </Link>
+      <InterviewRunner
+        sessionId={session.id}
+        title={session.title}
+        status={session.status}
+        initialTurns={session.turns.map((t) => ({
+          id: t.id,
+          order: t.order,
+          question: t.question,
+          answer: t.answer,
+          feedback: t.feedback,
+        }))}
+        totalQuestions={MAX_INTERVIEW_QUESTIONS}
+      />
+    </div>
+  );
+}
