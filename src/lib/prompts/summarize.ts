@@ -14,6 +14,6 @@ Guidelines for "markdown":
 - Do not invent information that wasn't in the transcript.
 - Do not include a "Key Terms" section in the markdown itself; key terms go only in the keyTerms array.`;
 
-export function buildSummarizeUserPrompt(transcript: string): string {
-  return `Here is a raw lecture transcript (it may contain speech-recognition errors, filler words, and run-on sentences). Turn it into clean study notes following the required JSON shape.\n\nTRANSCRIPT:\n"""\n${transcript}\n"""`;
+export function buildSummarizeUserPrompt(transcript: string, spellingGuide = ""): string {
+  return `Here is a raw lecture transcript (it may contain speech-recognition errors, filler words, and run-on sentences). Turn it into clean study notes following the required JSON shape.${spellingGuide}\n\nTRANSCRIPT:\n"""\n${transcript}\n"""`;
 }

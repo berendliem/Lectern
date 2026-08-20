@@ -92,6 +92,26 @@ export const conceptMapResponseSchema = z.object({
     .default([]),
 });
 
+export const createDictionaryTermSchema = z.object({
+  term: z.string().trim().min(1).max(64),
+  hint: z.string().trim().max(200).optional(),
+});
+
+export const toggleActionItemSchema = z.object({
+  done: z.boolean(),
+});
+
+export const actionItemsResponseSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        kind: z.enum(["ACTION", "DECISION", "QUESTION"]),
+        text: z.string().min(1).max(500),
+      })
+    )
+    .max(40),
+});
+
 export const summaryResponseSchema = z.object({
   markdown: z.string().min(1),
   keyTerms: z.array(z.object({ term: z.string().min(1), definition: z.string().min(1) })),

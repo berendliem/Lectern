@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callOpenRouterText, type ChatMessage } from "@/lib/openrouter";
+import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { chatRequestSchema } from "@/lib/validation";
 
 const MAX_CONTEXT_CHARS = 24_000;
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     "meta-llama/llama-3.3-70b-instruct:free";
 
   try {
-    const reply = await callOpenRouterText({ model, messages });
+    const reply = await callLLMText({ model, messages });
     return NextResponse.json({ reply });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Chat failed";

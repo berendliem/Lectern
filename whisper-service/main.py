@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from model import get_model
@@ -22,11 +22,15 @@ def health() -> dict:
 
 
 @app.post("/transcribe")
-async def transcribe(file: UploadFile = File(...)) -> dict:
+async def transcribe(file: UploadFile = File(...), hotwords: str | None = Form(None)) -> dict:
     suffix = Path(file.filename or "").suffix or ".bin"
     contents = await file.read()
     if not contents:
         raise HTTPException(status_code=422, detail="Uploaded file is empty")
+
+    # hotwords: space-separated personal-dictionary terms; biases decoding
+    # toward these spellings (names, acronyms, jargon). Kept short client-side.
+    hotwords = (hotwords or "").strip()[:1000] or None
 
     with tempfile.NamedTemporaryFile(suffix=suffix) as tmp:
         tmp.write(contents)
@@ -34,7 +38,9 @@ async def transcribe(file: UploadFile = File(...)) -> dict:
 
         try:
             model = get_model()
-            segments_iter, info = model.transcribe(tmp.name, word_timestamps=True)
+            segments_iter, info = model.transcribe(
+                tmp.name, word_timestamps=True, hotwords=hotwords
+            )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Transcription failed: {e}")
 

@@ -92,10 +92,28 @@ Open http://localhost:3000.
 - **Focus timer** — an automatic Pomodoro timer: a focus block, then a short break, and a long break after every few sessions, cycling on its own. Durations are configurable, it counts your focus sessions for the day, and it keeps ticking accurately even in a background tab.
 - **Feynman coach** — pick a concept and explain it in plain words, by typing or by speaking (your voice is transcribed by the local whisper service). A free OpenRouter model scores how clearly a beginner would understand it and calls out gaps, hidden jargon, and a follow-up question to push you deeper. Paste your notes as optional reference material to have it check accuracy too. Refine and re-score as many times as you like.
 - **Planner** — review streaks, cards due, and a 7-day upcoming-review schedule.
+- **Dictionary** — a personal dictionary of names, acronyms, and jargon (à la Wispr Flow). Terms are passed to the local whisper model as vocabulary hints so they're transcribed with the right spelling, and the summarizer is told to respect them in your notes. An optional hint per term helps the summarizer know what the term means.
+
+**Per-page Actions tab:** once a page is transcribed, the **Actions** tab extracts notetaker-style follow-ups — action items/deadlines, decisions, and open questions — as a checklist you can tick off. Regenerating keeps the checked state of unchanged items.
 
 **During a live lecture:** while recording, a rolling transcript builds up under the timer (each ~15s of audio is transcribed by the local whisper service as you go), and **Explain this** sends the recent transcript to OpenRouter for a quick plain-language catch-up. This live preview is best-effort and separate from the authoritative transcript, which is produced from the full recording when you hit **Save & transcribe**.
 
 Each pipeline stage (transcribe / summarize / generate guide) is independently retriable — if one fails (e.g. a free model returns malformed output, or you hit a rate limit), the status banner shows the error and a retry button for just that step.
+
+## Optional: fully local summaries with Ollama + Qwen3
+
+By default the AI steps (summarize, flashcards, quiz, chat…) call OpenRouter. You can run them locally instead via [Ollama](https://ollama.com):
+
+```bash
+ollama pull qwen3:8b   # ~5.2GB; needs roughly 6-8GB of RAM/VRAM
+```
+
+Then in `.env` set either:
+
+- `LLM_PROVIDER="ollama"` — every AI step runs locally, or
+- `LLM_PROVIDER_SUMMARY="ollama"` — only summarization + action-item extraction run locally (the common "notes stay private, chat stays on the big cloud model" setup).
+
+`OLLAMA_URL` (default `http://127.0.0.1:11434`) and `OLLAMA_MODEL` (default `qwen3:8b`) are also configurable. Qwen3-8B is the sweet spot for 16GB machines; on smaller machines try `qwen3:4b`. Combined with the local whisper service, `LLM_PROVIDER="ollama"` makes the whole pipeline work offline.
 
 ## Project layout
 

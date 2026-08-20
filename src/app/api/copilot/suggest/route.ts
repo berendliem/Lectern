@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callOpenRouterJSON } from "@/lib/openrouter";
+import { callLLMJSON } from "@/lib/llm";
 import { copilotSuggestionSchema, suggestRequestSchema, SUGGEST_TRANSCRIPT_CHARS } from "@/lib/copilot";
 import { buildCopilotUserPrompt, COPILOT_SYSTEM_PROMPT } from "@/lib/prompts/copilot";
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const transcript = result.data.transcript.slice(-SUGGEST_TRANSCRIPT_CHARS);
 
   try {
-    const raw = await callOpenRouterJSON({
+    const raw = await callLLMJSON({
       model: MODEL,
       systemPrompt: COPILOT_SYSTEM_PROMPT,
       userPrompt: buildCopilotUserPrompt(transcript),

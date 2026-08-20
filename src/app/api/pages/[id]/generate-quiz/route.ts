@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
-import { callOpenRouterJSON } from "@/lib/openrouter";
+import { callLLMJSON } from "@/lib/llm";
 import { QUIZ_SYSTEM_PROMPT, buildQuizUserPrompt } from "@/lib/prompts/quiz";
 import { quizResponseSchema } from "@/lib/validation";
 
@@ -17,7 +17,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const model = process.env.OPENROUTER_MODEL_QUIZ ?? "meta-llama/llama-3.3-70b-instruct:free";
 
   try {
-    const raw = await callOpenRouterJSON({
+    const raw = await callLLMJSON({
       model,
       systemPrompt: QUIZ_SYSTEM_PROMPT,
       userPrompt: buildQuizUserPrompt(page.notes.markdown),

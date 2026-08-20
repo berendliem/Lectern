@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
-import { callOpenRouterJSON } from "@/lib/openrouter";
+import { callLLMJSON, llmModelLabel } from "@/lib/llm";
+import { getDictionaryEntries, buildSpellingGuide } from "@/lib/dictionary";
 import { SUMMARIZE_SYSTEM_PROMPT, buildSummarizeUserPrompt } from "@/lib/prompts/summarize";
 import { summaryResponseSchema } from "@/lib/validation";
 import { upsertSearchIndex } from "@/lib/fts";
@@ -16,23 +17,26 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   await db.page.update({ where: { id }, data: { status: "SUMMARIZING", errorMessage: null } });
 
   const model = process.env.OPENROUTER_MODEL_SUMMARY ?? "meta-llama/llama-3.3-70b-instruct:free";
+  const modelUsed = llmModelLabel(model, "summary");
 
   try {
-    const raw = await callOpenRouterJSON({
+    const spellingGuide = buildSpellingGuide(await getDictionaryEntries().catch(() => []));
+    const raw = await callLLMJSON({
       model,
+      stage: "summary",
       systemPrompt: SUMMARIZE_SYSTEM_PROMPT,
-      userPrompt: buildSummarizeUserPrompt(page.transcript.rawText),
+      userPrompt: buildSummarizeUserPrompt(page.transcript.rawText, spellingGuide),
     });
     const parsed = await summaryResponseSchema.parseAsync(raw);
 
     await db.notes.upsert({
       where: { pageId: id },
-      update: { markdown: parsed.markdown, keyTerms: JSON.stringify(parsed.keyTerms), modelUsed: model },
+      update: { markdown: parsed.markdown, keyTerms: JSON.stringify(parsed.keyTerms), modelUsed },
       create: {
         pageId: id,
         markdown: parsed.markdown,
         keyTerms: JSON.stringify(parsed.keyTerms),
-        modelUsed: model,
+        modelUsed,
       },
     });
 

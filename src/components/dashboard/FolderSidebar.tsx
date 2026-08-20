@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   AudioLines,
+  BookOpen,
   BrainCircuit,
   CalendarDays,
   Folder as FolderIcon,
@@ -39,6 +40,7 @@ const NAV_ITEMS = [
   { href: "/feynman", label: "Feynman coach", icon: Lightbulb },
   { href: "/interview", label: "Interview", icon: MessagesSquare },
   { href: "/copilot", label: "Live copilot", icon: Radio },
+  { href: "/dictionary", label: "Dictionary", icon: BookOpen },
   { href: "/search", label: "Search", icon: Search },
 ];
 
