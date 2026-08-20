@@ -17,9 +17,11 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   await db.page.update({ where: { id }, data: { status: "SUMMARIZING", errorMessage: null } });
 
   const model = process.env.OPENROUTER_MODEL_SUMMARY ?? "meta-llama/llama-3.3-70b-instruct:free";
-  const modelUsed = llmModelLabel(model, "summary");
 
   try {
+    // Inside the try: a misconfigured LLM_PROVIDER throws here, and must land
+    // in the catch below so the page doesn't wedge in SUMMARIZING.
+    const modelUsed = llmModelLabel(model, "summary");
     const spellingGuide = buildSpellingGuide(await getDictionaryEntries().catch(() => []));
     const raw = await callLLMJSON({
       model,

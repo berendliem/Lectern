@@ -9,9 +9,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const result = await withValidation(toggleActionItemSchema, body);
   if ("error" in result) return result.error;
 
-  const existing = await db.actionItem.findUnique({ where: { id } });
-  if (!existing) return jsonError("Action item not found", 404);
-
-  const item = await db.actionItem.update({ where: { id }, data: { done: result.data.done } });
-  return NextResponse.json({ item });
+  // No findUnique pre-check: the item can vanish between check and update
+  // (a concurrent regenerate replaces all rows), so handle P2025 directly.
+  try {
+    const item = await db.actionItem.update({ where: { id }, data: { done: result.data.done } });
+    return NextResponse.json({ item });
+  } catch {
+    return jsonError("Action item not found — the list may have been regenerated", 404);
+  }
 }

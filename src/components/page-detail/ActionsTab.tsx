@@ -67,7 +67,17 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
       body: JSON.stringify({ done: next }),
     });
     if (!res.ok) {
-      setItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, done: item.done } : i)) ?? null);
+      // The item may have been replaced by a concurrent regenerate — tell the
+      // user and re-sync with the server instead of silently undoing the click.
+      setError("Couldn't save that change — the list may have been regenerated. Refreshed it.");
+      const data = await fetch(`/api/pages/${pageId}/action-items`)
+        .then((r) => r.json())
+        .catch(() => null);
+      if (data?.items) {
+        setItems(data.items);
+      } else {
+        setItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, done: item.done } : i)) ?? null);
+      }
     }
   }
 

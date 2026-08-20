@@ -92,9 +92,18 @@ export const conceptMapResponseSchema = z.object({
     .default([]),
 });
 
+// Terms/hints are interpolated into transcription hotwords and LLM prompts:
+// collapse all whitespace (incl. newlines) so an entry can never span lines
+// and forge its own instruction lines in a prompt.
+const singleLine = (max: number) =>
+  z
+    .string()
+    .max(max * 4)
+    .transform((s) => s.replace(/\s+/g, " ").trim());
+
 export const createDictionaryTermSchema = z.object({
-  term: z.string().trim().min(1).max(64),
-  hint: z.string().trim().max(200).optional(),
+  term: singleLine(64).pipe(z.string().min(1).max(64)),
+  hint: singleLine(200).pipe(z.string().max(200)).optional(),
 });
 
 export const toggleActionItemSchema = z.object({

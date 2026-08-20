@@ -10,6 +10,20 @@ function ollamaBaseUrl(): string {
   return (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, "");
 }
 
+// For error messages shown in the UI (and persisted in Page.errorMessage):
+// never echo the raw env value, which could carry basic-auth credentials.
+function ollamaDisplayUrl(): string {
+  try {
+    return new URL(ollamaBaseUrl()).origin;
+  } catch {
+    return "the configured OLLAMA_URL";
+  }
+}
+
+// Local inference on CPU can be slow, but a request should never hang forever
+// and pin a route handler with the page stuck mid-pipeline.
+const REQUEST_TIMEOUT_MS = 300_000;
+
 // Qwen3 is a "thinking" model; even with think:false requested, some builds
 // still emit <think>…</think> preambles. Strip them before parsing/display.
 function stripThinking(text: string): string {
@@ -28,6 +42,7 @@ export async function callOllama(opts: {
     res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       body: JSON.stringify({
         model,
         messages: opts.messages,
@@ -36,9 +51,14 @@ export async function callOllama(opts: {
         ...(opts.jsonMode ? { format: "json" } : {}),
       }),
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.name === "TimeoutError") {
+      throw new Error(
+        `Ollama did not respond within ${REQUEST_TIMEOUT_MS / 1000}s. The model may still be loading, or the machine is overloaded — try again.`
+      );
+    }
     throw new Error(
-      `Could not reach Ollama at ${ollamaBaseUrl()}. Is it running? (ollama serve, then: ollama pull ${model})`
+      `Could not reach Ollama at ${ollamaDisplayUrl()}. Is it running? (ollama serve, then: ollama pull ${model})`
     );
   }
 
