@@ -12,16 +12,25 @@ It also has a **live assistant** for use *during* a lecture: while you record, a
 - **Summarization, flashcards, quiz**: [OpenRouter](https://openrouter.ai) chat completions, using a free-tier model by default (configurable per pipeline stage).
 - **Export**: Markdown and PDF (`@react-pdf/renderer`).
 
-## Prerequisites
+## Quick start
 
-- Node.js 20+
-- Python 3.10+
-- **ffmpeg** installed on your system (used by faster-whisper to decode audio):
-  - macOS: `brew install ffmpeg`
-  - Ubuntu/Debian: `sudo apt install ffmpeg`
-- An [OpenRouter](https://openrouter.ai) account and API key (free-tier models exist; you don't need to add credit to use them, but free models have rate limits)
+Prerequisites: Node.js 20+ and Python 3.10+.
 
-## Setup
+```bash
+npm run dev:all
+```
+
+That's it — the first run sets everything up (npm deps, `.env` files, database migrations, the whisper service's Python venv) and then starts both the web app and the transcription service. Open http://localhost:3000.
+
+Two things it can't do for you:
+
+- **ffmpeg** must be on your PATH (macOS: `brew install ffmpeg`, Ubuntu: `sudo apt install ffmpeg`).
+- **An LLM for the AI steps**: put an [OpenRouter](https://openrouter.ai/keys) key in `.env` (`OPENROUTER_API_KEY`) — free-tier models work — **or** go fully local with [Ollama](https://ollama.com): `ollama pull qwen3:8b` and set `LLM_PROVIDER="ollama"` in `.env` (see "Optional: fully local summaries" below).
+
+`npm run setup` runs just the setup steps without starting anything. Re-running either command is always safe — completed steps are skipped.
+
+<details>
+<summary>Manual setup (what the script does, step by step)</summary>
 
 1. **Install web app dependencies and configure environment**
 
@@ -56,9 +65,7 @@ It also has a **live assistant** for use *during* a lecture: while you record, a
 
    The model (`small` by default, ~465MB) downloads automatically from Hugging Face the first time you transcribe something, and is cached afterward. If you're on a low-resource machine, set `WHISPER_MODEL_SIZE=base` (faster, smaller, somewhat less accurate) in `whisper-service/.env`. If you have a GPU, set `WHISPER_DEVICE=cuda`.
 
-## Running it
-
-You need both processes running:
+To run the two processes by hand instead of via `npm run dev:all`:
 
 ```bash
 # terminal 1
@@ -68,7 +75,7 @@ cd whisper-service && source .venv/bin/activate && uvicorn main:app --port 8000
 npm run dev
 ```
 
-Or, as a convenience, from the repo root: `npm run dev:all` (runs both via `concurrently`; you should still have run the whisper-service setup in step 3 above first).
+</details>
 
 Open http://localhost:3000.
 

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:all": "concurrently -n web,whisper -c blue,green \"next dev\" \"cd whisper-service && .venv/bin/uvicorn main:app --reload --port 8000\"",
+    "setup": "bash scripts/setup.sh",
+    "dev:all": "bash scripts/dev.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
