@@ -106,6 +106,23 @@ export const createDictionaryTermSchema = z.object({
   hint: singleLine(200).pipe(z.string().max(200)).optional(),
 });
 
+export const chaptersResponseSchema = z.object({
+  chapters: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1).max(80),
+        startSec: z.number().min(0),
+      })
+    )
+    .min(1)
+    .max(12),
+});
+
+export const editNotesSchema = z.object({
+  instruction: z.string().trim().min(1).max(500),
+  selectedText: z.string().trim().min(1).max(20_000).optional(),
+});
+
 export const toggleActionItemSchema = z.object({
   done: z.boolean(),
 });

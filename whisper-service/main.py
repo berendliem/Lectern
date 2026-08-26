@@ -1,3 +1,4 @@
+import os
 import tempfile
 from pathlib import Path
 
@@ -38,8 +39,12 @@ async def transcribe(file: UploadFile = File(...), hotwords: str | None = Form(N
 
         try:
             model = get_model()
+            # VAD filtering skips long silences (pauses, slide changes), which
+            # are a known cause of Whisper hallucinating repeated/fabricated
+            # text in lecture recordings. Disable with WHISPER_VAD_FILTER=0.
+            vad_filter = os.environ.get("WHISPER_VAD_FILTER", "1") != "0"
             segments_iter, info = model.transcribe(
-                tmp.name, word_timestamps=True, hotwords=hotwords
+                tmp.name, word_timestamps=True, hotwords=hotwords, vad_filter=vad_filter
             )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Transcription failed: {e}")

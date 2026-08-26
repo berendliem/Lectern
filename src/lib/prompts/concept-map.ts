@@ -1,3 +1,5 @@
+import { UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+
 // Prompts for the concept-map generator: the model distills a lecture into a
 // small graph of key concepts and labeled relationships, rendered as an
 // interactive mind-map on the page.
@@ -10,7 +12,9 @@ Respond with ONLY a JSON object (no markdown code fences, no commentary) matchin
 {
   "nodes": [{ "id": string, "label": string, "group": number }],
   "edges": [{ "from": string, "to": string, "label": string }]
-}`;
+}
+
+${UNTRUSTED_CONTENT_CLAUSE}`;
 
 export function buildConceptMapUserPrompt(title: string, material: string): string {
   return `Lecture title: "${title}"\n\nLECTURE MATERIAL:\n"""\n${material.slice(0, 8000)}\n"""\n\nBuild the concept map for this lecture and return the required JSON.`;

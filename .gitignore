@@ -35,6 +35,9 @@ yarn-error.log*
 !.env.example
 !whisper-service/.env.example
 
+# MCP server config (holds integration tokens)
+/mcp.config.json
+
 # vercel
 .vercel
 

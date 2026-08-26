@@ -58,6 +58,7 @@ model Page {
   audioDuration Float?
   status        PageStatus @default(DRAFT)
   errorMessage  String?
+  notionPageId  String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -78,6 +79,8 @@ model Transcript {
   id        String   @id @default(cuid())
   pageId    String   @unique
   rawText   String
+  cleanText String?
+  chapters  String?
   segments  String
   language  String?
   modelUsed String?

@@ -32,7 +32,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       model,
       stage: "summary",
       systemPrompt: ACTION_ITEMS_SYSTEM_PROMPT,
-      userPrompt: buildActionItemsUserPrompt(page.transcript.rawText.slice(0, MAX_CONTEXT_CHARS)),
+      userPrompt: buildActionItemsUserPrompt(
+        (page.transcript.cleanText ?? page.transcript.rawText).slice(0, MAX_CONTEXT_CHARS)
+      ),
     });
     const parsed = await actionItemsResponseSchema.parseAsync(raw);
 

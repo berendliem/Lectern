@@ -93,8 +93,16 @@ Open http://localhost:3000.
 - **Feynman coach** — pick a concept and explain it in plain words, by typing or by speaking (your voice is transcribed by the local whisper service). A free OpenRouter model scores how clearly a beginner would understand it and calls out gaps, hidden jargon, and a follow-up question to push you deeper. Paste your notes as optional reference material to have it check accuracy too. Refine and re-score as many times as you like.
 - **Planner** — review streaks, cards due, and a 7-day upcoming-review schedule.
 - **Dictionary** — a personal dictionary of names, acronyms, and jargon (à la Wispr Flow). Terms are passed to the local whisper model as vocabulary hints so they're transcribed with the right spelling, and the summarizer is told to respect them in your notes. An optional hint per term helps the summarizer know what the term means.
+- **Integrations** — connect [MCP](https://modelcontextprotocol.io) servers (configured Claude-Desktop-style in `mcp.config.json`) to organize and sync:
+  - **Google Calendar**: see this week's schedule, one-click **create a lecture page per class**, and push "Review flashcards (N due)" study blocks into your real calendar.
+  - **Notion**: **Export → Sync to Notion** pushes a page's notes, key terms, action items, flashcards, and transcript to a Notion page; re-syncing updates the same page.
+  - See "MCP integrations" below for setup.
 
 **Per-page Actions tab:** once a page is transcribed, the **Actions** tab extracts notetaker-style follow-ups — action items/deadlines, decisions, and open questions — as a checklist you can tick off. Regenerating keeps the checked state of unchanged items.
+
+**Transcript tools** (on the Transcript tab): **Clean up transcript** produces a readable version — filler words removed, self-corrections collapsed ("Thursday, no actually Wednesday" → "Wednesday"), ASR errors fixed — while keeping the raw timestamped version; notes are generated from the cleaned text when it exists. **Detect chapters** divides a long lecture into named topic sections shown as jump-to chips on the synced player. Transcripts also export as **SRT/VTT subtitles**, and the whisper service filters silences with VAD to avoid hallucinated text during pauses.
+
+**Notes Edit Mode** (on the Notes tab, à la FreeFlow): select any text in your notes and give a typed — or spoken, transcribed locally — instruction like "make this shorter" or "turn this into a table". Apply, review, and undo if needed.
 
 **During a live lecture:** while recording, a rolling transcript builds up under the timer (each ~15s of audio is transcribed by the local whisper service as you go), and **Explain this** sends the recent transcript to OpenRouter for a quick plain-language catch-up. This live preview is best-effort and separate from the authoritative transcript, which is produced from the full recording when you hit **Save & transcribe**.
 
@@ -114,6 +122,15 @@ Then in `.env` set either:
 - `LLM_PROVIDER_SUMMARY="ollama"` — only summarization + action-item extraction run locally (the common "notes stay private, chat stays on the big cloud model" setup).
 
 `OLLAMA_URL` (default `http://127.0.0.1:11434`) and `OLLAMA_MODEL` (default `qwen3:8b`) are also configurable. Qwen3-8B is the sweet spot for 16GB machines; on smaller machines try `qwen3:4b`. Combined with the local whisper service, `LLM_PROVIDER="ollama"` makes the whole pipeline work offline.
+
+## MCP integrations (Google Calendar + Notion)
+
+The app can act as an MCP client. Copy `mcp.config.example.json` to `mcp.config.json` (gitignored — it holds tokens) and fill in:
+
+- **Notion**: create an internal integration at notion.so/profile/integrations, put its token in `NOTION_TOKEN`, share a parent Notion page with the integration, and set that page's id as `NOTION_PARENT_PAGE_ID` in `.env`. Synced lecture pages are created under it.
+- **Google Calendar**: follow [@cocal/google-calendar-mcp's auth guide](https://github.com/nspady/google-calendar-mcp) — create a Google Cloud OAuth *Desktop app* client, save the JSON, and point `GOOGLE_OAUTH_CREDENTIALS` at it. The first connection opens a browser consent screen; tokens refresh automatically afterward. (Publish the OAuth app to Production or refresh tokens expire weekly.)
+
+Then open **Integrations** in the sidebar and hit **Test** on each server (the first connection runs `npx` and can take a few seconds). Servers run locally as child processes; nothing goes through any third-party middleman.
 
 ## Project layout
 

@@ -4,7 +4,7 @@ import { PageDetailHeader } from "@/components/page-detail/PageDetailHeader";
 import { PipelineStatusBanner } from "@/components/page-detail/PipelineStatusBanner";
 import { PageTabs } from "@/components/page-detail/PageTabs";
 import { TranscriptTab } from "@/components/page-detail/TranscriptTab";
-import { NotesView } from "@/components/page-detail/NotesView";
+import { NotesTab } from "@/components/page-detail/NotesTab";
 import { FlashcardList } from "@/components/flashcards/FlashcardList";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
 import { ChatTab } from "@/components/page-detail/ChatTab";
@@ -69,6 +69,8 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
                 hasAudio={!!page.audioFilePath}
                 isVideo={isVideo}
                 transcript={page.transcript?.rawText ?? null}
+                cleanText={page.transcript?.cleanText ?? null}
+                chapters={page.transcript?.chapters ? JSON.parse(page.transcript.chapters) : []}
                 segments={segments}
               />
             ),
@@ -77,7 +79,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             id: "notes",
             label: "Notes",
             content: page.notes ? (
-              <NotesView markdown={page.notes.markdown} keyTerms={keyTerms} />
+              <NotesTab pageId={page.id} markdown={page.notes.markdown} keyTerms={keyTerms} />
             ) : (
               <EmptyState message="Notes will appear here once the transcript has been summarized." />
             ),
