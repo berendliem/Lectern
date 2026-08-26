@@ -99,8 +99,13 @@ export async function callMcpTool(
     });
   } catch (e) {
     // A dead child process (server crashed, laptop slept) leaves a wedged
-    // client; drop it so the next call reconnects fresh.
-    await disconnectMcpClient(serverName);
+    // client; drop it so the next call reconnects fresh. Per-call failures
+    // (timeouts, validation errors) keep the client — the process is alive,
+    // and respawning it would defeat the whole point of caching.
+    const message = e instanceof Error ? e.message : String(e);
+    if (/connection closed|not connected|transport|EPIPE|ECONNRESET|write after end/i.test(message)) {
+      await disconnectMcpClient(serverName);
+    }
     throw e;
   }
 

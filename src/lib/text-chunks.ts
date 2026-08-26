@@ -3,6 +3,7 @@
  * paragraph breaks, then sentence ends, so no chunk cuts mid-thought.
  */
 export function splitTextIntoChunks(text: string, maxLen: number): string[] {
+  if (maxLen <= 0) throw new Error("maxLen must be positive");
   const trimmed = text.trim();
   if (trimmed.length <= maxLen) return trimmed ? [trimmed] : [];
 

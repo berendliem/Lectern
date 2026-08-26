@@ -139,6 +139,8 @@ The app can act as an MCP client. Copy `mcp.config.example.json` to `mcp.config.
 
 Then open **Integrations** in the sidebar and hit **Test** on each server (the first connection runs `npx` and can take a few seconds). Servers run locally as child processes; nothing goes through any third-party middleman.
 
+> Put tokens in a server's `env`, never in `args` — commands and args are shown on the Integrations page and in error messages; `env` values are not.
+
 ## Project layout
 
 ```

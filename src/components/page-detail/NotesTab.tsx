@@ -40,7 +40,12 @@ export function NotesTab({
   const [prevInitialMarkdown, setPrevInitialMarkdown] = useState(initialMarkdown);
   if (initialMarkdown !== prevInitialMarkdown) {
     setPrevInitialMarkdown(initialMarkdown);
-    if (!busy) setMarkdown(initialMarkdown);
+    if (!busy) {
+      setMarkdown(initialMarkdown);
+      // The notes changed server-side; an undo to the pre-edit snapshot would
+      // silently clobber that newer content.
+      setPreviousMarkdown(null);
+    }
   }
 
   async function transcribeInstruction(blob: Blob) {
@@ -65,15 +70,25 @@ export function NotesTab({
     if (!recorder.audioBlob || recorder.status !== "stopped") return;
     const blob = recorder.audioBlob;
     recorder.reset();
-    // Deferred so the state updates happen outside the effect's render pass.
-    const timer = setTimeout(() => void transcribeInstruction(blob), 0);
-    return () => clearTimeout(timer);
+    // Deferred (outside the effect's render pass), and deliberately WITHOUT a
+    // cleanup: reset() changes this effect's own deps, so the re-run's cleanup
+    // would cancel the timer before it ever fired.
+    setTimeout(() => void transcribeInstruction(blob), 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recorder.audioBlob, recorder.status]);
 
   function captureSelection() {
-    const sel = window.getSelection()?.toString().trim();
-    if (sel && sel.length >= 3 && notesRef.current?.contains(window.getSelection()?.anchorNode ?? null)) {
+    const selection = window.getSelection();
+    const sel = selection?.toString().trim();
+    const notes = notesRef.current;
+    // Both ends of the selection must be inside the notes, or the captured
+    // text can include content that isn't part of the notes markdown.
+    if (
+      sel &&
+      sel.length >= 3 &&
+      notes?.contains(selection?.anchorNode ?? null) &&
+      notes?.contains(selection?.focusNode ?? null)
+    ) {
       setSelectedText(sel.slice(0, 20_000));
     }
   }

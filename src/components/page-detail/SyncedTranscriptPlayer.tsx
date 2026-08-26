@@ -137,7 +137,9 @@ export function SyncedTranscriptPlayer({
       {chapters.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {chapters.map((chapter, i) => {
-            const active = currentTime >= chapter.startSec && currentTime < chapter.endSec;
+            const active =
+              currentTime >= chapter.startSec &&
+              (currentTime < chapter.endSec || i === chapters.length - 1);
             return (
               <button
                 key={i}

@@ -71,7 +71,7 @@ export function IntegrationsManager() {
     setLoadingEvents(true);
     setEventsError(null);
     try {
-      const res = await fetch("/api/integrations/calendar/events?days=7");
+      const res = await fetch("/api/integrations/calendar/events?days=7", { method: "POST" });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         setEventsError(body.error ?? "Could not load calendar events");

@@ -38,9 +38,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     // map-reduce them — condense each portion, then summarize the condensates.
     const MAP_REDUCE_THRESHOLD = 28_000;
     const CHUNK_CHARS = 14_000;
+    const MAX_CHUNKS = 40;
     let userPrompt: string;
     if (transcript.length > MAP_REDUCE_THRESHOLD) {
-      const chunks = splitTextIntoChunks(transcript, CHUNK_CHARS).slice(0, 24);
+      const chunks = splitTextIntoChunks(transcript, CHUNK_CHARS);
+      if (chunks.length > MAX_CHUNKS) {
+        // Fail loudly rather than silently dropping the transcript's tail.
+        throw new Error(
+          `This transcript is too long to summarize in one go (${chunks.length} chunks, max ${MAX_CHUNKS}).`
+        );
+      }
       const interim: string[] = [];
       for (let i = 0; i < chunks.length; i++) {
         const condensed = await callLLMText({

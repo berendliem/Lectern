@@ -5,11 +5,14 @@ function pad(n: number, len = 2): string {
 }
 
 function formatTime(totalSeconds: number, msSeparator: "," | "."): string {
-  const s = Math.max(0, totalSeconds);
-  const hours = Math.floor(s / 3600);
-  const minutes = Math.floor((s % 3600) / 60);
-  const seconds = Math.floor(s % 60);
-  const millis = Math.round((s - Math.floor(s)) * 1000);
+  // Round to total milliseconds first so a fraction like .9995 carries into
+  // the seconds instead of producing a 4-digit millisecond field.
+  const totalMs = Math.max(0, Math.round(totalSeconds * 1000));
+  const millis = totalMs % 1000;
+  const wholeSec = Math.floor(totalMs / 1000);
+  const hours = Math.floor(wholeSec / 3600);
+  const minutes = Math.floor((wholeSec % 3600) / 60);
+  const seconds = wholeSec % 60;
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}${msSeparator}${pad(millis, 3)}`;
 }
 
