@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
-import { callOpenRouterJSON } from "@/lib/openrouter";
+import { callLLMJSON } from "@/lib/llm";
 import { conceptMapResponseSchema } from "@/lib/validation";
 import { CONCEPT_MAP_SYSTEM_PROMPT, buildConceptMapUserPrompt } from "@/lib/prompts/concept-map";
 
@@ -25,7 +25,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     "meta-llama/llama-3.3-70b-instruct:free";
 
   try {
-    const raw = await callOpenRouterJSON({
+    const raw = await callLLMJSON({
       model,
       systemPrompt: CONCEPT_MAP_SYSTEM_PROMPT,
       userPrompt: buildConceptMapUserPrompt(page.title, material),

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import clsx from "@/lib/clsx";
-import type { TranscriptSegment } from "@/types";
+import type { Chapter, TranscriptSegment } from "@/types";
 
 const SPEEDS = [1, 1.25, 1.5, 2];
 
@@ -21,9 +21,11 @@ function fmt(seconds: number): string {
 export function SyncedTranscriptPlayer({
   src,
   segments,
+  chapters = [],
 }: {
   src: string;
   segments: TranscriptSegment[];
+  chapters?: Chapter[];
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -130,6 +132,32 @@ export function SyncedTranscriptPlayer({
           {SPEEDS[speedIndex]}×
         </button>
       </div>
+
+      {/* Chapter chips: jump to a topic section (AI-detected) */}
+      {chapters.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {chapters.map((chapter, i) => {
+            const active =
+              currentTime >= chapter.startSec &&
+              (currentTime < chapter.endSec || i === chapters.length - 1);
+            return (
+              <button
+                key={i}
+                onClick={() => seekTo(chapter.startSec, true)}
+                className={clsx(
+                  "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
+                  active
+                    ? "border-transparent bg-brand-soft text-brand"
+                    : "border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50"
+                )}
+              >
+                <span className="font-mono text-[11px] text-zinc-400">{fmt(chapter.startSec)}</span>
+                {i + 1}. {chapter.title}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Clickable, live-highlighted transcript */}
       <div className="flex flex-col gap-0.5">

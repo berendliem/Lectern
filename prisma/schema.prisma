@@ -33,6 +33,12 @@ enum InterviewStatus {
   COMPLETED
 }
 
+enum ActionKind {
+  ACTION
+  DECISION
+  QUESTION
+}
+
 model Folder {
   id          String   @id @default(cuid())
   name        String
@@ -52,6 +58,7 @@ model Page {
   audioDuration Float?
   status        PageStatus @default(DRAFT)
   errorMessage  String?
+  notionPageId  String?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -62,6 +69,7 @@ model Page {
   quizQuestions     QuizQuestion[]
   tags              TagsOnPages[]
   interviewSessions InterviewSession[]
+  actionItems       ActionItem[]
 
   @@index([folderId])
   @@index([status])
@@ -71,6 +79,8 @@ model Transcript {
   id        String   @id @default(cuid())
   pageId    String   @unique
   rawText   String
+  cleanText String?
+  chapters  String?
   segments  String
   language  String?
   modelUsed String?
@@ -183,6 +193,26 @@ model InterviewTurn {
   session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+}
+
+model DictionaryTerm {
+  id        String   @id @default(cuid())
+  term      String   @unique
+  hint      String?
+  createdAt DateTime @default(now())
+}
+
+model ActionItem {
+  id        String     @id @default(cuid())
+  pageId    String
+  kind      ActionKind
+  text      String
+  done      Boolean    @default(false)
+  createdAt DateTime   @default(now())
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
 }
 
 model Tag {

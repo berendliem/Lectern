@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callOpenRouterText, type ChatMessage } from "@/lib/openrouter";
+import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { chatRequestSchema } from "@/lib/validation";
 import { searchPages } from "@/lib/fts";
 
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
   const chatMessages: ChatMessage[] = [{ role: "system", content: systemPrompt }, ...messages];
 
   try {
-    const reply = await callOpenRouterText({ model, messages: chatMessages });
+    const reply = await callLLMText({ model, messages: chatMessages });
     return NextResponse.json({ reply, sources });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ask failed";

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callOpenRouterJSON } from "@/lib/openrouter";
+import { callLLMJSON } from "@/lib/llm";
 import { feynmanEvaluateSchema, feynmanFeedbackSchema } from "@/lib/validation";
 import { FEYNMAN_SYSTEM_PROMPT, buildFeynmanUserPrompt } from "@/lib/prompts/feynman";
 
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   });
 
   try {
-    const raw = await callOpenRouterJSON({ model: MODEL, systemPrompt: FEYNMAN_SYSTEM_PROMPT, userPrompt });
+    const raw = await callLLMJSON({ model: MODEL, systemPrompt: FEYNMAN_SYSTEM_PROMPT, userPrompt });
     const parsed = await feynmanFeedbackSchema.parseAsync(raw).catch(() => null);
     if (!parsed) {
       return jsonError("The coach returned an unexpected response. Please try again.", 502);

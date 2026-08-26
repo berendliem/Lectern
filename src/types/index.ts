@@ -10,6 +10,12 @@ export type KeyTerm = {
   definition: string;
 };
 
+export type Chapter = {
+  title: string;
+  startSec: number;
+  endSec: number;
+};
+
 export type FlashcardDraft = {
   prompt: string;
   idealExplanation: string;

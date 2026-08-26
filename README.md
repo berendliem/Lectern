@@ -12,16 +12,25 @@ It also has a **live assistant** for use *during* a lecture: while you record, a
 - **Summarization, flashcards, quiz**: [OpenRouter](https://openrouter.ai) chat completions, using a free-tier model by default (configurable per pipeline stage).
 - **Export**: Markdown and PDF (`@react-pdf/renderer`).
 
-## Prerequisites
+## Quick start
 
-- Node.js 20+
-- Python 3.10+
-- **ffmpeg** installed on your system (used by faster-whisper to decode audio):
-  - macOS: `brew install ffmpeg`
-  - Ubuntu/Debian: `sudo apt install ffmpeg`
-- An [OpenRouter](https://openrouter.ai) account and API key (free-tier models exist; you don't need to add credit to use them, but free models have rate limits)
+Prerequisites: Node.js 20+ and Python 3.10+.
 
-## Setup
+```bash
+npm run dev:all
+```
+
+That's it — the first run sets everything up (npm deps, `.env` files, database migrations, the whisper service's Python venv) and then starts both the web app and the transcription service. Open http://localhost:3000.
+
+Two things it can't do for you:
+
+- **ffmpeg** must be on your PATH (macOS: `brew install ffmpeg`, Ubuntu: `sudo apt install ffmpeg`).
+- **An LLM for the AI steps**: put an [OpenRouter](https://openrouter.ai/keys) key in `.env` (`OPENROUTER_API_KEY`) — free-tier models work — **or** go fully local with [Ollama](https://ollama.com): `ollama pull qwen3:8b` and set `LLM_PROVIDER="ollama"` in `.env` (see "Optional: fully local summaries" below).
+
+`npm run setup` runs just the setup steps without starting anything. Re-running either command is always safe — completed steps are skipped.
+
+<details>
+<summary>Manual setup (what the script does, step by step)</summary>
 
 1. **Install web app dependencies and configure environment**
 
@@ -56,9 +65,7 @@ It also has a **live assistant** for use *during* a lecture: while you record, a
 
    The model (`small` by default, ~465MB) downloads automatically from Hugging Face the first time you transcribe something, and is cached afterward. If you're on a low-resource machine, set `WHISPER_MODEL_SIZE=base` (faster, smaller, somewhat less accurate) in `whisper-service/.env`. If you have a GPU, set `WHISPER_DEVICE=cuda`.
 
-## Running it
-
-You need both processes running:
+To run the two processes by hand instead of via `npm run dev:all`:
 
 ```bash
 # terminal 1
@@ -68,7 +75,7 @@ cd whisper-service && source .venv/bin/activate && uvicorn main:app --port 8000
 npm run dev
 ```
 
-Or, as a convenience, from the repo root: `npm run dev:all` (runs both via `concurrently`; you should still have run the whisper-service setup in step 3 above first).
+</details>
 
 Open http://localhost:3000.
 
@@ -92,10 +99,47 @@ Open http://localhost:3000.
 - **Focus timer** — an automatic Pomodoro timer: a focus block, then a short break, and a long break after every few sessions, cycling on its own. Durations are configurable, it counts your focus sessions for the day, and it keeps ticking accurately even in a background tab.
 - **Feynman coach** — pick a concept and explain it in plain words, by typing or by speaking (your voice is transcribed by the local whisper service). A free OpenRouter model scores how clearly a beginner would understand it and calls out gaps, hidden jargon, and a follow-up question to push you deeper. Paste your notes as optional reference material to have it check accuracy too. Refine and re-score as many times as you like.
 - **Planner** — review streaks, cards due, and a 7-day upcoming-review schedule.
+- **Dictionary** — a personal dictionary of names, acronyms, and jargon (à la Wispr Flow). Terms are passed to the local whisper model as vocabulary hints so they're transcribed with the right spelling, and the summarizer is told to respect them in your notes. An optional hint per term helps the summarizer know what the term means.
+- **Integrations** — connect [MCP](https://modelcontextprotocol.io) servers (configured Claude-Desktop-style in `mcp.config.json`) to organize and sync:
+  - **Google Calendar**: see this week's schedule, one-click **create a lecture page per class**, and push "Review flashcards (N due)" study blocks into your real calendar.
+  - **Notion**: **Export → Sync to Notion** pushes a page's notes, key terms, action items, flashcards, and transcript to a Notion page; re-syncing updates the same page.
+  - See "MCP integrations" below for setup.
+
+**Per-page Actions tab:** once a page is transcribed, the **Actions** tab extracts notetaker-style follow-ups — action items/deadlines, decisions, and open questions — as a checklist you can tick off. Regenerating keeps the checked state of unchanged items.
+
+**Transcript tools** (on the Transcript tab): **Clean up transcript** produces a readable version — filler words removed, self-corrections collapsed ("Thursday, no actually Wednesday" → "Wednesday"), ASR errors fixed — while keeping the raw timestamped version; notes are generated from the cleaned text when it exists. **Detect chapters** divides a long lecture into named topic sections shown as jump-to chips on the synced player. Transcripts also export as **SRT/VTT subtitles**, and the whisper service filters silences with VAD to avoid hallucinated text during pauses.
+
+**Notes Edit Mode** (on the Notes tab, à la FreeFlow): select any text in your notes and give a typed — or spoken, transcribed locally — instruction like "make this shorter" or "turn this into a table". Apply, review, and undo if needed.
 
 **During a live lecture:** while recording, a rolling transcript builds up under the timer (each ~15s of audio is transcribed by the local whisper service as you go), and **Explain this** sends the recent transcript to OpenRouter for a quick plain-language catch-up. This live preview is best-effort and separate from the authoritative transcript, which is produced from the full recording when you hit **Save & transcribe**.
 
 Each pipeline stage (transcribe / summarize / generate guide) is independently retriable — if one fails (e.g. a free model returns malformed output, or you hit a rate limit), the status banner shows the error and a retry button for just that step.
+
+## Optional: fully local summaries with Ollama + Qwen3
+
+By default the AI steps (summarize, flashcards, quiz, chat…) call OpenRouter. You can run them locally instead via [Ollama](https://ollama.com):
+
+```bash
+ollama pull qwen3:8b   # ~5.2GB; needs roughly 6-8GB of RAM/VRAM
+```
+
+Then in `.env` set either:
+
+- `LLM_PROVIDER="ollama"` — every AI step runs locally, or
+- `LLM_PROVIDER_SUMMARY="ollama"` — only summarization + action-item extraction run locally (the common "notes stay private, chat stays on the big cloud model" setup).
+
+`OLLAMA_URL` (default `http://127.0.0.1:11434`) and `OLLAMA_MODEL` (default `qwen3:8b`) are also configurable. Qwen3-8B is the sweet spot for 16GB machines; on smaller machines try `qwen3:4b`. Combined with the local whisper service, `LLM_PROVIDER="ollama"` makes the whole pipeline work offline.
+
+## MCP integrations (Google Calendar + Notion)
+
+The app can act as an MCP client. Copy `mcp.config.example.json` to `mcp.config.json` (gitignored — it holds tokens) and fill in:
+
+- **Notion**: create an internal integration at notion.so/profile/integrations, put its token in `NOTION_TOKEN`, share a parent Notion page with the integration, and set that page's id as `NOTION_PARENT_PAGE_ID` in `.env`. Synced lecture pages are created under it.
+- **Google Calendar**: follow [@cocal/google-calendar-mcp's auth guide](https://github.com/nspady/google-calendar-mcp) — create a Google Cloud OAuth *Desktop app* client, save the JSON, and point `GOOGLE_OAUTH_CREDENTIALS` at it. The first connection opens a browser consent screen; tokens refresh automatically afterward. (Publish the OAuth app to Production or refresh tokens expire weekly.)
+
+Then open **Integrations** in the sidebar and hit **Test** on each server (the first connection runs `npx` and can take a few seconds). Servers run locally as child processes; nothing goes through any third-party middleman.
+
+> Put tokens in a server's `env`, never in `args` — commands and args are shown on the Integrations page and in error messages; `env` values are not.
 
 ## Project layout
 

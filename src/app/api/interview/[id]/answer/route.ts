@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callOpenRouterJSON } from "@/lib/openrouter";
+import { callLLMJSON } from "@/lib/llm";
 import {
   MAX_INTERVIEW_QUESTIONS,
   submitAnswerSchema,
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   let feedback;
   try {
-    const raw = await callOpenRouterJSON({
+    const raw = await callLLMJSON({
       model: MODEL,
       systemPrompt: INTERVIEW_FEEDBACK_SYSTEM_PROMPT,
       userPrompt: buildFeedbackUserPrompt(context, turn.question, answer),
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   ];
 
   try {
-    const raw = await callOpenRouterJSON({
+    const raw = await callLLMJSON({
       model: MODEL,
       systemPrompt: INTERVIEW_QUESTION_SYSTEM_PROMPT,
       userPrompt: buildNextQuestionUserPrompt(context, history),

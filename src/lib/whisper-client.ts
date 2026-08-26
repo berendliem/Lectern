@@ -1,4 +1,5 @@
 import type { TranscriptSegment } from "@/types";
+import { getDictionaryHotwords } from "@/lib/dictionary";
 
 export type TranscribeResult = {
   language: string;
@@ -14,6 +15,11 @@ export async function transcribeAudio(buffer: Buffer, filename: string, mimeType
 
   const formData = new FormData();
   formData.append("file", new Blob([new Uint8Array(buffer)], { type: mimeType }), filename);
+
+  // Personal dictionary: bias whisper toward the user's names/acronyms/jargon.
+  // Best-effort — a dictionary read failure shouldn't block transcription.
+  const hotwords = await getDictionaryHotwords().catch(() => "");
+  if (hotwords) formData.append("hotwords", hotwords);
 
   let res: Response;
   try {

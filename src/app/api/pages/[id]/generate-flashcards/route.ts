@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
-import { callOpenRouterJSON } from "@/lib/openrouter";
+import { callLLMJSON } from "@/lib/llm";
 import { FLASHCARDS_SYSTEM_PROMPT, buildFlashcardsUserPrompt } from "@/lib/prompts/flashcards";
 import { flashcardsResponseSchema } from "@/lib/validation";
 import { upsertSearchIndex } from "@/lib/fts";
@@ -18,7 +18,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const model = process.env.OPENROUTER_MODEL_FLASHCARDS ?? "meta-llama/llama-3.3-70b-instruct:free";
 
   try {
-    const raw = await callOpenRouterJSON({
+    const raw = await callLLMJSON({
       model,
       systemPrompt: FLASHCARDS_SYSTEM_PROMPT,
       userPrompt: buildFlashcardsUserPrompt(page.notes.markdown),

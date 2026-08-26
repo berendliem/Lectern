@@ -92,6 +92,52 @@ export const conceptMapResponseSchema = z.object({
     .default([]),
 });
 
+// Terms/hints are interpolated into transcription hotwords and LLM prompts:
+// collapse all whitespace (incl. newlines) so an entry can never span lines
+// and forge its own instruction lines in a prompt.
+const singleLine = (max: number) =>
+  z
+    .string()
+    .max(max * 4)
+    .transform((s) => s.replace(/\s+/g, " ").trim());
+
+export const createDictionaryTermSchema = z.object({
+  term: singleLine(64).pipe(z.string().min(1).max(64)),
+  hint: singleLine(200).pipe(z.string().max(200)).optional(),
+});
+
+export const chaptersResponseSchema = z.object({
+  chapters: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1).max(80),
+        startSec: z.number().min(0),
+      })
+    )
+    .min(1)
+    .max(12),
+});
+
+export const editNotesSchema = z.object({
+  instruction: z.string().trim().min(1).max(500),
+  selectedText: z.string().trim().min(1).max(20_000).optional(),
+});
+
+export const toggleActionItemSchema = z.object({
+  done: z.boolean(),
+});
+
+export const actionItemsResponseSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        kind: z.enum(["ACTION", "DECISION", "QUESTION"]),
+        text: z.string().min(1).max(500),
+      })
+    )
+    .max(40),
+});
+
 export const summaryResponseSchema = z.object({
   markdown: z.string().min(1),
   keyTerms: z.array(z.object({ term: z.string().min(1), definition: z.string().min(1) })),

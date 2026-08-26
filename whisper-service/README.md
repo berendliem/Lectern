@@ -36,7 +36,7 @@ Set `WHISPER_DEVICE=cuda` and an appropriate `WHISPER_COMPUTE_TYPE` (e.g. `float
 
 ## API
 
-`POST /transcribe` — multipart form upload with a `file` field. Returns:
+`POST /transcribe` — multipart form upload with a `file` field, plus an optional `hotwords` text field (space-separated vocabulary terms — e.g. the app's personal dictionary — that bias decoding toward those spellings). Returns:
 
 ```json
 {

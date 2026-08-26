@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callOpenRouterJSON } from "@/lib/openrouter";
+import { callLLMJSON } from "@/lib/llm";
 import { createInterviewSessionSchema, interviewQuestionResponseSchema, type InterviewContext } from "@/lib/interview";
 import { INTERVIEW_QUESTION_SYSTEM_PROMPT, buildFirstQuestionUserPrompt } from "@/lib/prompts/interview";
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   });
 
   try {
-    const raw = await callOpenRouterJSON({
+    const raw = await callLLMJSON({
       model: MODEL,
       systemPrompt: INTERVIEW_QUESTION_SYSTEM_PROMPT,
       userPrompt: buildFirstQuestionUserPrompt(context),
