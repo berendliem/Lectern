@@ -13,10 +13,24 @@ export const createPageSchema = z.object({
   folderId: z.string().trim().min(1).optional(),
 });
 
+const transcriptSegmentSchema = z.object({
+  start: z.number().min(0),
+  end: z.number().min(0),
+  text: z.string().trim().min(1).max(10_000),
+  speaker: z.string().trim().max(120).optional(),
+});
+
 export const createPageFromTextSchema = z.object({
   title: z.string().trim().min(1).max(300),
   text: z.string().trim().min(1).max(500_000),
   folderId: z.string().trim().min(1).optional(),
+  // Present when the text came from a timestamped transcript rather than a
+  // paste or a PDF. Storing the segments is what makes chapters, subtitle
+  // export, and timestamped navigation work on an imported meeting.
+  segments: z.array(transcriptSegmentSchema).max(20_000).optional(),
+  // Provenance, recorded in Transcript.modelUsed. Constrained because it is
+  // written to a column other code reads back.
+  source: z.enum(["teams", "zoom", "otter", "subtitles", "import"]).optional(),
 });
 
 export const createMaterialSchema = z.object({

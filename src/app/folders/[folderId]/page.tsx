@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
 import { ImportButton } from "@/components/dashboard/ImportButton";
+import { TranscriptImportButton } from "@/components/dashboard/TranscriptImportButton";
 import { FolderHeader } from "@/components/dashboard/FolderHeader";
 import { PageTabs } from "@/components/page-detail/PageTabs";
 import { MaterialUploadButton } from "@/components/dashboard/MaterialUploadButton";
@@ -72,7 +73,8 @@ export default async function FolderPage({
             label: `Lectures (${pages.length})`,
             content: (
               <div className="flex flex-col gap-4">
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  <TranscriptImportButton folderId={folder.id} />
                   <ImportButton folderId={folder.id} />
                 </div>
                 <PageList pages={pages} />
