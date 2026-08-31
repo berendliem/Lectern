@@ -19,6 +19,16 @@ export const createPageFromTextSchema = z.object({
   folderId: z.string().trim().min(1).optional(),
 });
 
+export const createMaterialSchema = z.object({
+  kind: z.enum(["SYLLABUS", "SLIDES", "READING", "OTHER"]),
+  title: z.string().trim().min(1).max(300),
+  // Same ceiling as an imported lecture body; a slide deck's text is far
+  // smaller than this in practice.
+  text: z.string().trim().min(1).max(500_000),
+  sourceFileName: z.string().trim().max(300).optional(),
+  slideCount: z.number().int().min(0).max(10_000).optional(),
+});
+
 export const updatePageSchema = z.object({
   title: z.string().trim().min(1).max(300).optional(),
   folderId: z.string().trim().min(1).nullable().optional(),
