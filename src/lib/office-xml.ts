@@ -8,7 +8,14 @@ function decodeEntities(s: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#(\d+);/g, (match, code: string) => {
+      const n = Number(code);
+      // Out-of-range or surrogate code points would throw from
+      // String.fromCodePoint; leave the original entity text alone rather
+      // than aborting extraction of the whole file over one bad entity.
+      if (n > 0x10ffff || (n >= 0xd800 && n <= 0xdfff)) return match;
+      return String.fromCodePoint(n);
+    })
     // Ampersand last, or a doubly-encoded "&amp;lt;" would decode twice.
     .replace(/&amp;/g, "&");
 }

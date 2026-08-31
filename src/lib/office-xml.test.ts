@@ -25,6 +25,14 @@ test("docxXmlToText keeps significant whitespace in xml:space runs", () => {
   assert.equal(docxXmlToText(xml), "Berend   0:03");
 });
 
+test("slideXmlToText survives an out-of-range numeric entity", () => {
+  const xml = "<p:sld><a:t>Rate &#999999999; yield</a:t><a:t>&#65; ok</a:t></p:sld>";
+  const out = slideXmlToText(xml);
+  assert.ok(out.includes("Rate"), "text around a bad entity must survive");
+  assert.ok(out.includes("yield"));
+  assert.ok(out.includes("A ok"), "valid numeric entities must still decode");
+});
+
 test("sortSlideEntries orders numerically, not lexically", () => {
   const sorted = sortSlideEntries([
     "ppt/slides/slide10.xml",
