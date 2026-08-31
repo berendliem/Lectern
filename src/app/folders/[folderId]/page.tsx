@@ -4,7 +4,11 @@ import { GraduationCap } from "lucide-react";
 import { db } from "@/lib/db";
 import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
+import { ImportButton } from "@/components/dashboard/ImportButton";
 import { FolderHeader } from "@/components/dashboard/FolderHeader";
+import { PageTabs } from "@/components/page-detail/PageTabs";
+import { MaterialUploadButton } from "@/components/dashboard/MaterialUploadButton";
+import { MaterialList } from "@/components/dashboard/MaterialList";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +21,7 @@ export default async function FolderPage({
   const folder = await db.folder.findUnique({ where: { id: folderId } });
   if (!folder) notFound();
 
-  const [pages, quizCount] = await Promise.all([
+  const [pages, quizCount, materials] = await Promise.all([
     db.page.findMany({
       where: { folderId },
       orderBy: { updatedAt: "desc" },
@@ -28,6 +32,18 @@ export default async function FolderPage({
       },
     }),
     db.quizQuestion.count({ where: { page: { folderId } } }),
+    db.material.findMany({
+      where: { folderId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        kind: true,
+        title: true,
+        sourceFileName: true,
+        slideCount: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
   return (
@@ -48,7 +64,35 @@ export default async function FolderPage({
           <FolderHeader folderId={folder.id} name={folder.name} />
         </div>
       </div>
-      <PageList pages={pages} />
+
+      <PageTabs
+        tabs={[
+          {
+            id: "lectures",
+            label: `Lectures (${pages.length})`,
+            content: (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-end">
+                  <ImportButton folderId={folder.id} />
+                </div>
+                <PageList pages={pages} />
+              </div>
+            ),
+          },
+          {
+            id: "materials",
+            label: `Materials (${materials.length})`,
+            content: (
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-end">
+                  <MaterialUploadButton folderId={folder.id} />
+                </div>
+                <MaterialList materials={materials} />
+              </div>
+            ),
+          },
+        ]}
+      />
     </div>
   );
 }

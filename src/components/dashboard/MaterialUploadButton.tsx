@@ -33,6 +33,9 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
 
   async function handleFile(file: File) {
     setError(null);
+    setText("");
+    setSourceFileName(null);
+    setSlideCount(null);
     setBusy(true);
     try {
       const isPptx = /\.pptx$/i.test(file.name);
