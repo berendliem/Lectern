@@ -20,12 +20,17 @@ export function parseTimecode(raw: string): number {
     : nums[0] * 60 + nums[1];
 }
 
-// A speaker prefix is a short run of name-ish characters before a colon.
-// Every word must start with an uppercase letter (letters/marks/apostrophes/
-// dots/hyphens allowed after that), at most five words. This keeps
-// "Remember this: ..." from being mistaken for a speaker named
-// "Remember this" (lowercase "this" fails the per-word capital check).
-const SPEAKER_PREFIX = /^(\p{Lu}[\p{L}\p{M}'’.\-]*(?: \p{Lu}[\p{L}\p{M}'’.\-]*){0,4}):\s+(.*)$/u;
+// A speaker name is a short run of name-ish characters: every word starts
+// with an uppercase letter (letters/marks/apostrophes/dots/hyphens allowed
+// after that), at most five words. Shared by splitSpeaker's colon-prefix
+// check and parseTimestampedText's turn-header checks, so "Remember this: "
+// and "The lecture wrapped up around 1:15" are never mistaken for a speaker
+// name (lowercase words fail the per-word capital check).
+const SPEAKER_NAME = /^\p{Lu}[\p{L}\p{M}'’.\-]*(?: \p{Lu}[\p{L}\p{M}'’.\-]*){0,4}$/u;
+
+function looksLikeSpeakerName(candidate: string): boolean {
+  return SPEAKER_NAME.test(candidate.trim());
+}
 
 /** Pulls `<v Name>text</v>` or a `Name: text` prefix out of a cue payload. */
 export function splitSpeaker(payload: string): { speaker?: string; text: string } {
@@ -33,8 +38,10 @@ export function splitSpeaker(payload: string): { speaker?: string; text: string 
   if (voice) return { speaker: voice[1].trim(), text: stripTags(voice[2]).trim() };
 
   const stripped = stripTags(payload).trim();
-  const prefixed = stripped.match(SPEAKER_PREFIX);
-  if (prefixed) return { speaker: prefixed[1].trim(), text: prefixed[2].trim() };
+  const prefixed = stripped.match(/^([^:]+):\s+(.*)$/);
+  if (prefixed && looksLikeSpeakerName(prefixed[1])) {
+    return { speaker: prefixed[1].trim(), text: prefixed[2].trim() };
+  }
 
   return { text: stripped };
 }
@@ -102,10 +109,18 @@ export function parseSrt(content: string): TranscriptSegment[] {
 }
 
 // "Berend Liem   0:03" — a speaker name followed by a bare timecode, which is
-// how Teams' Word export and several note apps open a turn.
+// how Teams' Word export and several note apps open a turn. The captured
+// name is content-blind on its own (it'd also match "The lecture wrapped up
+// around   1:15"), so callers must additionally check it with
+// looksLikeSpeakerName before treating it as a turn header.
 const SPEAKER_THEN_TIME = /^(.{1,60}?)\s{1,}((?:\d{1,2}:)?\d{1,2}:\d{2})$/;
-// "[00:00:10] Dr Vos: text" — timecode first, everything else on the same line.
-const BRACKET_TIME = /^\[?((?:\d{1,2}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)\]?\s+(.*)$/;
+// "[00:00:10] Dr Vos: text" — a genuinely bracketed timecode, everything else
+// on the same line. Always safe to open a turn: the brackets are the signal.
+const BRACKETED_TIME = /^\[((?:\d{1,2}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)\]\s+(.*)$/;
+// "0:12 Dr Vos: text" — a bare, unbracketed timecode. On its own this also
+// matches ordinary prose ("12:30 is when we broke for lunch"), so callers
+// must additionally require the remainder to carry a speaker prefix.
+const UNBRACKETED_TIME = /^((?:\d{1,2}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)\s+(.*)$/;
 
 // Speech runs at roughly 2.5 words per second. Used only to give the final
 // segment a plausible end, since these formats carry no end times.
@@ -124,21 +139,33 @@ export function parseTimestampedText(content: string): TranscriptSegment[] {
     if (!line) continue;
 
     const turn = line.match(SPEAKER_THEN_TIME);
-    if (turn) {
+    if (turn && looksLikeSpeakerName(turn[1])) {
       const start = parseTimecode(turn[2]);
       if (!Number.isNaN(start)) {
-        open.push({ start, speaker: turn[1].trim() || undefined, parts: [] });
+        open.push({ start, speaker: turn[1].trim(), parts: [] });
         continue;
       }
     }
 
-    const bracketed = line.match(BRACKET_TIME);
+    const bracketed = line.match(BRACKETED_TIME);
     if (bracketed) {
       const start = parseTimecode(bracketed[1]);
       if (!Number.isNaN(start)) {
         const { speaker, text } = splitSpeaker(bracketed[2]);
         open.push({ start, speaker, parts: text ? [text] : [] });
         continue;
+      }
+    } else {
+      const unbracketed = line.match(UNBRACKETED_TIME);
+      if (unbracketed) {
+        const { speaker, text } = splitSpeaker(unbracketed[2]);
+        if (speaker) {
+          const start = parseTimecode(unbracketed[1]);
+          if (!Number.isNaN(start)) {
+            open.push({ start, speaker, parts: text ? [text] : [] });
+            continue;
+          }
+        }
       }
     }
 
@@ -159,4 +186,88 @@ export function parseTimestampedText(content: string): TranscriptSegment[] {
         ? { start: turn.start, end, text, speaker: turn.speaker }
         : { start: turn.start, end, text };
     });
+}
+
+export type ParsedTranscript = {
+  segments: TranscriptSegment[];
+  speakers: string[];
+  format: "vtt" | "srt" | "text";
+};
+
+// ponytail: 15s same-speaker merge window and a 1500-char cap, both tuned by
+// eye on Teams exports. Promote to env values if a lecturer's cadence fights
+// them.
+const MERGE_WINDOW_SEC = 15;
+const MERGE_MAX_CHARS = 1500;
+
+/**
+ * Joins consecutive segments that share a speaker and sit close together in
+ * time, keeping the original span. Phase 4's diarization alignment calls this
+ * with the same defaults so imported and recorded transcripts segment alike.
+ */
+export function mergeSameSpeaker(
+  segments: TranscriptSegment[],
+  windowSec: number = MERGE_WINDOW_SEC
+): TranscriptSegment[] {
+  const out: TranscriptSegment[] = [];
+
+  for (const segment of segments) {
+    const prev = out[out.length - 1];
+    const joinable =
+      prev &&
+      prev.speaker === segment.speaker &&
+      segment.start - prev.end <= windowSec &&
+      prev.text.length + segment.text.length + 1 <= MERGE_MAX_CHARS;
+
+    if (joinable) {
+      prev.text = `${prev.text} ${segment.text}`.trim();
+      prev.end = segment.end;
+      if (prev.words && segment.words) prev.words = [...prev.words, ...segment.words];
+      continue;
+    }
+    out.push({ ...segment });
+  }
+
+  return out;
+}
+
+/**
+ * Flattens segments into the transcript body stored in `Transcript.rawText`.
+ * A speaker label is written only when it changes, so the summarize/flashcard
+ * prompts see attribution without a name repeated on every line.
+ */
+export function segmentsToRawText(segments: TranscriptSegment[]): string {
+  let lastSpeaker: string | undefined;
+  return segments
+    .map((segment) => {
+      const showLabel = segment.speaker && segment.speaker !== lastSpeaker;
+      lastSpeaker = segment.speaker;
+      return showLabel ? `${segment.speaker}: ${segment.text}` : segment.text;
+    })
+    .join("\n\n")
+    .trim();
+}
+
+/**
+ * Picks a parser by content first and extension second, so a Teams .vtt saved
+ * as .txt still parses. Returns empty segments rather than throwing when the
+ * content matches nothing — the caller decides what to tell the user.
+ */
+export function parseExternalTranscript(filename: string, content: string): ParsedTranscript {
+  const head = content.slice(0, 2000);
+  const extension = filename.toLowerCase().split(".").pop() ?? "";
+
+  let format: ParsedTranscript["format"];
+  if (/^﻿?\s*WEBVTT/i.test(head)) format = "vtt";
+  else if (/^\s*\d+\s*\n\s*\d{1,2}:\d{2}:\d{2},\d{3}\s*-->/m.test(head)) format = "srt";
+  else if (head.includes("-->")) format = extension === "srt" ? "srt" : "vtt";
+  else format = "text";
+
+  const parsed =
+    format === "vtt" ? parseVtt(content) : format === "srt" ? parseSrt(content) : parseTimestampedText(content);
+
+  const segments = mergeSameSpeaker(parsed);
+  const speakers = [...new Set(segments.map((s) => s.speaker).filter((s): s is string => !!s))];
+
+  return { segments, speakers, format };
 }

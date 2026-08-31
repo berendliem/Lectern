@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseTimecode, parseVtt, parseSrt, parseTimestampedText } from "./transcript-import.ts";
+import {
+  parseTimecode,
+  parseVtt,
+  parseSrt,
+  parseTimestampedText,
+  mergeSameSpeaker,
+  segmentsToRawText,
+  parseExternalTranscript,
+} from "./transcript-import.ts";
 
 test("parseTimecode handles hh:mm:ss.mmm, comma millis, and m:ss", () => {
   assert.equal(parseTimecode("00:01:02.500"), 62.5);
@@ -125,4 +133,81 @@ test("parseTimestampedText estimates an end for the final segment", () => {
   const segs = parseTimestampedText("Dr Vos   0:05\nOne two three four five six.");
   assert.equal(segs.length, 1);
   assert.ok(segs[0].end > segs[0].start, "final segment must have a positive duration");
+});
+
+test("parseTimestampedText treats prose containing a timecode as body text", () => {
+  const txt = [
+    "Dr Vos   0:05",
+    "We covered enzymes.",
+    "The lecture wrapped up around 1:15",
+    "12:30 is when we broke for lunch",
+  ].join("\n");
+
+  const segs = parseTimestampedText(txt);
+  assert.equal(segs.length, 1, "prose lines must not open new turns");
+  assert.equal(segs[0].speaker, "Dr Vos");
+  assert.ok(segs[0].text.includes("wrapped up around 1:15"));
+  assert.ok(segs[0].text.includes("12:30 is when we broke"));
+});
+
+test("mergeSameSpeaker joins adjacent cues from one speaker inside the window", () => {
+  const merged = mergeSameSpeaker(
+    [
+      { start: 0, end: 2, text: "Enzymes are catalysts.", speaker: "Dr Vos" },
+      { start: 2, end: 4, text: "They lower activation energy.", speaker: "Dr Vos" },
+      { start: 4, end: 6, text: "Any questions?", speaker: "Berend Liem" },
+    ],
+    15
+  );
+
+  assert.equal(merged.length, 2);
+  assert.equal(merged[0].text, "Enzymes are catalysts. They lower activation energy.");
+  assert.equal(merged[0].start, 0);
+  assert.equal(merged[0].end, 4);
+  assert.equal(merged[1].speaker, "Berend Liem");
+});
+
+test("mergeSameSpeaker breaks when the gap exceeds the window", () => {
+  const merged = mergeSameSpeaker(
+    [
+      { start: 0, end: 2, text: "Before the break.", speaker: "Dr Vos" },
+      { start: 100, end: 102, text: "After the break.", speaker: "Dr Vos" },
+    ],
+    15
+  );
+  assert.equal(merged.length, 2);
+});
+
+test("mergeSameSpeaker merges unlabelled segments too", () => {
+  const merged = mergeSameSpeaker(
+    [
+      { start: 0, end: 2, text: "One." },
+      { start: 2, end: 4, text: "Two." },
+    ],
+    15
+  );
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].text, "One. Two.");
+});
+
+test("segmentsToRawText prefixes each speaker change", () => {
+  const raw = segmentsToRawText([
+    { start: 0, end: 2, text: "Good morning.", speaker: "Dr Vos" },
+    { start: 2, end: 4, text: "Morning.", speaker: "Berend Liem" },
+    { start: 4, end: 6, text: "No label here." },
+  ]);
+  assert.equal(raw, "Dr Vos: Good morning.\n\nBerend Liem: Morning.\n\nNo label here.");
+});
+
+test("parseExternalTranscript sniffs content when the extension lies", () => {
+  const vtt = "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<v Dr Vos>Hello.</v>\n";
+  const parsed = parseExternalTranscript("meeting.txt", vtt);
+  assert.equal(parsed.format, "vtt");
+  assert.deepEqual(parsed.speakers, ["Dr Vos"]);
+  assert.equal(parsed.segments.length, 1);
+});
+
+test("parseExternalTranscript returns nothing for text with no timestamps", () => {
+  const parsed = parseExternalTranscript("notes.txt", "Just some prose with no times at all.");
+  assert.equal(parsed.segments.length, 0);
 });
