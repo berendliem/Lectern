@@ -74,13 +74,15 @@ export function TranscriptImportButton({ folderId }: { folderId?: string }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error ?? "Could not import that transcript.");
+        // Cleared per failing branch rather than in a `finally`: router.push
+        // does not settle, so a shared reset would re-enable the button on
+        // success and let a second click create a duplicate lecture.
+        setSubmitting(false);
         return;
       }
       router.push(`/pages/${data.page.id}`);
     } catch {
       setError("Network error talking to the local server.");
-      // No `finally`: router.push does not settle here, so re-enabling the
-      // button would let a second click create a duplicate lecture.
       setSubmitting(false);
     }
   }
