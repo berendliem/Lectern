@@ -13,12 +13,19 @@ export const createPageSchema = z.object({
   folderId: z.string().trim().min(1).optional(),
 });
 
-const transcriptSegmentSchema = z.object({
-  start: z.number().min(0),
-  end: z.number().min(0),
-  text: z.string().trim().min(1).max(10_000),
-  speaker: z.string().trim().max(120).optional(),
-});
+const transcriptSegmentSchema = z
+  .object({
+    start: z.number().min(0),
+    end: z.number().min(0),
+    text: z.string().trim().min(1).max(10_000),
+    speaker: z.string().trim().max(120).optional(),
+  })
+  // Stored verbatim and later re-emitted as SRT/VTT `start --> end` cues by
+  // subtitle-export.ts, so a reversed cue must never reach the database.
+  .refine((segment) => segment.end >= segment.start, {
+    message: "A transcript segment's end time must not be before its start time.",
+    path: ["end"],
+  });
 
 export const createPageFromTextSchema = z.object({
   title: z.string().trim().min(1).max(300),

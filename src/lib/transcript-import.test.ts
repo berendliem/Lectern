@@ -9,6 +9,7 @@ import {
   segmentsToRawText,
   parseExternalTranscript,
 } from "./transcript-import.ts";
+import { createPageFromTextSchema } from "./validation.ts";
 
 test("parseTimecode handles hh:mm:ss.mmm, comma millis, and m:ss", () => {
   assert.equal(parseTimecode("00:01:02.500"), 62.5);
@@ -210,4 +211,17 @@ test("parseExternalTranscript sniffs content when the extension lies", () => {
 test("parseExternalTranscript returns nothing for text with no timestamps", () => {
   const parsed = parseExternalTranscript("notes.txt", "Just some prose with no times at all.");
   assert.equal(parsed.segments.length, 0);
+});
+
+test("createPageFromTextSchema rejects a segment whose end precedes its start", () => {
+  const result = createPageFromTextSchema.safeParse({
+    title: "Reversed cue",
+    text: "Hello.",
+    segments: [{ start: 10, end: 5, text: "Hello." }],
+  });
+  assert.equal(result.success, false);
+  assert.ok(
+    result.error.issues.some((i) => i.message.includes("end time must not be before")),
+    "expected an actionable end-before-start error message"
+  );
 });

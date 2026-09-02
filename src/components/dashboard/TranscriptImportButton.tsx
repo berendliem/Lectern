@@ -21,6 +21,7 @@ export function TranscriptImportButton({ folderId }: { folderId?: string }) {
 
   async function handleFile(file: File) {
     setError(null);
+    setParsed(null);
     setBusy(true);
     try {
       const content = /\.docx$/i.test(file.name) ? await extractDocxText(file) : await file.text();
