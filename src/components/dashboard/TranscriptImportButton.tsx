@@ -19,6 +19,17 @@ export function TranscriptImportButton({ folderId }: { folderId?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  function reset() {
+    setTitle("");
+    setParsed(null);
+    setError(null);
+  }
+
+  function close() {
+    setOpen(false);
+    reset();
+  }
+
   async function handleFile(file: File) {
     setError(null);
     setParsed(null);
@@ -68,7 +79,8 @@ export function TranscriptImportButton({ folderId }: { folderId?: string }) {
       router.push(`/pages/${data.page.id}`);
     } catch {
       setError("Network error talking to the local server.");
-    } finally {
+      // No `finally`: router.push does not settle here, so re-enabling the
+      // button would let a second click create a duplicate lecture.
       setSubmitting(false);
     }
   }
@@ -79,7 +91,7 @@ export function TranscriptImportButton({ folderId }: { folderId?: string }) {
         <FileAudio className="h-4 w-4" strokeWidth={2} />
         Import transcript
       </Button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Import a transcript">
+      <Modal open={open} onClose={close} title="Import a transcript">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Input
             autoFocus
@@ -117,13 +129,14 @@ export function TranscriptImportButton({ folderId }: { folderId?: string }) {
             <p className="text-[12.5px] text-zinc-500">
               {parsed.segments.length} segments
               {parsed.speakers.length > 0 ? ` · ${parsed.speakers.join(", ")}` : " · no speaker labels"}
+              {parsed.skipped > 0 ? ` · ${parsed.skipped} unusable cues skipped` : ""}
             </p>
           )}
 
           {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+            <Button type="button" variant="secondary" onClick={close}>
               Cancel
             </Button>
             <Button type="submit" variant="brand" disabled={submitting || !title.trim() || !parsed}>

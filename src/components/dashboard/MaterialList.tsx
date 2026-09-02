@@ -71,6 +71,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                 <p className="truncate text-[12.5px] text-zinc-400">
                   {material.kind.toLowerCase()}
                   {material.slideCount !== null ? ` · ${material.slideCount} slides` : ""}
+                  {material.sourceFileName ? ` · ${material.sourceFileName}` : ""}
                   {` · ${shortDate(material.createdAt)}`}
                 </p>
               </div>

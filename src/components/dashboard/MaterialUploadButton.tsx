@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { extractPdfText } from "@/lib/pdf-extract";
-import { extractPptxText } from "@/lib/office-extract";
+import { extractDocxText, extractPptxText } from "@/lib/office-extract";
 
 const KINDS = [
   { value: "SYLLABUS", label: "Syllabus" },
@@ -31,6 +31,20 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  function reset() {
+    setKind("SLIDES");
+    setTitle("");
+    setText("");
+    setSourceFileName(null);
+    setSlideCount(null);
+    setError(null);
+  }
+
+  function close() {
+    setOpen(false);
+    reset();
+  }
+
   async function handleFile(file: File) {
     setError(null);
     setText("");
@@ -38,14 +52,36 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
     setSlideCount(null);
     setBusy(true);
     try {
-      const isPptx = /\.pptx$/i.test(file.name);
-      const extracted = isPptx ? await extractPptxText(file) : { text: await extractPdfText(file), slideCount: null };
+      // `accept` is only a hint — a file picked through "All Files" still
+      // arrives here, so route on the extension rather than assuming PDF.
+      const kindOfFile = /\.pptx$/i.test(file.name)
+        ? "pptx"
+        : /\.docx$/i.test(file.name)
+          ? "docx"
+          : /\.pdf$/i.test(file.name)
+            ? "pdf"
+            : null;
+
+      if (!kindOfFile) {
+        setError("Only PDF, PowerPoint (.pptx) and Word (.docx) files can be read.");
+        return;
+      }
+
+      const extracted =
+        kindOfFile === "pptx"
+          ? await extractPptxText(file)
+          : {
+              text: kindOfFile === "docx" ? await extractDocxText(file) : await extractPdfText(file),
+              slideCount: null,
+            };
 
       if (!extracted.text) {
         setError(
-          isPptx
+          kindOfFile === "pptx"
             ? "That deck has no selectable text — image-only slides aren't supported."
-            : "Couldn't find any selectable text in that PDF (scanned images aren't supported)."
+            : kindOfFile === "docx"
+              ? "That document has no readable text."
+              : "Couldn't find any selectable text in that PDF (scanned images aren't supported)."
         );
         return;
       }
@@ -53,8 +89,8 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
       setText(extracted.text);
       setSlideCount(extracted.slideCount);
       setSourceFileName(file.name);
-      if (!title.trim()) setTitle(file.name.replace(/\.(pptx|pdf)$/i, ""));
-      if (isPptx) setKind("SLIDES");
+      if (!title.trim()) setTitle(file.name.replace(/\.(pptx|docx|pdf)$/i, ""));
+      if (kindOfFile === "pptx") setKind("SLIDES");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not read that file.");
     } finally {
@@ -84,11 +120,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
         setError(data.error ?? "Could not save that material.");
         return;
       }
-      setOpen(false);
-      setTitle("");
-      setText("");
-      setSourceFileName(null);
-      setSlideCount(null);
+      close();
       router.refresh();
     } catch {
       setError("Network error talking to the local server.");
@@ -103,7 +135,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
         <Upload className="h-4 w-4" strokeWidth={2} />
         Add material
       </Button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Add course material">
+      <Modal open={open} onClose={close} title="Add course material">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="flex gap-1 rounded-lg border border-zinc-200 p-0.5 text-[12.5px] font-medium">
             {KINDS.map((k) => (
@@ -140,12 +172,12 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
             ) : (
               <FileText className="h-4 w-4 text-brand" strokeWidth={2} />
             )}
-            {busy ? "Extracting text…" : "Choose a PDF or PowerPoint"}
+            {busy ? "Extracting text…" : "Choose a PDF, PowerPoint or Word file"}
           </button>
           <input
             ref={inputRef}
             type="file"
-            accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            accept=".pdf,.pptx,.docx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -165,7 +197,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
           {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+            <Button type="button" variant="secondary" onClick={close}>
               Cancel
             </Button>
             <Button type="submit" variant="brand" disabled={submitting || !title.trim() || !text.trim()}>
