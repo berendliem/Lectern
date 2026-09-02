@@ -20,24 +20,29 @@ export function parseTimecode(raw: string): number {
     : nums[0] * 60 + nums[1];
 }
 
-// A speaker name is a short run of name-ish words, at most five. The first
-// word starts with an uppercase letter; later words may also be a short digit
-// run ("Speaker 1", the generic label Teams/Zoom/Otter give an unidentified
-// participant) or a lowercase nobiliary particle ("Dr. van Vos"). Shared by
-// splitSpeaker's colon-prefix check and parseTimestampedText's turn-header
-// checks, so "Remember this: " and "The lecture wrapped up around 1:15" are
-// never mistaken for a speaker name — "this" and "lecture" are none of the
-// three permitted word shapes.
+// A speaker name is a short run of name-ish words, at most five. Words start
+// with an uppercase letter, except that a lowercase nobiliary particle may
+// appear in the middle ("Dr. van Vos"). Shared by splitSpeaker's colon-prefix
+// check and parseTimestampedText's turn-header checks, so "Remember this: "
+// and "The lecture wrapped up around 1:15" are never mistaken for a speaker
+// name — "this" and "lecture" are neither capitalised nor particles.
 const NAME_WORD = "\\p{Lu}[\\p{L}\\p{M}'’.\\-]*";
-const DIGIT_WORD = "\\d{1,3}";
 const PARTICLE = "(?:van|de|der|den|von|la|le|du|di|dos|bin|al)";
 const SPEAKER_NAME = new RegExp(
-  `^${NAME_WORD}(?: (?:${NAME_WORD}|${DIGIT_WORD}|${PARTICLE})){0,4}$`,
+  `^${NAME_WORD}(?: (?:${NAME_WORD}|${PARTICLE})){0,4}$`,
   "u"
 );
 
+// "Speaker 1", "Participant 2" — the numbered placeholder Teams, Zoom and
+// Otter give an unidentified participant. A trailing number is admitted only
+// behind one of these words: allowing any word to be followed by a digit run
+// would also read "Chapter 3: ..." and "Question 1: ..." as speakers.
+const NUMBERED_SPEAKER =
+  /^(?:speaker|spreker|participant|attendee|guest|student|presenter|interviewer|person|unknown)\s+\d{1,3}$/i;
+
 function looksLikeSpeakerName(candidate: string): boolean {
-  return SPEAKER_NAME.test(candidate.trim());
+  const trimmed = candidate.trim();
+  return SPEAKER_NAME.test(trimmed) || NUMBERED_SPEAKER.test(trimmed);
 }
 
 /** Pulls `<v Name>text</v>` or a `Name: text` prefix out of a cue payload. */

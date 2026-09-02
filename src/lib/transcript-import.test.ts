@@ -231,6 +231,10 @@ test("splitSpeaker accepts generic and particle speaker names, still rejects pro
   assert.equal(splitSpeaker("Speaker 1: Good morning.").speaker, "Speaker 1");
   assert.equal(splitSpeaker("Dr. van Vos: Good morning.").speaker, "Dr. van Vos");
   assert.equal(splitSpeaker("Remember this: it matters.").speaker, undefined);
+  // A trailing number alone must not make a speaker, or slide-style cue text
+  // would lose its prefix into a speaker label.
+  assert.equal(splitSpeaker("Chapter 3: Photosynthesis.").speaker, undefined);
+  assert.equal(splitSpeaker("Question 1: define enthalpy.").speaker, undefined);
 });
 
 test("parseTimestampedText attributes anonymous Speaker N turns separately", () => {
