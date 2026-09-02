@@ -92,3 +92,8 @@ export type Tag = Prisma.TagModel
  * 
  */
 export type TagsOnPages = Prisma.TagsOnPagesModel
+/**
+ * Model Chunk
+ * 
+ */
+export type Chunk = Prisma.ChunkModel

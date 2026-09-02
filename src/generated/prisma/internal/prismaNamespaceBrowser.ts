@@ -65,7 +65,8 @@ export const ModelName = {
   DictionaryTerm: 'DictionaryTerm',
   ActionItem: 'ActionItem',
   Tag: 'Tag',
-  TagsOnPages: 'TagsOnPages'
+  TagsOnPages: 'TagsOnPages',
+  Chunk: 'Chunk'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -269,6 +270,22 @@ export const TagsOnPagesScalarFieldEnum = {
 } as const
 
 export type TagsOnPagesScalarFieldEnum = (typeof TagsOnPagesScalarFieldEnum)[keyof typeof TagsOnPagesScalarFieldEnum]
+
+
+export const ChunkScalarFieldEnum = {
+  id: 'id',
+  source: 'source',
+  pageId: 'pageId',
+  materialId: 'materialId',
+  ord: 'ord',
+  text: 'text',
+  vector: 'vector',
+  hash: 'hash',
+  model: 'model',
+  createdAt: 'createdAt'
+} as const
+
+export type ChunkScalarFieldEnum = (typeof ChunkScalarFieldEnum)[keyof typeof ChunkScalarFieldEnum]
 
 
 export const SortOrder = {

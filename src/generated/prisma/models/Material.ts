@@ -249,6 +249,7 @@ export type MaterialWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   folder?: Prisma.XOR<Prisma.FolderScalarRelationFilter, Prisma.FolderWhereInput>
+  chunks?: Prisma.ChunkListRelationFilter
 }
 
 export type MaterialOrderByWithRelationInput = {
@@ -262,6 +263,7 @@ export type MaterialOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   folder?: Prisma.FolderOrderByWithRelationInput
+  chunks?: Prisma.ChunkOrderByRelationAggregateInput
 }
 
 export type MaterialWhereUniqueInput = Prisma.AtLeast<{
@@ -278,6 +280,7 @@ export type MaterialWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   folder?: Prisma.XOR<Prisma.FolderScalarRelationFilter, Prisma.FolderWhereInput>
+  chunks?: Prisma.ChunkListRelationFilter
 }, "id">
 
 export type MaterialOrderByWithAggregationInput = {
@@ -322,6 +325,7 @@ export type MaterialCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialUncheckedCreateInput = {
@@ -334,6 +338,7 @@ export type MaterialUncheckedCreateInput = {
   slideCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialUpdateInput = {
@@ -346,6 +351,7 @@ export type MaterialUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialUncheckedUpdateInput = {
@@ -358,6 +364,7 @@ export type MaterialUncheckedUpdateInput = {
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialCreateManyInput = {
@@ -449,6 +456,11 @@ export type MaterialSumOrderByAggregateInput = {
   slideCount?: Prisma.SortOrder
 }
 
+export type MaterialNullableScalarRelationFilter = {
+  is?: Prisma.MaterialWhereInput | null
+  isNot?: Prisma.MaterialWhereInput | null
+}
+
 export type MaterialCreateNestedManyWithoutFolderInput = {
   create?: Prisma.XOR<Prisma.MaterialCreateWithoutFolderInput, Prisma.MaterialUncheckedCreateWithoutFolderInput> | Prisma.MaterialCreateWithoutFolderInput[] | Prisma.MaterialUncheckedCreateWithoutFolderInput[]
   connectOrCreate?: Prisma.MaterialCreateOrConnectWithoutFolderInput | Prisma.MaterialCreateOrConnectWithoutFolderInput[]
@@ -503,6 +515,22 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type MaterialCreateNestedOneWithoutChunksInput = {
+  create?: Prisma.XOR<Prisma.MaterialCreateWithoutChunksInput, Prisma.MaterialUncheckedCreateWithoutChunksInput>
+  connectOrCreate?: Prisma.MaterialCreateOrConnectWithoutChunksInput
+  connect?: Prisma.MaterialWhereUniqueInput
+}
+
+export type MaterialUpdateOneWithoutChunksNestedInput = {
+  create?: Prisma.XOR<Prisma.MaterialCreateWithoutChunksInput, Prisma.MaterialUncheckedCreateWithoutChunksInput>
+  connectOrCreate?: Prisma.MaterialCreateOrConnectWithoutChunksInput
+  upsert?: Prisma.MaterialUpsertWithoutChunksInput
+  disconnect?: Prisma.MaterialWhereInput | boolean
+  delete?: Prisma.MaterialWhereInput | boolean
+  connect?: Prisma.MaterialWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MaterialUpdateToOneWithWhereWithoutChunksInput, Prisma.MaterialUpdateWithoutChunksInput>, Prisma.MaterialUncheckedUpdateWithoutChunksInput>
+}
+
 export type MaterialCreateWithoutFolderInput = {
   id?: string
   kind: $Enums.MaterialKind
@@ -512,6 +540,7 @@ export type MaterialCreateWithoutFolderInput = {
   slideCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  chunks?: Prisma.ChunkCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialUncheckedCreateWithoutFolderInput = {
@@ -523,6 +552,7 @@ export type MaterialUncheckedCreateWithoutFolderInput = {
   slideCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialCreateOrConnectWithoutFolderInput = {
@@ -565,6 +595,70 @@ export type MaterialScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
 }
 
+export type MaterialCreateWithoutChunksInput = {
+  id?: string
+  kind: $Enums.MaterialKind
+  title: string
+  sourceFileName?: string | null
+  text: string
+  slideCount?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
+}
+
+export type MaterialUncheckedCreateWithoutChunksInput = {
+  id?: string
+  folderId: string
+  kind: $Enums.MaterialKind
+  title: string
+  sourceFileName?: string | null
+  text: string
+  slideCount?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type MaterialCreateOrConnectWithoutChunksInput = {
+  where: Prisma.MaterialWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaterialCreateWithoutChunksInput, Prisma.MaterialUncheckedCreateWithoutChunksInput>
+}
+
+export type MaterialUpsertWithoutChunksInput = {
+  update: Prisma.XOR<Prisma.MaterialUpdateWithoutChunksInput, Prisma.MaterialUncheckedUpdateWithoutChunksInput>
+  create: Prisma.XOR<Prisma.MaterialCreateWithoutChunksInput, Prisma.MaterialUncheckedCreateWithoutChunksInput>
+  where?: Prisma.MaterialWhereInput
+}
+
+export type MaterialUpdateToOneWithWhereWithoutChunksInput = {
+  where?: Prisma.MaterialWhereInput
+  data: Prisma.XOR<Prisma.MaterialUpdateWithoutChunksInput, Prisma.MaterialUncheckedUpdateWithoutChunksInput>
+}
+
+export type MaterialUpdateWithoutChunksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumMaterialKindFieldUpdateOperationsInput | $Enums.MaterialKind
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
+}
+
+export type MaterialUncheckedUpdateWithoutChunksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  folderId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumMaterialKindFieldUpdateOperationsInput | $Enums.MaterialKind
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type MaterialCreateManyFolderInput = {
   id?: string
   kind: $Enums.MaterialKind
@@ -585,6 +679,7 @@ export type MaterialUpdateWithoutFolderInput = {
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  chunks?: Prisma.ChunkUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialUncheckedUpdateWithoutFolderInput = {
@@ -596,6 +691,7 @@ export type MaterialUncheckedUpdateWithoutFolderInput = {
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialUncheckedUpdateManyWithoutFolderInput = {
@@ -610,6 +706,35 @@ export type MaterialUncheckedUpdateManyWithoutFolderInput = {
 }
 
 
+/**
+ * Count Type MaterialCountOutputType
+ */
+
+export type MaterialCountOutputType = {
+  chunks: number
+}
+
+export type MaterialCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  chunks?: boolean | MaterialCountOutputTypeCountChunksArgs
+}
+
+/**
+ * MaterialCountOutputType without action
+ */
+export type MaterialCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the MaterialCountOutputType
+   */
+  select?: Prisma.MaterialCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * MaterialCountOutputType without action
+ */
+export type MaterialCountOutputTypeCountChunksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChunkWhereInput
+}
+
 
 export type MaterialSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -622,6 +747,8 @@ export type MaterialSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   createdAt?: boolean
   updatedAt?: boolean
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
+  chunks?: boolean | Prisma.Material$chunksArgs<ExtArgs>
+  _count?: boolean | Prisma.MaterialCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["material"]>
 
 export type MaterialSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -665,6 +792,8 @@ export type MaterialSelectScalar = {
 export type MaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "folderId" | "kind" | "title" | "sourceFileName" | "text" | "slideCount" | "createdAt" | "updatedAt", ExtArgs["result"]["material"]>
 export type MaterialInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
+  chunks?: boolean | Prisma.Material$chunksArgs<ExtArgs>
+  _count?: boolean | Prisma.MaterialCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MaterialIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
@@ -677,6 +806,7 @@ export type $MaterialPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Material"
   objects: {
     folder: Prisma.$FolderPayload<ExtArgs>
+    chunks: Prisma.$ChunkPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1083,6 +1213,7 @@ readonly fields: MaterialFieldRefs;
 export interface Prisma__MaterialClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   folder<T extends Prisma.FolderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FolderDefaultArgs<ExtArgs>>): Prisma.Prisma__FolderClient<runtime.Types.Result.GetResult<Prisma.$FolderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  chunks<T extends Prisma.Material$chunksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Material$chunksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1517,6 +1648,30 @@ export type MaterialDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many Materials to delete.
    */
   limit?: number
+}
+
+/**
+ * Material.chunks
+ */
+export type Material$chunksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Chunk
+   */
+  select?: Prisma.ChunkSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Chunk
+   */
+  omit?: Prisma.ChunkOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChunkInclude<ExtArgs> | null
+  where?: Prisma.ChunkWhereInput
+  orderBy?: Prisma.ChunkOrderByWithRelationInput | Prisma.ChunkOrderByWithRelationInput[]
+  cursor?: Prisma.ChunkWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChunkScalarFieldEnum | Prisma.ChunkScalarFieldEnum[]
 }
 
 /**
