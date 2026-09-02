@@ -46,6 +46,12 @@ enum MaterialKind {
   OTHER
 }
 
+enum ChunkSource {
+  LECTURE_TRANSCRIPT
+  LECTURE_NOTES
+  MATERIAL
+}
+
 model Folder {
   id          String   @id @default(cuid())
   name        String
@@ -70,6 +76,7 @@ model Material {
   updatedAt      DateTime     @updatedAt
 
   folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  chunks Chunk[]
 
   @@index([folderId, kind])
 }
@@ -94,6 +101,7 @@ model Page {
   tags              TagsOnPages[]
   interviewSessions InterviewSession[]
   actionItems       ActionItem[]
+  chunks            Chunk[]
 
   @@index([folderId])
   @@index([status])
@@ -254,4 +262,23 @@ model TagsOnPages {
   tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([pageId, tagId])
+}
+
+model Chunk {
+  id         String      @id @default(cuid())
+  source     ChunkSource
+  pageId     String?
+  materialId String?
+  ord        Int
+  text       String
+  vector     Bytes
+  hash       String
+  model      String
+  createdAt  DateTime    @default(now())
+
+  page     Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  material Material? @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([materialId])
 }
