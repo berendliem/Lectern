@@ -51,7 +51,7 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
         <div>
           <h1 className="text-lg font-bold tracking-tight text-zinc-900">Exam cram · {folder.name}</h1>
           <p className="text-[13px] text-zinc-500">
-            {runnerQuestions.length} question{runnerQuestions.length === 1 ? "" : "s"} mixed from every lecture in this folder.
+            {runnerQuestions.length} question{runnerQuestions.length === 1 ? "" : "s"} mixed from every lecture in this course.
           </p>
         </div>
       </div>
@@ -60,7 +60,7 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
         <QuizRunner questions={runnerQuestions} />
       ) : (
         <div className="rounded-2xl border border-dashed border-zinc-300 px-4 py-14 text-center text-sm text-zinc-400">
-          No quiz questions in this folder yet. Generate a learning guide on a lecture first.
+          No quiz questions in this course yet. Generate a learning guide on a lecture first.
         </div>
       )}
     </div>
