@@ -20,13 +20,21 @@ export function parseTimecode(raw: string): number {
     : nums[0] * 60 + nums[1];
 }
 
-// A speaker name is a short run of name-ish characters: every word starts
-// with an uppercase letter (letters/marks/apostrophes/dots/hyphens allowed
-// after that), at most five words. Shared by splitSpeaker's colon-prefix
-// check and parseTimestampedText's turn-header checks, so "Remember this: "
-// and "The lecture wrapped up around 1:15" are never mistaken for a speaker
-// name (lowercase words fail the per-word capital check).
-const SPEAKER_NAME = /^\p{Lu}[\p{L}\p{M}'’.\-]*(?: \p{Lu}[\p{L}\p{M}'’.\-]*){0,4}$/u;
+// A speaker name is a short run of name-ish words, at most five. The first
+// word starts with an uppercase letter; later words may also be a short digit
+// run ("Speaker 1", the generic label Teams/Zoom/Otter give an unidentified
+// participant) or a lowercase nobiliary particle ("Dr. van Vos"). Shared by
+// splitSpeaker's colon-prefix check and parseTimestampedText's turn-header
+// checks, so "Remember this: " and "The lecture wrapped up around 1:15" are
+// never mistaken for a speaker name — "this" and "lecture" are none of the
+// three permitted word shapes.
+const NAME_WORD = "\\p{Lu}[\\p{L}\\p{M}'’.\\-]*";
+const DIGIT_WORD = "\\d{1,3}";
+const PARTICLE = "(?:van|de|der|den|von|la|le|du|di|dos|bin|al)";
+const SPEAKER_NAME = new RegExp(
+  `^${NAME_WORD}(?: (?:${NAME_WORD}|${DIGIT_WORD}|${PARTICLE})){0,4}$`,
+  "u"
+);
 
 function looksLikeSpeakerName(candidate: string): boolean {
   return SPEAKER_NAME.test(candidate.trim());
@@ -192,7 +200,14 @@ export type ParsedTranscript = {
   segments: TranscriptSegment[];
   speakers: string[];
   format: "vtt" | "srt" | "text";
+  /** Cues dropped as unusable, so the caller can say so rather than stay silent. */
+  skipped: number;
 };
+
+// Mirrors the ceiling on transcriptSegmentSchema.speaker in validation.ts. The
+// schema stays the trust boundary; clamping here just keeps one malformed cue
+// from taking a whole import down with it.
+const MAX_SPEAKER_CHARS = 120;
 
 // ponytail: 15s same-speaker merge window and a 1500-char cap, both tuned by
 // eye on Teams exports. Promote to env values if a lecturer's cadence fights
@@ -222,7 +237,11 @@ export function mergeSameSpeaker(
     if (joinable) {
       prev.text = `${prev.text} ${segment.text}`.trim();
       prev.end = segment.end;
-      if (prev.words && segment.words) prev.words = [...prev.words, ...segment.words];
+      // Keep whatever timings either side carries — dropping them when only
+      // one side has words would lose real data on a partly-timed transcript.
+      if (prev.words || segment.words) {
+        prev.words = [...(prev.words ?? []), ...(segment.words ?? [])];
+      }
       continue;
     }
     out.push({ ...segment });
@@ -266,8 +285,18 @@ export function parseExternalTranscript(filename: string, content: string): Pars
   const parsed =
     format === "vtt" ? parseVtt(content) : format === "srt" ? parseSrt(content) : parseTimestampedText(content);
 
-  const segments = mergeSameSpeaker(parsed);
+  // The parsers already skip cues they cannot read; these two survive parsing
+  // but would be rejected by the schema, failing the entire import over one
+  // bad cue. Apply the same skip-the-bad-one policy at the seam instead.
+  const usable = parsed.filter((segment) => segment.end >= segment.start);
+  const clamped = usable.map((segment) =>
+    segment.speaker && segment.speaker.length > MAX_SPEAKER_CHARS
+      ? { ...segment, speaker: segment.speaker.slice(0, MAX_SPEAKER_CHARS) }
+      : segment
+  );
+
+  const segments = mergeSameSpeaker(clamped);
   const speakers = [...new Set(segments.map((s) => s.speaker).filter((s): s is string => !!s))];
 
-  return { segments, speakers, format };
+  return { segments, speakers, format, skipped: parsed.length - usable.length };
 }

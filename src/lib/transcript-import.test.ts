@@ -5,6 +5,7 @@ import {
   parseVtt,
   parseSrt,
   parseTimestampedText,
+  splitSpeaker,
   mergeSameSpeaker,
   segmentsToRawText,
   parseExternalTranscript,
@@ -224,4 +225,93 @@ test("createPageFromTextSchema rejects a segment whose end precedes its start", 
     result.error.issues.some((i) => i.message.includes("end time must not be before")),
     "expected an actionable end-before-start error message"
   );
+});
+
+test("splitSpeaker accepts generic and particle speaker names, still rejects prose", () => {
+  assert.equal(splitSpeaker("Speaker 1: Good morning.").speaker, "Speaker 1");
+  assert.equal(splitSpeaker("Dr. van Vos: Good morning.").speaker, "Dr. van Vos");
+  assert.equal(splitSpeaker("Remember this: it matters.").speaker, undefined);
+});
+
+test("parseTimestampedText attributes anonymous Speaker N turns separately", () => {
+  const segs = parseTimestampedText(
+    [
+      "Speaker 1  0:03",
+      "Okay so the mitochondrion.",
+      "Speaker 2  0:22",
+      "And the inner membrane?",
+    ].join("\n")
+  );
+
+  assert.equal(segs.length, 2);
+  assert.equal(segs[0].speaker, "Speaker 1");
+  assert.equal(segs[0].text, "Okay so the mitochondrion.");
+  assert.equal(segs[1].speaker, "Speaker 2");
+  assert.equal(segs[1].text, "And the inner membrane?");
+});
+
+test("parseTimestampedText does not fold a particle-surname turn into the previous speaker", () => {
+  const segs = parseTimestampedText(
+    [
+      "Berend Liem   0:03",
+      "Right, let us get started.",
+      "Dr. van Vos   0:41",
+      "Quick question before you go on.",
+      "Berend Liem   1:02",
+      "Go ahead.",
+    ].join("\n")
+  );
+
+  assert.equal(segs.length, 3);
+  assert.equal(segs[1].speaker, "Dr. van Vos");
+  assert.equal(segs[1].text, "Quick question before you go on.");
+  assert.equal(segs[2].text, "Go ahead.");
+});
+
+test("parseExternalTranscript skips reversed cues instead of failing the whole file", () => {
+  const vtt = [
+    "WEBVTT",
+    "",
+    "00:00:01.000 --> 00:00:04.000",
+    "<v Dr Vos>Good cue.</v>",
+    "",
+    "00:00:20.000 --> 00:00:10.000",
+    "<v Dr Vos>Reversed cue.</v>",
+    "",
+  ].join("\n");
+
+  const parsed = parseExternalTranscript("meeting.vtt", vtt);
+  assert.equal(parsed.segments.length, 1);
+  assert.equal(parsed.segments[0].text, "Good cue.");
+  assert.equal(parsed.skipped, 1);
+});
+
+test("parseExternalTranscript clamps an over-long speaker name to the stored limit", () => {
+  const longName = "A".repeat(400);
+  const vtt = `WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<v ${longName}>Hello.</v>\n`;
+
+  const parsed = parseExternalTranscript("meeting.vtt", vtt);
+  assert.equal(parsed.segments.length, 1);
+  assert.equal(parsed.segments[0].speaker?.length, 120);
+  assert.equal(
+    createPageFromTextSchema.safeParse({
+      title: "Long name",
+      text: "Hello.",
+      segments: parsed.segments,
+    }).success,
+    true
+  );
+});
+
+test("mergeSameSpeaker keeps word timings when only one side carries them", () => {
+  const merged = mergeSameSpeaker(
+    [
+      { start: 0, end: 2, text: "One.", speaker: "Dr Vos" },
+      { start: 2, end: 4, text: "Two.", speaker: "Dr Vos", words: [{ word: "Two.", start: 2, end: 4, probability: 1 }] },
+    ],
+    15
+  );
+
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].words?.length, 1);
 });
