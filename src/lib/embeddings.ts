@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { splitTextIntoChunks } from "@/lib/text-chunks";
+import type { TopicMatch } from "@/lib/coverage";
 import {
   cosine,
   courseChunkFilter,
@@ -257,4 +258,54 @@ export async function searchCourse(
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, k);
+}
+
+/**
+ * Best-matching chunk for each topic title, in the order the titles came in.
+ * One embedding call for every title and one pass over the course's chunks —
+ * the coverage dashboard scores a whole syllabus at once, so scoring topics
+ * one at a time would reload the corpus per topic.
+ *
+ * Throws if embedding fails; the caller decides whether coverage is worth
+ * failing a page render for (it is not — see the course overview).
+ */
+export async function scoreTopics(
+  folderId: string,
+  titles: string[]
+): Promise<(TopicMatch | null)[]> {
+  if (titles.length === 0) return [];
+
+  const model = activeEmbedModelLabel();
+  const rows = await db.chunk.findMany({
+    where: courseChunkFilter(folderId, model),
+    select: {
+      text: true,
+      pageId: true,
+      materialId: true,
+      vector: true,
+      page: { select: { title: true } },
+      material: { select: { title: true } },
+    },
+  });
+  if (rows.length === 0) return titles.map(() => null);
+
+  const decoded = rows.map((row) => ({
+    vector: decodeVector(row.vector),
+    title: row.page?.title ?? row.material?.title ?? "Untitled",
+    pageId: row.pageId,
+    materialId: row.materialId,
+  }));
+
+  const topicVectors = await embedTexts(titles);
+
+  return topicVectors.map((topicVector) => {
+    let best: TopicMatch | null = null;
+    for (const chunk of decoded) {
+      const score = cosine(topicVector, chunk.vector);
+      if (!best || score > best.score) {
+        best = { score, title: chunk.title, pageId: chunk.pageId, materialId: chunk.materialId };
+      }
+    }
+    return best;
+  });
 }
