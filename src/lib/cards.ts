@@ -29,10 +29,7 @@ export function assertSingleParent(
  */
 export function courseScopeFilter(folderId: string) {
   return {
-    OR: [{ page: { folderId } }, { material: { folderId } }] as [
-      { page: { folderId: string } },
-      { material: { folderId: string } },
-    ],
+    OR: [{ page: { folderId } }, { material: { folderId } }],
   };
 }
 

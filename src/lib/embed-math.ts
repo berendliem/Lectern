@@ -50,11 +50,28 @@ export function hashChunk(text: string): string {
 export function courseChunkFilter(folderId: string, model: string) {
   return {
     model,
-    OR: [{ page: { folderId } }, { material: { folderId } }] as [
-      { page: { folderId: string } },
-      { material: { folderId: string } },
-    ],
+    OR: [{ page: { folderId } }, { material: { folderId } }],
   };
+}
+
+/**
+ * Runs `embedBatch` over `items` in fixed-size slices and concatenates the
+ * results in order. Bounds how much goes into one embedding call (a long
+ * lecture is ~500 chunks, which would otherwise pad one attention tensor to
+ * ~1GB locally, or land in one oversized request to a remote provider).
+ * Pure aside from the injected `embedBatch`, so the slicing/ordering logic is
+ * testable with a stub instead of a live model or network call.
+ */
+export async function embedInBatches<T, R>(
+  items: T[],
+  batchSize: number,
+  embedBatch: (batch: T[]) => Promise<R[]>
+): Promise<R[]> {
+  const out: R[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    out.push(...(await embedBatch(items.slice(i, i + batchSize))));
+  }
+  return out;
 }
 
 export type ExistingChunk = { ord: number; hash: string; model: string };

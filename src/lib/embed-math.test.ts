@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   cosine,
   courseChunkFilter,
+  embedInBatches,
   encodeVector,
   decodeVector,
   hashChunk,
@@ -87,6 +88,29 @@ test("courseChunkFilter pins the query to the active model and both relations", 
     model: "local:test",
     OR: [{ page: { folderId: "f1" } }, { material: { folderId: "f1" } }],
   });
+});
+
+test("embedInBatches splits unevenly-sized input into bounded batches, in order", async () => {
+  const items = ["a", "b", "c", "d", "e", "f", "g"]; // 7 items, batch size 3 -> 3,3,1
+  const seenBatchSizes: number[] = [];
+
+  const out = await embedInBatches(items, 3, async (batch) => {
+    seenBatchSizes.push(batch.length);
+    return batch.map((t) => t.toUpperCase());
+  });
+
+  assert.deepEqual(seenBatchSizes, [3, 3, 1]);
+  assert.deepEqual(out, ["A", "B", "C", "D", "E", "F", "G"]);
+});
+
+test("embedInBatches returns an empty array for empty input without calling embedBatch", async () => {
+  let calls = 0;
+  const out = await embedInBatches([], 3, async (batch) => {
+    calls++;
+    return batch;
+  });
+  assert.deepEqual(out, []);
+  assert.equal(calls, 0);
 });
 
 test("planChunkWork marks the tail for deletion when the text got shorter", () => {

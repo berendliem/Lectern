@@ -4,6 +4,7 @@ import {
   cosine,
   courseChunkFilter,
   decodeVector,
+  embedInBatches,
   encodeVector,
   planChunkWork,
   type ExistingChunk,
@@ -12,6 +13,11 @@ import {
 const CHUNK_CHARS = 1200;
 const LOCAL_MODEL = "Xenova/all-MiniLM-L6-v2";
 const DEFAULT_K = 8;
+// Bounds how many texts go into one embedding call. Unbounded, a two-hour
+// transcript (~500 chunks) pads the local model's attention tensors to
+// roughly a gigabyte, and sends everything in one oversized OpenRouter
+// request.
+const EMBED_BATCH_SIZE = 32;
 
 type Provider = "local" | "openrouter";
 
@@ -45,7 +51,13 @@ async function localEmbed(texts: string[]): Promise<Float32Array[]> {
   if (!extractorPromise) {
     // q8 keeps the download near 25MB and the quality difference is not
     // measurable for retrieval over one course.
-    extractorPromise = pipeline("feature-extraction", LOCAL_MODEL, { dtype: "q8" });
+    extractorPromise = pipeline("feature-extraction", LOCAL_MODEL, { dtype: "q8" }).catch((e) => {
+      // Don't memoize a rejection: a one-off network hiccup during the ~25MB
+      // download would otherwise fail every embed for the rest of this
+      // process, since the cached rejected promise is reused forever.
+      extractorPromise = null;
+      throw e;
+    });
   }
   const extractor = (await extractorPromise) as (
     input: string[],
@@ -80,15 +92,16 @@ async function openRouterEmbed(texts: string[]): Promise<Float32Array[]> {
 
 export async function embedTexts(texts: string[]): Promise<Float32Array[]> {
   if (texts.length === 0) return [];
-  return provider() === "openrouter" ? openRouterEmbed(texts) : localEmbed(texts);
+  const embedBatch = provider() === "openrouter" ? openRouterEmbed : localEmbed;
+  return embedInBatches(texts, EMBED_BATCH_SIZE, embedBatch);
 }
 
 /**
  * Re-embeds a lecture or material's text into `Chunk` rows, doing the minimum
  * work: unchanged chunks keep their stored vector. Returns null when there is
  * nothing to index, and throws when embedding itself fails — callers decide
- * whether that should fail their request (see indexSourceSafely usage in the
- * pipeline routes).
+ * whether that should fail their request. See `indexSourceSafely` below for
+ * the best-effort wrapper the pipeline routes use.
  */
 export async function indexSource(
   target: { pageId: string } | { materialId: string }
@@ -170,6 +183,22 @@ export async function indexSource(
   }
 
   return { indexed, skipped };
+}
+
+/**
+ * Best-effort wrapper for the pipeline routes: a failed embedding must never
+ * fail the write the user just made (course ask degrades to FTS when chunks
+ * are missing), so this catches and logs instead of throwing.
+ */
+export async function indexSourceSafely(
+  target: { pageId: string } | { materialId: string }
+): Promise<void> {
+  try {
+    await indexSource(target);
+  } catch (e) {
+    const label = "pageId" in target ? `page ${target.pageId}` : `material ${target.materialId}`;
+    console.error(`[embeddings] indexing ${label} failed:`, e);
+  }
 }
 
 export type CourseHit = {
