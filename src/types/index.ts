@@ -2,6 +2,10 @@ export type TranscriptSegment = {
   start: number;
   end: number;
   text: string;
+  // Present on transcripts imported from a source that labels speakers
+  // (Teams, Zoom), and later on diarized recordings. Absent means unknown,
+  // never "no speaker".
+  speaker?: string;
   words?: { word: string; start: number; end: number; probability: number }[];
 };
 

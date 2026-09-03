@@ -149,11 +149,11 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="mt-7 flex items-center justify-between pl-[22px] pr-3">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Folders</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Courses</span>
         <button
           onClick={() => setModalOpen(true)}
           className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-200/60 hover:text-zinc-700"
-          aria-label="New folder"
+          aria-label="New course"
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={2.2} />
         </button>
@@ -162,7 +162,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="mt-1 flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4" onClick={onNavigate}>
         {loading && <p className="px-2.5 py-1.5 text-[13px] text-zinc-400">Loading…</p>}
         {!loading && folders.length === 0 && (
-          <p className="px-2.5 py-1.5 text-[13px] text-zinc-400">No folders yet</p>
+          <p className="px-2.5 py-1.5 text-[13px] text-zinc-400">No courses yet</p>
         )}
         {folders.map((folder) => {
           const active = pathname === `/folders/${folder.id}`;
@@ -188,11 +188,11 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </nav>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New folder">
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New course">
         <form onSubmit={handleCreate} className="flex flex-col gap-3">
           <Input
             autoFocus
-            placeholder="Folder name"
+            placeholder="Course name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />

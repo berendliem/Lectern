@@ -9,7 +9,7 @@ export function FolderHeader({ folderId, name }: { folderId: string; name: strin
   const router = useRouter();
 
   async function handleDelete() {
-    if (!confirm(`Delete folder "${name}"? Pages inside it will become unfoldered.`)) return;
+    if (!confirm(`Delete course "${name}"? Its lectures will be kept but will no longer belong to a course. Any materials uploaded to it — syllabus, slides, readings — will be permanently deleted.`)) return;
     setDeleting(true);
     const res = await fetch(`/api/folders/${folderId}`, { method: "DELETE" });
     if (res.ok) {
@@ -22,7 +22,7 @@ export function FolderHeader({ folderId, name }: { folderId: string; name: strin
 
   return (
     <Button variant="danger" size="sm" onClick={handleDelete} disabled={deleting}>
-      Delete folder
+      Delete course
     </Button>
   );
 }

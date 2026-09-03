@@ -37,7 +37,7 @@ export function NewPageButton({ folderId }: { folderId?: string }) {
         <Plus className="h-4 w-4" strokeWidth={2.2} />
         New lecture
       </Button>
-      <Modal open={open} onClose={() => setOpen(false)} title="New page">
+      <Modal open={open} onClose={() => setOpen(false)} title="New lecture">
         <form onSubmit={handleCreate} className="flex flex-col gap-3">
           <Input
             autoFocus

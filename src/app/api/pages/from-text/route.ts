@@ -12,14 +12,19 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const result = await withValidation(createPageFromTextSchema, body);
   if ("error" in result) return result.error;
-  const { title, text, folderId } = result.data;
+  const { title, text, folderId, segments, source } = result.data;
 
   const page = await db.page.create({
     data: { title, folderId, status: "TRANSCRIBED" },
   });
 
   await db.transcript.create({
-    data: { pageId: page.id, rawText: text, segments: "[]", modelUsed: "import" },
+    data: {
+      pageId: page.id,
+      rawText: text,
+      segments: JSON.stringify(segments ?? []),
+      modelUsed: source ? `import:${source}` : "import",
+    },
   });
 
   await upsertSearchIndex(page.id);

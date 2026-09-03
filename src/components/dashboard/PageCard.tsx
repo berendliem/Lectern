@@ -39,7 +39,7 @@ export function PageCard({ page }: { page: PageCardData }) {
             {page.title}
           </h3>
           <p className="mt-0.5 truncate text-xs text-zinc-400">
-            {page.folder ? page.folder.name : "No folder"} · {shortDate(page.updatedAt)}
+            {page.folder ? page.folder.name : "No course"} · {shortDate(page.updatedAt)}
           </p>
         </div>
       </div>

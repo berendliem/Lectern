@@ -18,6 +18,13 @@ export function ImportButton({ folderId }: { folderId?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  function close() {
+    setOpen(false);
+    setTitle("");
+    setText("");
+    setError(null);
+  }
+
   async function handlePdf(file: File) {
     setError(null);
     setExtracting(true);
@@ -66,7 +73,7 @@ export function ImportButton({ folderId }: { folderId?: string }) {
         <Upload className="h-4 w-4" strokeWidth={2} />
         Import
       </Button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Import notes or a PDF">
+      <Modal open={open} onClose={close} title="Import notes or a PDF">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Input
             autoFocus
@@ -110,7 +117,7 @@ export function ImportButton({ folderId }: { folderId?: string }) {
           {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+            <Button type="button" variant="secondary" onClick={close}>
               Cancel
             </Button>
             <Button type="submit" variant="brand" disabled={submitting || !title.trim() || !text.trim()}>

@@ -26,10 +26,21 @@ export function buildSrt(segments: TranscriptSegment[]): string {
     .join("\n");
 }
 
-/** WebVTT subtitle file from transcript segments. */
+/**
+ * WebVTT subtitle file from transcript segments. Attribution is written as a
+ * `<v Name>` voice tag so a Teams export round-trips through import and back
+ * out with its speakers intact. SubRip has no equivalent, so buildSrt drops
+ * them.
+ */
 export function buildVtt(segments: TranscriptSegment[]): string {
   const cues = segments
-    .map((seg) => `${formatTime(seg.start, ".")} --> ${formatTime(seg.end, ".")}\n${seg.text.trim()}\n`)
+    .map((seg) => {
+      const text = seg.text.trim();
+      // ">" would close the voice tag early; the name is user-supplied.
+      const speaker = seg.speaker?.trim().replace(/>/g, "");
+      const body = speaker ? `<v ${speaker}>${text}</v>` : text;
+      return `${formatTime(seg.start, ".")} --> ${formatTime(seg.end, ".")}\n${body}\n`;
+    })
     .join("\n");
   return `WEBVTT\n\n${cues}`;
 }

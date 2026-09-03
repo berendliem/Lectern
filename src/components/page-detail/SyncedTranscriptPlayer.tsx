@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import clsx from "@/lib/clsx";
 import type { Chapter, TranscriptSegment } from "@/types";
@@ -162,8 +162,15 @@ export function SyncedTranscriptPlayer({
       {/* Clickable, live-highlighted transcript */}
       <div className="flex flex-col gap-0.5">
         {segments.map((segment, i) => (
+          // Label only when the speaker changes, matching TranscriptView — an
+          // imported transcript keeps its attribution once audio is attached.
+          <Fragment key={i}>
+            {!!segment.speaker && segment.speaker !== segments[i - 1]?.speaker && (
+              <span className="pl-[4.75rem] text-[12.5px] font-semibold text-brand">
+                {segment.speaker}
+              </span>
+            )}
           <button
-            key={i}
             onClick={() => seekTo(segment.start, true)}
             className={clsx(
               "flex gap-3 rounded-lg px-2 py-1.5 text-left text-sm leading-6 transition-colors",
@@ -180,6 +187,7 @@ export function SyncedTranscriptPlayer({
             </span>
             <span className={clsx(i === activeIndex ? "text-zinc-900" : "text-zinc-700")}>{segment.text}</span>
           </button>
+          </Fragment>
         ))}
       </div>
     </div>

@@ -11,7 +11,7 @@ export function PageList({ pages }: { pages: PageCardData[] }) {
         <div>
           <p className="text-sm font-medium text-zinc-700">No lectures yet</p>
           <p className="mx-auto mt-1 max-w-xs text-[13px] leading-5 text-zinc-400">
-            Create a page and record or upload a lecture — it becomes notes, flashcards, and a quiz.
+            Create a lecture and record or upload it — it becomes notes, flashcards, and a quiz.
           </p>
         </div>
       </div>

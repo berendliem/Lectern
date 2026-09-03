@@ -39,6 +39,13 @@ enum ActionKind {
   QUESTION
 }
 
+enum MaterialKind {
+  SYLLABUS
+  SLIDES
+  READING
+  OTHER
+}
+
 model Folder {
   id          String   @id @default(cuid())
   name        String
@@ -47,7 +54,24 @@ model Folder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  pages Page[]
+  pages     Page[]
+  materials Material[]
+}
+
+model Material {
+  id             String       @id @default(cuid())
+  folderId       String
+  kind           MaterialKind
+  title          String
+  sourceFileName String?
+  text           String
+  slideCount     Int?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([folderId, kind])
 }
 
 model Page {
