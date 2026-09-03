@@ -61,7 +61,8 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
         <QuizRunner questions={runnerQuestions} />
       ) : (
         <div className="rounded-2xl border border-dashed border-zinc-300 px-4 py-14 text-center text-sm text-zinc-400">
-          No quiz questions in this course yet. Generate a learning guide on a lecture first.
+          No quiz questions in this course yet. Generate a learning guide on a lecture, or a quiz
+          on a material, first.
         </div>
       )}
     </div>

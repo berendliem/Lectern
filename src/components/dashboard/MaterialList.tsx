@@ -12,6 +12,8 @@ export type MaterialSummary = {
   sourceFileName: string | null;
   slideCount: number | null;
   createdAt: Date;
+  flashcardCount: number;
+  quizCount: number;
 };
 
 const ICONS: Record<string, typeof FileText> = {
@@ -23,8 +25,27 @@ const ICONS: Record<string, typeof FileText> = {
 
 export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [generating, setGenerating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  async function generate(id: string, kind: "flashcards" | "quiz") {
+    setGenerating(`${id}:${kind}`);
+    setError(null);
+    try {
+      const res = await fetch(`/api/materials/${id}/generate-${kind}`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? `Could not generate ${kind} from that material.`);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setError("Network error talking to the local server.");
+    } finally {
+      setGenerating(null);
+    }
+  }
 
   async function remove(id: string) {
     setDeleting(id);
@@ -75,6 +96,28 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                   {` · ${shortDate(material.createdAt)}`}
                 </p>
               </div>
+              <button
+                onClick={() => generate(material.id, "flashcards")}
+                disabled={generating !== null}
+                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-zinc-500 transition-colors hover:bg-brand-soft/50 hover:text-brand disabled:opacity-50"
+              >
+                {generating === `${material.id}:flashcards`
+                  ? "Generating…"
+                  : material.flashcardCount > 0
+                    ? `${material.flashcardCount} cards`
+                    : "Flashcards"}
+              </button>
+              <button
+                onClick={() => generate(material.id, "quiz")}
+                disabled={generating !== null}
+                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-zinc-500 transition-colors hover:bg-brand-soft/50 hover:text-brand disabled:opacity-50"
+              >
+                {generating === `${material.id}:quiz`
+                  ? "Generating…"
+                  : material.quizCount > 0
+                    ? `${material.quizCount} questions`
+                    : "Quiz"}
+              </button>
               <button
                 onClick={() => remove(material.id)}
                 disabled={deleting === material.id}

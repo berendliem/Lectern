@@ -44,6 +44,7 @@ export default async function FolderPage({
         sourceFileName: true,
         slideCount: true,
         createdAt: true,
+        _count: { select: { flashcards: true, quizQuestions: true } },
       },
     }),
   ]);
@@ -90,7 +91,18 @@ export default async function FolderPage({
                 <div className="flex justify-end">
                   <MaterialUploadButton folderId={folder.id} />
                 </div>
-                <MaterialList materials={materials} />
+                <MaterialList
+                  materials={materials.map((m) => ({
+                    id: m.id,
+                    kind: m.kind,
+                    title: m.title,
+                    sourceFileName: m.sourceFileName,
+                    slideCount: m.slideCount,
+                    createdAt: m.createdAt,
+                    flashcardCount: m._count.flashcards,
+                    quizCount: m._count.quizQuestions,
+                  }))}
+                />
               </div>
             ),
           },
