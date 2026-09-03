@@ -277,7 +277,13 @@ export async function scoreTopics(
 
   const model = activeEmbedModelLabel();
   const rows = await db.chunk.findMany({
-    where: courseChunkFilter(folderId, model),
+    where: {
+      ...courseChunkFilter(folderId, model),
+      // The syllabus is where the topics came from, so it matches every one of
+      // them almost perfectly. Leaving it in would mark a whole syllabus
+      // covered by itself and never surface a single gap.
+      NOT: { material: { kind: "SYLLABUS" } },
+    },
     select: {
       text: true,
       pageId: true,

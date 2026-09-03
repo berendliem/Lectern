@@ -4,13 +4,13 @@
 
 import { masteryOf, type Mastery } from "./mastery.ts";
 
-// A topic title is a short phrase and a chunk is up to 1200 characters of
-// lecture prose, so even a well-covered topic rarely scores above ~0.6 with
-// MiniLM. 0.35 separates "this lecture is about that" from "this lecture said
-// those words once" on the syllabi tested.
+// Measured with MiniLM on a lecture and three syllabus topics: the topic the
+// lecture teaches scored 0.82, a topic it only mentions in passing 0.42, and
+// an unrelated topic 0.28. 0.5 sits in the gap — it credits the lecture that
+// is *about* a topic, not the one that name-dropped it.
 // ponytail: coverage threshold is a heuristic; needs a real knob because
 // syllabus phrasing and lecture phrasing rarely match cleanly.
-export const DEFAULT_COVERAGE_THRESHOLD = 0.35;
+export const DEFAULT_COVERAGE_THRESHOLD = 0.5;
 
 export function coverageThreshold(raw = process.env.COVERAGE_THRESHOLD): number {
   const parsed = Number(raw);

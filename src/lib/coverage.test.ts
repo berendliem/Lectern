@@ -25,7 +25,7 @@ test("a topic with no match at all is uncovered and has no match", () => {
 });
 
 test("the threshold env var overrides the default, and nonsense falls back", () => {
-  assert.equal(coverageThreshold("0.5"), 0.5);
+  assert.equal(coverageThreshold("0.7"), 0.7);
   assert.equal(coverageThreshold(undefined), DEFAULT_COVERAGE_THRESHOLD);
   assert.equal(coverageThreshold("banana"), DEFAULT_COVERAGE_THRESHOLD);
   // Cosine over normalized vectors never exceeds 1; a threshold of 2 would
