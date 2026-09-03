@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
 import { upcomingSchedule } from "@/lib/planner";
@@ -12,14 +12,31 @@ const SESSION_MINUTES = 30;
 
 // Creates one "Review flashcards" calendar event per upcoming day that has
 // cards due (next 7 days), so spaced repetition shows up in the student's
-// real schedule.
-export async function POST() {
-  const cards = await db.flashcard.findMany({ select: { nextReviewAt: true } });
+// real schedule. An optional `pageId` scopes the scheduling to one lecture's
+// cards, which is what the lecture page's "Schedule review" button sends.
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+  const pageId = typeof body?.pageId === "string" && body.pageId ? body.pageId : null;
+
+  const page = pageId
+    ? await db.page.findUnique({ where: { id: pageId }, select: { title: true } })
+    : null;
+  if (pageId && !page) return jsonError("Lecture not found", 404);
+
+  const cards = await db.flashcard.findMany({
+    where: pageId ? { pageId } : {},
+    select: { nextReviewAt: true },
+  });
   const schedule = upcomingSchedule(cards.map((c) => c.nextReviewAt), 7);
   const daysWithReviews = schedule.filter((d) => d.count > 0);
 
   if (daysWithReviews.length === 0) {
-    return jsonError("No flashcards are due in the next 7 days — nothing to schedule", 422);
+    return jsonError(
+      page
+        ? `No cards from "${page.title}" are due in the next 7 days — nothing to schedule`
+        : "No flashcards are due in the next 7 days — nothing to schedule",
+      422
+    );
   }
 
   const hourRaw = Number(process.env.REVIEW_EVENT_HOUR ?? DEFAULT_HOUR);
@@ -34,8 +51,10 @@ export async function POST() {
       if (start.getTime() < Date.now()) continue;
 
       await createCalendarEvent({
-        summary: `Review flashcards (${day.count} due)`,
-        description: "Spaced-repetition review session — created by AI Notetaker.",
+        summary: page
+          ? `Review ${page.title} (${day.count} due)`
+          : `Review flashcards (${day.count} due)`,
+        description: "Spaced-repetition review session — created by Lectern.",
         start,
         durationMinutes: SESSION_MINUTES,
       });

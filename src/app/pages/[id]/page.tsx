@@ -11,6 +11,7 @@ import { ChatTab } from "@/components/page-detail/ChatTab";
 import { ConceptMapTab } from "@/components/page-detail/ConceptMapTab";
 import { ActionsTab } from "@/components/page-detail/ActionsTab";
 import { InterviewLaunch } from "@/components/interview/InterviewLaunch";
+import { LectureActions } from "@/components/page-detail/LectureActions";
 import { isVideoExtension } from "@/lib/audio-storage";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
@@ -57,6 +58,8 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
       />
 
       {page.notes && <InterviewLaunch pageId={page.id} pageTitle={page.title} />}
+
+      <LectureActions pageId={page.id} />
 
       <PageTabs
         tabs={[

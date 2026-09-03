@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Coffee, Pause, Play, RotateCcw, Settings2, SkipForward, Sparkles, Timer } from "lucide-react";
 import clsx from "@/lib/clsx";
 
@@ -132,7 +133,12 @@ function notify(title: string, body: string) {
 const RADIUS = 130;
 const CIRC = 2 * Math.PI * RADIUS;
 
-export function PomodoroTimer() {
+export function PomodoroTimer({
+  /** The lecture this session is for, when the timer was opened from one. */
+  lecture,
+}: {
+  lecture?: { id: string; title: string };
+} = {}) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [phase, setPhase] = useState<Phase>("focus");
   const [remaining, setRemaining] = useState(DEFAULT_SETTINGS.focus * 60);
@@ -287,6 +293,14 @@ export function PomodoroTimer() {
         <p className="mt-0.5 text-[13px] text-zinc-500">
           The Pomodoro technique: {settings.focus} min of focus, then a break — it cycles automatically.
         </p>
+        {lecture && (
+          <Link
+            href={`/pages/${lecture.id}`}
+            className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-[12.5px] font-medium text-brand hover:underline"
+          >
+            <Timer className="h-3.5 w-3.5" strokeWidth={2.2} /> Studying: {lecture.title}
+          </Link>
+        )}
       </div>
 
       <div className="flex flex-col items-center gap-6 rounded-2xl border border-brand-border grad-brand-soft p-8">
