@@ -9,7 +9,36 @@ import { formatCitation, type Citation } from "@/lib/citations";
 import { reasoningModel } from "@/lib/llm";
 
 const K = 8;
-const PER_CHUNK_CHARS = 1_400;
+// Caps how much of one FTS-matched lecture's raw (unchunked) text goes into
+// the prompt. Semantic hits need no such cap here: Chunk rows are already
+// capped at write time (CHUNK_CHARS in src/lib/embeddings.ts), so slicing
+// them again here could never truncate anything.
+const FTS_PAGE_CHARS = 2_800;
+
+type Retrieval = "semantic" | "fts" | "unindexed";
+
+async function ftsFallback(
+  courseId: string,
+  query: string,
+  k: number
+): Promise<{ blocks: string[]; citations: Citation[] }> {
+  const ftsHits = await searchPages(query, k);
+  const pages = ftsHits.length
+    ? await db.page.findMany({
+        where: { id: { in: ftsHits.map((h) => h.pageId) }, folderId: courseId },
+        include: { notes: true, transcript: true },
+      })
+    : [];
+  const blocks: string[] = [];
+  const citations: Citation[] = [];
+  for (const page of pages) {
+    const text = page.notes?.markdown ?? page.transcript?.rawText ?? "";
+    if (!text.trim()) continue;
+    blocks.push(`### ${page.title}\n${text.slice(0, FTS_PAGE_CHARS)}`);
+    citations.push({ label: page.title, pageId: page.id, materialId: null });
+  }
+  return { blocks, citations };
+}
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,38 +53,36 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return jsonError("No question to answer", 422);
 
-  let retrieval: "semantic" | "fts" = "semantic";
+  let retrieval: Retrieval = "semantic";
   let blocks: string[] = [];
   let citations: Citation[] = [];
 
   try {
     const hits = await searchCourse(id, lastUser.content, K);
-    blocks = hits.map((h) => `### ${h.title}\n${h.text.slice(0, PER_CHUNK_CHARS)}`);
-    citations = hits.map(formatCitation);
+    if (hits.length === 0) {
+      // Brute-force cosine over the whole course: an empty result here means
+      // precisely "this course has no chunks for the active embedder" (most
+      // likely it predates Phase 2, or the embedder changed) — never "nothing
+      // was relevant enough". That's a clean, distinct signal from a failure.
+      retrieval = "unindexed";
+      ({ blocks, citations } = await ftsFallback(id, lastUser.content, K));
+    } else {
+      blocks = hits.map((h) => `### ${h.title}\n${h.text}`);
+      citations = hits.map(formatCitation);
+    }
   } catch (e) {
     // Every rung of the embedding chain failed. Fall back to full-text search
     // scoped to this course: retrieval quality drops, the feature does not break.
     console.error(`[ask] semantic retrieval failed for course ${id}, falling back to FTS:`, e);
     retrieval = "fts";
-    const ftsHits = await searchPages(lastUser.content, K);
-    const pages = ftsHits.length
-      ? await db.page.findMany({
-          where: { id: { in: ftsHits.map((h) => h.pageId) }, folderId: id },
-          include: { notes: true, transcript: true },
-        })
-      : [];
-    for (const page of pages) {
-      const text = page.notes?.markdown ?? page.transcript?.rawText ?? "";
-      if (!text.trim()) continue;
-      blocks.push(`### ${page.title}\n${text.slice(0, PER_CHUNK_CHARS * 2)}`);
-      citations.push({ label: page.title, pageId: page.id, materialId: null });
-    }
+    ({ blocks, citations } = await ftsFallback(id, lastUser.content, K));
   }
 
-  // De-duplicate citations: several chunks from one lecture cite it once.
+  // De-duplicate citations: several chunks from one lecture or material cite
+  // it once. Key on the id, not the label — two materials can share a title.
   const seen = new Set<string>();
   citations = citations.filter((c) => {
-    const key = c.label;
+    const key = c.pageId ?? c.materialId ?? c.label;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -70,7 +97,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const chatMessages: ChatMessage[] = [{ role: "system", content: systemPrompt }, ...messages];
 
   try {
-    const reply = await callLLMText({ model: reasoningModel(), messages: chatMessages });
+    const reply = await callLLMText({
+      model: reasoningModel(),
+      messages: chatMessages,
+      stage: "reasoning",
+    });
     return NextResponse.json({ reply, citations, retrieval });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ask failed";

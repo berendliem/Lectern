@@ -6,6 +6,11 @@ export function ollamaModel(): string {
   return process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL;
 }
 
+/** The REASONING tier's ollama model — falls back to the default model. */
+export function ollamaReasoningModel(): string {
+  return process.env.OLLAMA_MODEL_REASONING || ollamaModel();
+}
+
 function ollamaBaseUrl(): string {
   return (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/+$/, "");
 }
@@ -33,9 +38,11 @@ function stripThinking(text: string): string {
 export async function callOllama(opts: {
   messages: ChatMessage[];
   jsonMode?: boolean;
+  /** Overrides ollamaModel() when set — used for the REASONING tier. */
+  model?: string;
 }): Promise<string> {
   const url = `${ollamaBaseUrl()}/api/chat`;
-  const model = ollamaModel();
+  const model = opts.model || ollamaModel();
 
   let res: Response;
   try {

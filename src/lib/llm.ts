@@ -1,14 +1,16 @@
 import { callOpenRouterText, callOpenRouterJSON, type ChatMessage } from "@/lib/openrouter";
-import { callOllama, ollamaModel } from "@/lib/ollama";
+import { callOllama, ollamaModel, ollamaReasoningModel } from "@/lib/ollama";
 
 export type { ChatMessage };
 
 /**
- * Pipeline stage hint. Today only "summary" has a per-stage provider override
+ * Pipeline stage hint. "summary" has a per-stage provider override
  * (LLM_PROVIDER_SUMMARY), so you can run summaries locally on Qwen3 via Ollama
- * while everything else stays on OpenRouter — or vice versa.
+ * while everything else stays on OpenRouter — or vice versa. "reasoning"
+ * selects OLLAMA_MODEL_REASONING on the ollama path (see reasoningModel()
+ * below for the OpenRouter half of that tier).
  */
-export type LLMStage = "summary";
+export type LLMStage = "summary" | "reasoning";
 
 type Provider = "openrouter" | "ollama";
 
@@ -33,7 +35,10 @@ export async function callLLMText(opts: {
   stage?: LLMStage;
 }): Promise<string> {
   if (resolveProvider(opts.stage) === "ollama") {
-    return callOllama({ messages: opts.messages });
+    return callOllama({
+      messages: opts.messages,
+      model: opts.stage === "reasoning" ? ollamaReasoningModel() : undefined,
+    });
   }
   return callOpenRouterText({ model: opts.model, messages: opts.messages });
 }
@@ -72,8 +77,10 @@ export async function callLLMJSON(opts: {
  * The REASONING tier: course-scoped work that stuffs several retrieved chunks
  * into one prompt, which is the one place context length and reasoning quality
  * matter. Provider dispatch is the existing LLM_PROVIDER branch in
- * callLLMText, so this only names the OpenRouter model; on ollama the model
- * name is ignored and `ollamaModel()` wins.
+ * callLLMText, so this only names the OpenRouter model; callers pass
+ * `stage: "reasoning"` to callLLMText so the ollama path picks up
+ * OLLAMA_MODEL_REASONING (see ollamaReasoningModel()) instead of the
+ * general-purpose OLLAMA_MODEL.
  */
 export function reasoningModel(): string {
   return (

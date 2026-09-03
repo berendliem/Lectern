@@ -20,7 +20,7 @@ export function CourseChat({ folderId }: { folderId: string }) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [degraded, setDegraded] = useState(false);
+  const [degraded, setDegraded] = useState<"fts" | "unindexed" | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   async function send(text: string) {
@@ -43,7 +43,7 @@ export function CourseChat({ folderId }: { folderId: string }) {
       });
       if (res.ok) {
         const { reply, citations, retrieval } = await res.json();
-        setDegraded(retrieval === "fts");
+        setDegraded(retrieval === "fts" || retrieval === "unindexed" ? retrieval : null);
         setMessages((m) => [...m, { role: "assistant", content: reply, citations }]);
         setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       } else {
@@ -63,11 +63,19 @@ export function CourseChat({ folderId }: { folderId: string }) {
         Answers come from this course&apos;s lectures and materials, with the source cited.
       </p>
 
-      {degraded && (
+      {degraded === "fts" && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-800">
           Semantic search is unavailable, so this answer used keyword search over this
           course&apos;s lectures only — uploaded materials aren&apos;t searched in this mode. Run{" "}
           <code className="font-mono">npm run reindex</code> to rebuild the index.
+        </p>
+      )}
+      {degraded === "unindexed" && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-800">
+          This course hasn&apos;t been indexed for semantic search yet, so this answer used
+          keyword search over this course&apos;s lectures only — uploaded materials aren&apos;t
+          searched in this mode. Run <code className="font-mono">npm run reindex</code> to index
+          it.
         </p>
       )}
 
