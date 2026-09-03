@@ -2,6 +2,8 @@
 // plain language as if teaching a beginner, and the model grades the clarity
 // and completeness of that explanation, surfacing gaps and hidden jargon.
 
+import { UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+
 export const FEYNMAN_SYSTEM_PROMPT = `You are a Feynman-technique study coach. The student is trying to master a concept by explaining it, in the simplest possible terms, as if teaching a curious 12-year-old. Your job is to judge how well their explanation would actually make a beginner understand the idea — not how sophisticated it sounds.
 
 Evaluate the explanation for: correctness, completeness (did they miss anything essential?), simplicity (did they lean on jargon or hand-wave?), and use of intuition/analogy. Be encouraging but honest and specific — reference what they actually said.
@@ -14,7 +16,9 @@ Respond with ONLY a JSON object (no markdown code fences, no commentary) matchin
   "gaps": [string],          // 1-4 missing, vague, or incorrect points to fix (empty array if none)
   "jargon": [string],        // 0-4 technical terms they used without explaining — that a beginner wouldn't get
   "followUp": string         // one probing question that targets the biggest gap, to push their understanding deeper
-}`;
+}
+
+${UNTRUSTED_CONTENT_CLAUSE}`;
 
 export function buildFeynmanUserPrompt(opts: {
   concept: string;

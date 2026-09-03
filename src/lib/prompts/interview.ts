@@ -1,11 +1,14 @@
 import type { InterviewContext, QAPair } from "@/lib/interview";
+import { UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
 
 const PERSONA = `You are an expert interviewer: encouraging but rigorous. You ask open-ended questions that probe real understanding rather than trivia recall. Each question is concise (1-2 sentences) and clear.`;
 
 export const INTERVIEW_QUESTION_SYSTEM_PROMPT = `${PERSONA}
 
 Respond with ONLY a JSON object (no markdown code fences, no commentary) matching exactly this shape:
-{ "question": string }`;
+{ "question": string }
+
+${UNTRUSTED_CONTENT_CLAUSE}`;
 
 export const INTERVIEW_FEEDBACK_SYSTEM_PROMPT = `${PERSONA}
 
@@ -17,7 +20,9 @@ Respond with ONLY a JSON object (no markdown code fences, no commentary) matchin
   "improvements": [string, ...],    // 1-3 concrete, actionable things to improve
   "score": number,                  // integer 1-5 (5 = excellent, 1 = missed the point)
   "modelAnswer": string             // a strong model answer to the question, a few sentences
-}`;
+}
+
+${UNTRUSTED_CONTENT_CLAUSE}`;
 
 function describeContext(ctx: InterviewContext): string {
   if (ctx.source === "LECTURE") {
