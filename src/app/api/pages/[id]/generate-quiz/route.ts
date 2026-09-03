@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
+import { assertSingleParent } from "@/lib/cards";
 import { callLLMJSON } from "@/lib/llm";
 import { QUIZ_SYSTEM_PROMPT, buildQuizUserPrompt } from "@/lib/prompts/quiz";
 import { quizResponseSchema } from "@/lib/validation";
@@ -27,7 +28,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     await db.quizQuestion.deleteMany({ where: { pageId: id } });
     await db.quizQuestion.createMany({
       data: parsed.questions.map((q) => ({
-        pageId: id,
+        ...assertSingleParent({ pageId: id }),
         type: q.type,
         prompt: q.prompt,
         correctAnswer: q.correctAnswer,

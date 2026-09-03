@@ -250,6 +250,8 @@ export type MaterialWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   folder?: Prisma.XOR<Prisma.FolderScalarRelationFilter, Prisma.FolderWhereInput>
   chunks?: Prisma.ChunkListRelationFilter
+  flashcards?: Prisma.FlashcardListRelationFilter
+  quizQuestions?: Prisma.QuizQuestionListRelationFilter
 }
 
 export type MaterialOrderByWithRelationInput = {
@@ -264,6 +266,8 @@ export type MaterialOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   folder?: Prisma.FolderOrderByWithRelationInput
   chunks?: Prisma.ChunkOrderByRelationAggregateInput
+  flashcards?: Prisma.FlashcardOrderByRelationAggregateInput
+  quizQuestions?: Prisma.QuizQuestionOrderByRelationAggregateInput
 }
 
 export type MaterialWhereUniqueInput = Prisma.AtLeast<{
@@ -281,6 +285,8 @@ export type MaterialWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   folder?: Prisma.XOR<Prisma.FolderScalarRelationFilter, Prisma.FolderWhereInput>
   chunks?: Prisma.ChunkListRelationFilter
+  flashcards?: Prisma.FlashcardListRelationFilter
+  quizQuestions?: Prisma.QuizQuestionListRelationFilter
 }, "id">
 
 export type MaterialOrderByWithAggregationInput = {
@@ -326,6 +332,8 @@ export type MaterialCreateInput = {
   updatedAt?: Date | string
   folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
   chunks?: Prisma.ChunkCreateNestedManyWithoutMaterialInput
+  flashcards?: Prisma.FlashcardCreateNestedManyWithoutMaterialInput
+  quizQuestions?: Prisma.QuizQuestionCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialUncheckedCreateInput = {
@@ -339,6 +347,8 @@ export type MaterialUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
+  flashcards?: Prisma.FlashcardUncheckedCreateNestedManyWithoutMaterialInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialUpdateInput = {
@@ -352,6 +362,8 @@ export type MaterialUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
   chunks?: Prisma.ChunkUpdateManyWithoutMaterialNestedInput
+  flashcards?: Prisma.FlashcardUpdateManyWithoutMaterialNestedInput
+  quizQuestions?: Prisma.QuizQuestionUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialUncheckedUpdateInput = {
@@ -365,6 +377,8 @@ export type MaterialUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
+  flashcards?: Prisma.FlashcardUncheckedUpdateManyWithoutMaterialNestedInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialCreateManyInput = {
@@ -515,6 +529,38 @@ export type NullableIntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type MaterialCreateNestedOneWithoutFlashcardsInput = {
+  create?: Prisma.XOR<Prisma.MaterialCreateWithoutFlashcardsInput, Prisma.MaterialUncheckedCreateWithoutFlashcardsInput>
+  connectOrCreate?: Prisma.MaterialCreateOrConnectWithoutFlashcardsInput
+  connect?: Prisma.MaterialWhereUniqueInput
+}
+
+export type MaterialUpdateOneWithoutFlashcardsNestedInput = {
+  create?: Prisma.XOR<Prisma.MaterialCreateWithoutFlashcardsInput, Prisma.MaterialUncheckedCreateWithoutFlashcardsInput>
+  connectOrCreate?: Prisma.MaterialCreateOrConnectWithoutFlashcardsInput
+  upsert?: Prisma.MaterialUpsertWithoutFlashcardsInput
+  disconnect?: Prisma.MaterialWhereInput | boolean
+  delete?: Prisma.MaterialWhereInput | boolean
+  connect?: Prisma.MaterialWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MaterialUpdateToOneWithWhereWithoutFlashcardsInput, Prisma.MaterialUpdateWithoutFlashcardsInput>, Prisma.MaterialUncheckedUpdateWithoutFlashcardsInput>
+}
+
+export type MaterialCreateNestedOneWithoutQuizQuestionsInput = {
+  create?: Prisma.XOR<Prisma.MaterialCreateWithoutQuizQuestionsInput, Prisma.MaterialUncheckedCreateWithoutQuizQuestionsInput>
+  connectOrCreate?: Prisma.MaterialCreateOrConnectWithoutQuizQuestionsInput
+  connect?: Prisma.MaterialWhereUniqueInput
+}
+
+export type MaterialUpdateOneWithoutQuizQuestionsNestedInput = {
+  create?: Prisma.XOR<Prisma.MaterialCreateWithoutQuizQuestionsInput, Prisma.MaterialUncheckedCreateWithoutQuizQuestionsInput>
+  connectOrCreate?: Prisma.MaterialCreateOrConnectWithoutQuizQuestionsInput
+  upsert?: Prisma.MaterialUpsertWithoutQuizQuestionsInput
+  disconnect?: Prisma.MaterialWhereInput | boolean
+  delete?: Prisma.MaterialWhereInput | boolean
+  connect?: Prisma.MaterialWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MaterialUpdateToOneWithWhereWithoutQuizQuestionsInput, Prisma.MaterialUpdateWithoutQuizQuestionsInput>, Prisma.MaterialUncheckedUpdateWithoutQuizQuestionsInput>
+}
+
 export type MaterialCreateNestedOneWithoutChunksInput = {
   create?: Prisma.XOR<Prisma.MaterialCreateWithoutChunksInput, Prisma.MaterialUncheckedCreateWithoutChunksInput>
   connectOrCreate?: Prisma.MaterialCreateOrConnectWithoutChunksInput
@@ -541,6 +587,8 @@ export type MaterialCreateWithoutFolderInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkCreateNestedManyWithoutMaterialInput
+  flashcards?: Prisma.FlashcardCreateNestedManyWithoutMaterialInput
+  quizQuestions?: Prisma.QuizQuestionCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialUncheckedCreateWithoutFolderInput = {
@@ -553,6 +601,8 @@ export type MaterialUncheckedCreateWithoutFolderInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
+  flashcards?: Prisma.FlashcardUncheckedCreateNestedManyWithoutMaterialInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialCreateOrConnectWithoutFolderInput = {
@@ -595,6 +645,150 @@ export type MaterialScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
 }
 
+export type MaterialCreateWithoutFlashcardsInput = {
+  id?: string
+  kind: $Enums.MaterialKind
+  title: string
+  sourceFileName?: string | null
+  text: string
+  slideCount?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutMaterialInput
+  quizQuestions?: Prisma.QuizQuestionCreateNestedManyWithoutMaterialInput
+}
+
+export type MaterialUncheckedCreateWithoutFlashcardsInput = {
+  id?: string
+  folderId: string
+  kind: $Enums.MaterialKind
+  title: string
+  sourceFileName?: string | null
+  text: string
+  slideCount?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedCreateNestedManyWithoutMaterialInput
+}
+
+export type MaterialCreateOrConnectWithoutFlashcardsInput = {
+  where: Prisma.MaterialWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaterialCreateWithoutFlashcardsInput, Prisma.MaterialUncheckedCreateWithoutFlashcardsInput>
+}
+
+export type MaterialUpsertWithoutFlashcardsInput = {
+  update: Prisma.XOR<Prisma.MaterialUpdateWithoutFlashcardsInput, Prisma.MaterialUncheckedUpdateWithoutFlashcardsInput>
+  create: Prisma.XOR<Prisma.MaterialCreateWithoutFlashcardsInput, Prisma.MaterialUncheckedCreateWithoutFlashcardsInput>
+  where?: Prisma.MaterialWhereInput
+}
+
+export type MaterialUpdateToOneWithWhereWithoutFlashcardsInput = {
+  where?: Prisma.MaterialWhereInput
+  data: Prisma.XOR<Prisma.MaterialUpdateWithoutFlashcardsInput, Prisma.MaterialUncheckedUpdateWithoutFlashcardsInput>
+}
+
+export type MaterialUpdateWithoutFlashcardsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumMaterialKindFieldUpdateOperationsInput | $Enums.MaterialKind
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutMaterialNestedInput
+  quizQuestions?: Prisma.QuizQuestionUpdateManyWithoutMaterialNestedInput
+}
+
+export type MaterialUncheckedUpdateWithoutFlashcardsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  folderId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumMaterialKindFieldUpdateOperationsInput | $Enums.MaterialKind
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedUpdateManyWithoutMaterialNestedInput
+}
+
+export type MaterialCreateWithoutQuizQuestionsInput = {
+  id?: string
+  kind: $Enums.MaterialKind
+  title: string
+  sourceFileName?: string | null
+  text: string
+  slideCount?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutMaterialInput
+  flashcards?: Prisma.FlashcardCreateNestedManyWithoutMaterialInput
+}
+
+export type MaterialUncheckedCreateWithoutQuizQuestionsInput = {
+  id?: string
+  folderId: string
+  kind: $Enums.MaterialKind
+  title: string
+  sourceFileName?: string | null
+  text: string
+  slideCount?: number | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
+  flashcards?: Prisma.FlashcardUncheckedCreateNestedManyWithoutMaterialInput
+}
+
+export type MaterialCreateOrConnectWithoutQuizQuestionsInput = {
+  where: Prisma.MaterialWhereUniqueInput
+  create: Prisma.XOR<Prisma.MaterialCreateWithoutQuizQuestionsInput, Prisma.MaterialUncheckedCreateWithoutQuizQuestionsInput>
+}
+
+export type MaterialUpsertWithoutQuizQuestionsInput = {
+  update: Prisma.XOR<Prisma.MaterialUpdateWithoutQuizQuestionsInput, Prisma.MaterialUncheckedUpdateWithoutQuizQuestionsInput>
+  create: Prisma.XOR<Prisma.MaterialCreateWithoutQuizQuestionsInput, Prisma.MaterialUncheckedCreateWithoutQuizQuestionsInput>
+  where?: Prisma.MaterialWhereInput
+}
+
+export type MaterialUpdateToOneWithWhereWithoutQuizQuestionsInput = {
+  where?: Prisma.MaterialWhereInput
+  data: Prisma.XOR<Prisma.MaterialUpdateWithoutQuizQuestionsInput, Prisma.MaterialUncheckedUpdateWithoutQuizQuestionsInput>
+}
+
+export type MaterialUpdateWithoutQuizQuestionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumMaterialKindFieldUpdateOperationsInput | $Enums.MaterialKind
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutMaterialNestedInput
+  flashcards?: Prisma.FlashcardUpdateManyWithoutMaterialNestedInput
+}
+
+export type MaterialUncheckedUpdateWithoutQuizQuestionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  folderId?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumMaterialKindFieldUpdateOperationsInput | $Enums.MaterialKind
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  text?: Prisma.StringFieldUpdateOperationsInput | string
+  slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
+  flashcards?: Prisma.FlashcardUncheckedUpdateManyWithoutMaterialNestedInput
+}
+
 export type MaterialCreateWithoutChunksInput = {
   id?: string
   kind: $Enums.MaterialKind
@@ -605,6 +799,8 @@ export type MaterialCreateWithoutChunksInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
+  flashcards?: Prisma.FlashcardCreateNestedManyWithoutMaterialInput
+  quizQuestions?: Prisma.QuizQuestionCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialUncheckedCreateWithoutChunksInput = {
@@ -617,6 +813,8 @@ export type MaterialUncheckedCreateWithoutChunksInput = {
   slideCount?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  flashcards?: Prisma.FlashcardUncheckedCreateNestedManyWithoutMaterialInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedCreateNestedManyWithoutMaterialInput
 }
 
 export type MaterialCreateOrConnectWithoutChunksInput = {
@@ -645,6 +843,8 @@ export type MaterialUpdateWithoutChunksInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
+  flashcards?: Prisma.FlashcardUpdateManyWithoutMaterialNestedInput
+  quizQuestions?: Prisma.QuizQuestionUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialUncheckedUpdateWithoutChunksInput = {
@@ -657,6 +857,8 @@ export type MaterialUncheckedUpdateWithoutChunksInput = {
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  flashcards?: Prisma.FlashcardUncheckedUpdateManyWithoutMaterialNestedInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialCreateManyFolderInput = {
@@ -680,6 +882,8 @@ export type MaterialUpdateWithoutFolderInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUpdateManyWithoutMaterialNestedInput
+  flashcards?: Prisma.FlashcardUpdateManyWithoutMaterialNestedInput
+  quizQuestions?: Prisma.QuizQuestionUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialUncheckedUpdateWithoutFolderInput = {
@@ -692,6 +896,8 @@ export type MaterialUncheckedUpdateWithoutFolderInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
+  flashcards?: Prisma.FlashcardUncheckedUpdateManyWithoutMaterialNestedInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedUpdateManyWithoutMaterialNestedInput
 }
 
 export type MaterialUncheckedUpdateManyWithoutFolderInput = {
@@ -712,10 +918,14 @@ export type MaterialUncheckedUpdateManyWithoutFolderInput = {
 
 export type MaterialCountOutputType = {
   chunks: number
+  flashcards: number
+  quizQuestions: number
 }
 
 export type MaterialCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   chunks?: boolean | MaterialCountOutputTypeCountChunksArgs
+  flashcards?: boolean | MaterialCountOutputTypeCountFlashcardsArgs
+  quizQuestions?: boolean | MaterialCountOutputTypeCountQuizQuestionsArgs
 }
 
 /**
@@ -735,6 +945,20 @@ export type MaterialCountOutputTypeCountChunksArgs<ExtArgs extends runtime.Types
   where?: Prisma.ChunkWhereInput
 }
 
+/**
+ * MaterialCountOutputType without action
+ */
+export type MaterialCountOutputTypeCountFlashcardsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FlashcardWhereInput
+}
+
+/**
+ * MaterialCountOutputType without action
+ */
+export type MaterialCountOutputTypeCountQuizQuestionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.QuizQuestionWhereInput
+}
+
 
 export type MaterialSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -748,6 +972,8 @@ export type MaterialSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   updatedAt?: boolean
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
   chunks?: boolean | Prisma.Material$chunksArgs<ExtArgs>
+  flashcards?: boolean | Prisma.Material$flashcardsArgs<ExtArgs>
+  quizQuestions?: boolean | Prisma.Material$quizQuestionsArgs<ExtArgs>
   _count?: boolean | Prisma.MaterialCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["material"]>
 
@@ -793,6 +1019,8 @@ export type MaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs =
 export type MaterialInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
   chunks?: boolean | Prisma.Material$chunksArgs<ExtArgs>
+  flashcards?: boolean | Prisma.Material$flashcardsArgs<ExtArgs>
+  quizQuestions?: boolean | Prisma.Material$quizQuestionsArgs<ExtArgs>
   _count?: boolean | Prisma.MaterialCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type MaterialIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -807,6 +1035,8 @@ export type $MaterialPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   objects: {
     folder: Prisma.$FolderPayload<ExtArgs>
     chunks: Prisma.$ChunkPayload<ExtArgs>[]
+    flashcards: Prisma.$FlashcardPayload<ExtArgs>[]
+    quizQuestions: Prisma.$QuizQuestionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1214,6 +1444,8 @@ export interface Prisma__MaterialClient<T, Null = never, ExtArgs extends runtime
   readonly [Symbol.toStringTag]: "PrismaPromise"
   folder<T extends Prisma.FolderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.FolderDefaultArgs<ExtArgs>>): Prisma.Prisma__FolderClient<runtime.Types.Result.GetResult<Prisma.$FolderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   chunks<T extends Prisma.Material$chunksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Material$chunksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  flashcards<T extends Prisma.Material$flashcardsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Material$flashcardsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FlashcardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  quizQuestions<T extends Prisma.Material$quizQuestionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Material$quizQuestionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuizQuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1672,6 +1904,54 @@ export type Material$chunksArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   distinct?: Prisma.ChunkScalarFieldEnum | Prisma.ChunkScalarFieldEnum[]
+}
+
+/**
+ * Material.flashcards
+ */
+export type Material$flashcardsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Flashcard
+   */
+  select?: Prisma.FlashcardSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Flashcard
+   */
+  omit?: Prisma.FlashcardOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FlashcardInclude<ExtArgs> | null
+  where?: Prisma.FlashcardWhereInput
+  orderBy?: Prisma.FlashcardOrderByWithRelationInput | Prisma.FlashcardOrderByWithRelationInput[]
+  cursor?: Prisma.FlashcardWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FlashcardScalarFieldEnum | Prisma.FlashcardScalarFieldEnum[]
+}
+
+/**
+ * Material.quizQuestions
+ */
+export type Material$quizQuestionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the QuizQuestion
+   */
+  select?: Prisma.QuizQuestionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the QuizQuestion
+   */
+  omit?: Prisma.QuizQuestionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.QuizQuestionInclude<ExtArgs> | null
+  where?: Prisma.QuizQuestionWhereInput
+  orderBy?: Prisma.QuizQuestionOrderByWithRelationInput | Prisma.QuizQuestionOrderByWithRelationInput[]
+  cursor?: Prisma.QuizQuestionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.QuizQuestionScalarFieldEnum | Prisma.QuizQuestionScalarFieldEnum[]
 }
 
 /**

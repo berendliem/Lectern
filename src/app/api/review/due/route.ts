@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { courseScopeFilter } from "@/lib/cards";
 
 export async function GET(req: NextRequest) {
   const folderId = req.nextUrl.searchParams.get("folderId");
@@ -8,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   const where = {
     nextReviewAt: { lte: new Date() },
-    ...(folderId ? { page: { folderId } } : {}),
+    ...(folderId ? courseScopeFilter(folderId) : {}),
   };
 
   const [cards, total] = await Promise.all([
@@ -16,7 +17,10 @@ export async function GET(req: NextRequest) {
       where,
       orderBy: { nextReviewAt: "asc" },
       take: limit,
-      include: { page: { select: { id: true, title: true } } },
+      include: {
+        page: { select: { id: true, title: true } },
+        material: { select: { id: true, title: true } },
+      },
     }),
     db.flashcard.count({ where }),
   ]);

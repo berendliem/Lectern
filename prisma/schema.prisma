@@ -75,8 +75,10 @@ model Material {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  chunks Chunk[]
+  folder        Folder         @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  chunks        Chunk[]
+  flashcards    Flashcard[]
+  quizQuestions QuizQuestion[]
 
   @@index([folderId, kind])
 }
@@ -134,8 +136,9 @@ model Notes {
 }
 
 model Flashcard {
-  id               String   @id @default(cuid())
-  pageId           String
+  id               String  @id @default(cuid())
+  pageId           String?
+  materialId       String?
   prompt           String
   idealExplanation String
   sourceTerm       String?
@@ -149,10 +152,12 @@ model Flashcard {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  page       Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  page       Page?       @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  material   Material?   @relation(fields: [materialId], references: [id], onDelete: Cascade)
   reviewLogs ReviewLog[]
 
   @@index([pageId])
+  @@index([materialId])
   @@index([nextReviewAt])
 }
 
@@ -168,7 +173,8 @@ model ReviewLog {
 
 model QuizQuestion {
   id            String       @id @default(cuid())
-  pageId        String
+  pageId        String?
+  materialId    String?
   type          QuestionType
   prompt        String
   correctAnswer String
@@ -176,10 +182,12 @@ model QuizQuestion {
   explanation   String?
   createdAt     DateTime     @default(now())
 
-  page     Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  page     Page?         @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  material Material?     @relation(fields: [materialId], references: [id], onDelete: Cascade)
   attempts QuizAttempt[]
 
   @@index([pageId])
+  @@index([materialId])
 }
 
 model QuizAttempt {

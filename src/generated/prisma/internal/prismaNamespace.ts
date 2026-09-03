@@ -1713,6 +1713,7 @@ export type NotesScalarFieldEnum = (typeof NotesScalarFieldEnum)[keyof typeof No
 export const FlashcardScalarFieldEnum = {
   id: 'id',
   pageId: 'pageId',
+  materialId: 'materialId',
   prompt: 'prompt',
   idealExplanation: 'idealExplanation',
   sourceTerm: 'sourceTerm',
@@ -1740,6 +1741,7 @@ export type ReviewLogScalarFieldEnum = (typeof ReviewLogScalarFieldEnum)[keyof t
 export const QuizQuestionScalarFieldEnum = {
   id: 'id',
   pageId: 'pageId',
+  materialId: 'materialId',
   type: 'type',
   prompt: 'prompt',
   correctAnswer: 'correctAnswer',

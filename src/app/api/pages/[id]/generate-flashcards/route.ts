@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
+import { assertSingleParent } from "@/lib/cards";
 import { callLLMJSON } from "@/lib/llm";
 import { FLASHCARDS_SYSTEM_PROMPT, buildFlashcardsUserPrompt } from "@/lib/prompts/flashcards";
 import { flashcardsResponseSchema } from "@/lib/validation";
@@ -28,7 +29,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     await db.flashcard.deleteMany({ where: { pageId: id } });
     await db.flashcard.createMany({
       data: parsed.flashcards.map((card) => ({
-        pageId: id,
+        ...assertSingleParent({ pageId: id }),
         prompt: card.prompt,
         idealExplanation: card.idealExplanation,
         sourceTerm: card.sourceTerm,

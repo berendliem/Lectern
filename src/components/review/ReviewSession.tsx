@@ -10,7 +10,8 @@ type DueCard = {
   id: string;
   prompt: string;
   idealExplanation: string;
-  page: { id: string; title: string };
+  page: { id: string; title: string } | null;
+  material: { id: string; title: string } | null;
 };
 
 export function ReviewSession() {
@@ -90,9 +91,15 @@ export function ReviewSession() {
           <span>
             Card {index + 1} of {cards.length}
           </span>
-          <Link href={`/pages/${card.page.id}`} className="truncate font-medium hover:text-brand">
-            {card.page.title}
-          </Link>
+          {card.page ? (
+            <Link href={`/pages/${card.page.id}`} className="truncate font-medium hover:text-brand">
+              {card.page.title}
+            </Link>
+          ) : card.material ? (
+            <span className="truncate font-medium">{card.material.title}</span>
+          ) : (
+            <span className="truncate font-medium text-zinc-400">Unknown source</span>
+          )}
         </div>
         <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
           <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />

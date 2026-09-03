@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, GraduationCap } from "lucide-react";
 import { db } from "@/lib/db";
+import { courseScopeFilter } from "@/lib/cards";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
   if (!folder) notFound();
 
   const questions = await db.quizQuestion.findMany({
-    where: { page: { folderId } },
+    where: courseScopeFilter(folderId),
     select: { id: true, type: true, prompt: true, options: true },
   });
 
@@ -51,7 +52,7 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
         <div>
           <h1 className="text-lg font-bold tracking-tight text-zinc-900">Exam cram · {folder.name}</h1>
           <p className="text-[13px] text-zinc-500">
-            {runnerQuestions.length} question{runnerQuestions.length === 1 ? "" : "s"} mixed from every lecture in this course.
+            {runnerQuestions.length} question{runnerQuestions.length === 1 ? "" : "s"} mixed from this course&apos;s lectures and materials.
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GraduationCap } from "lucide-react";
 import { db } from "@/lib/db";
+import { courseScopeFilter } from "@/lib/cards";
 import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
 import { ImportButton } from "@/components/dashboard/ImportButton";
@@ -32,7 +33,7 @@ export default async function FolderPage({
         _count: { select: { flashcards: true, quizQuestions: true } },
       },
     }),
-    db.quizQuestion.count({ where: { page: { folderId } } }),
+    db.quizQuestion.count({ where: courseScopeFilter(folderId) }),
     db.material.findMany({
       where: { folderId },
       orderBy: { createdAt: "desc" },

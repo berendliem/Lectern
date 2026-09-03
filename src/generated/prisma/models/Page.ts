@@ -625,10 +625,12 @@ export type PageCreateNestedOneWithoutFlashcardsInput = {
   connect?: Prisma.PageWhereUniqueInput
 }
 
-export type PageUpdateOneRequiredWithoutFlashcardsNestedInput = {
+export type PageUpdateOneWithoutFlashcardsNestedInput = {
   create?: Prisma.XOR<Prisma.PageCreateWithoutFlashcardsInput, Prisma.PageUncheckedCreateWithoutFlashcardsInput>
   connectOrCreate?: Prisma.PageCreateOrConnectWithoutFlashcardsInput
   upsert?: Prisma.PageUpsertWithoutFlashcardsInput
+  disconnect?: Prisma.PageWhereInput | boolean
+  delete?: Prisma.PageWhereInput | boolean
   connect?: Prisma.PageWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.PageUpdateToOneWithWhereWithoutFlashcardsInput, Prisma.PageUpdateWithoutFlashcardsInput>, Prisma.PageUncheckedUpdateWithoutFlashcardsInput>
 }
@@ -639,10 +641,12 @@ export type PageCreateNestedOneWithoutQuizQuestionsInput = {
   connect?: Prisma.PageWhereUniqueInput
 }
 
-export type PageUpdateOneRequiredWithoutQuizQuestionsNestedInput = {
+export type PageUpdateOneWithoutQuizQuestionsNestedInput = {
   create?: Prisma.XOR<Prisma.PageCreateWithoutQuizQuestionsInput, Prisma.PageUncheckedCreateWithoutQuizQuestionsInput>
   connectOrCreate?: Prisma.PageCreateOrConnectWithoutQuizQuestionsInput
   upsert?: Prisma.PageUpsertWithoutQuizQuestionsInput
+  disconnect?: Prisma.PageWhereInput | boolean
+  delete?: Prisma.PageWhereInput | boolean
   connect?: Prisma.PageWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.PageUpdateToOneWithWhereWithoutQuizQuestionsInput, Prisma.PageUpdateWithoutQuizQuestionsInput>, Prisma.PageUncheckedUpdateWithoutQuizQuestionsInput>
 }
