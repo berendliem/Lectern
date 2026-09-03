@@ -79,7 +79,7 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
             href={folderId ? `/folders/${folderId}` : "/"}
             className="mt-1 inline-block text-[13px] font-medium text-brand hover:underline"
           >
-            Back to your library
+            Back to your courses
           </Link>
         </div>
       </div>

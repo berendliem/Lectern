@@ -32,10 +32,13 @@ type Folder = {
   _count: { pages: number };
 };
 
+// The global tier: everything that works across every course. Course-scoped
+// and lecture-scoped entry points live on the course page and the lecture
+// page respectively, where they start with context instead of a blank slate.
 const NAV_ITEMS = [
-  { href: "/", label: "Library", icon: LayoutGrid },
-  { href: "/ask", label: "Ask library", icon: BrainCircuit },
-  { href: "/review", label: "Review", icon: GraduationCap },
+  { href: "/", label: "Courses", icon: LayoutGrid },
+  { href: "/ask", label: "Ask all courses", icon: BrainCircuit },
+  { href: "/review", label: "Review all", icon: GraduationCap },
   { href: "/planner", label: "Planner", icon: CalendarDays },
   { href: "/focus", label: "Focus timer", icon: Timer },
   { href: "/feynman", label: "Feynman coach", icon: Lightbulb },
@@ -113,11 +116,15 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
           >
             <AudioLines className="h-4.5 w-4.5 text-white" strokeWidth={2.2} />
           </span>
-          <span className="text-[15px] font-semibold tracking-tight text-gradient">Notetaker</span>
+          <span className="text-[15px] font-semibold tracking-tight text-gradient">Lectern</span>
         </Link>
       </div>
 
-      <nav className="flex flex-col gap-0.5 px-3 pt-4" onClick={onNavigate}>
+      <div className="mt-4 pl-[22px] pr-3">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Global</span>
+      </div>
+
+      <nav className="mt-1 flex flex-col gap-0.5 px-3" onClick={onNavigate}>
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
@@ -133,7 +140,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
             >
               <Icon className="h-4 w-4" strokeWidth={active ? 2.4 : 2} />
               <span className="flex-1">{label}</span>
-              {label === "Review" && dueCount > 0 && (
+              {href === "/review" && dueCount > 0 && (
                 <span
                   className={clsx(
                     "rounded-full px-1.5 py-px text-[11px] font-semibold leading-4",
@@ -149,7 +156,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="mt-7 flex items-center justify-between pl-[22px] pr-3">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Courses</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Your courses</span>
         <button
           onClick={() => setModalOpen(true)}
           className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-200/60 hover:text-zinc-700"

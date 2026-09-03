@@ -170,10 +170,10 @@ export function PomodoroTimer({
   // Reflect the countdown in the tab title while running.
   useEffect(() => {
     if (!mounted) return;
-    document.title = running ? `${fmt(remaining)} — ${PHASE_META[phase].label}` : "Focus — Notetaker";
+    document.title = running ? `${fmt(remaining)} — ${PHASE_META[phase].label}` : "Focus — Lectern";
   }, [remaining, running, phase, mounted]);
   useEffect(() => () => {
-    document.title = "Notetaker";
+    document.title = "Lectern";
   }, []);
 
   function advance(countFocus: boolean) {

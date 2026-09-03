@@ -1,6 +1,6 @@
-# AI Notetaker
+# Lectern
 
-A local-first notetaker for lectures: record or upload audio, transcribe it locally with Whisper, summarize it into structured notes with a free OpenRouter model, and study with a Feynman-style learning guide (flashcards with spaced repetition, plus a self-test quiz). Organize pages into folders/tags and search across everything.
+A local-first course library for students: record or upload a lecture, transcribe it locally with Whisper, summarize it into structured notes with a free OpenRouter model, and study with a Feynman-style learning guide (flashcards with spaced repetition, plus a self-test quiz). Each course also holds its **materials** — the syllabus, slide decks, readings — which feed the same flashcards, quiz, and course-wide question answering, and the syllabus tells you which topics no lecture covers yet.
 
 It also has a **live assistant** for use *during* a lecture: while you record, a rolling transcript appears in real time, an "Explain this" button catches you up on whatever's being discussed right now, and every page has an **Ask AI** chat tab grounded in that lecture's transcript and notes.
 
@@ -92,9 +92,18 @@ Open http://localhost:3000.
 7. Organize with folders (sidebar) and tags (page header); **Search** looks across transcripts, notes, and flashcards.
 8. **Export** a page to Markdown or PDF from the page header.
 
+**Per course** (open a course from the sidebar):
+
+- **Overview** — the syllabus topic list with a coverage verdict per topic. Upload the syllabus as a material and hit **Parse syllabus**: a reasoning model extracts the topic outline into an editable list, and each topic is embedded and matched against everything the course has captured. Topics with no lecture behind them are called out; topics with cards show how far along you are. Coverage is a similarity heuristic and says so — a near-miss names the closest lecture rather than claiming the topic was never taught. Tune the bar with `COVERAGE_THRESHOLD` in `.env`, and add or delete topics by hand whenever the parse gets a messy syllabus wrong.
+- **Materials** — syllabus, slides, and readings, with flashcards and a quiz generated from any of them.
+- **Ask** — a question answered from that course's lectures *and* materials, with citations.
+- **Review**, **Exam cram**, **Feynman**, and **Interview** buttons, each pre-seeded with that course's content.
+
+**Per lecture** (under the lecture header): **Feynman coach** with the lecture's key terms as concepts and its notes as the reference answer, **Focus timer** bound to that lecture, **Dictionary** offering the lecture's key terms as one-click additions, and **Schedule review** to book just that lecture's due cards into your calendar.
+
 **Study tools (in the sidebar):**
 
-- **Ask your library** — one AI assistant across *every* lecture. Ask a question and it full-text-searches your notes/transcripts, answers grounded in the most relevant lectures, and links the pages it drew from as citations.
+- **Ask all courses** — one AI assistant across *every* lecture. Ask a question and it full-text-searches your notes/transcripts, answers grounded in the most relevant lectures, and links the pages it drew from as citations.
 - **Command palette** — press <kbd>⌘K</kbd> / <kbd>Ctrl-K</kbd> (or the button in the header) to jump to any section or open any page by name, keyboard-only.
 - **Focus timer** — an automatic Pomodoro timer: a focus block, then a short break, and a long break after every few sessions, cycling on its own. Durations are configurable, it counts your focus sessions for the day, and it keeps ticking accurately even in a background tab.
 - **Feynman coach** — pick a concept and explain it in plain words, by typing or by speaking (your voice is transcribed by the local whisper service). A free OpenRouter model scores how clearly a beginner would understand it and calls out gaps, hidden jargon, and a follow-up question to push you deeper. Paste your notes as optional reference material to have it check accuracy too. Refine and re-score as many times as you like.
