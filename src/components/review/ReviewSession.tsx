@@ -14,7 +14,7 @@ type DueCard = {
   material: { id: string; title: string } | null;
 };
 
-export function ReviewSession() {
+export function ReviewSession({ folderId }: { folderId?: string }) {
   const [cards, setCards] = useState<DueCard[] | null>(null);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -22,7 +22,8 @@ export function ReviewSession() {
 
   useEffect(() => {
     let ignore = false;
-    fetch("/api/review/due")
+    const url = folderId ? `/api/review/due?folderId=${encodeURIComponent(folderId)}` : "/api/review/due";
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (!ignore) setCards(data.cards ?? []);
@@ -30,7 +31,7 @@ export function ReviewSession() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [folderId]);
 
   async function handleGrade(quality: number) {
     const card = cards?.[index];

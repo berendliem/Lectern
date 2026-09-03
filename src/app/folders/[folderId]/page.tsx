@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GraduationCap } from "lucide-react";
+import { CheckCheck, GraduationCap } from "lucide-react";
 import { db } from "@/lib/db";
 import { courseScopeFilter } from "@/lib/cards";
 import { PageList } from "@/components/dashboard/PageList";
@@ -24,7 +24,7 @@ export default async function FolderPage({
   const folder = await db.folder.findUnique({ where: { id: folderId } });
   if (!folder) notFound();
 
-  const [pages, quizCount, materials] = await Promise.all([
+  const [pages, quizCount, dueCount, materials] = await Promise.all([
     db.page.findMany({
       where: { folderId },
       orderBy: { updatedAt: "desc" },
@@ -35,6 +35,9 @@ export default async function FolderPage({
       },
     }),
     db.quizQuestion.count({ where: courseScopeFilter(folderId) }),
+    db.flashcard.count({
+      where: { nextReviewAt: { lte: new Date() }, ...courseScopeFilter(folderId) },
+    }),
     db.material.findMany({
       where: { folderId },
       orderBy: { createdAt: "desc" },
@@ -55,6 +58,15 @@ export default async function FolderPage({
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-gradient">{folder.name}</h1>
         <div className="flex items-center gap-2">
+          {dueCount > 0 && (
+            <Link
+              href={`/folders/${folder.id}/review`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-soft/40 px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-brand-soft"
+            >
+              <CheckCheck className="h-4 w-4" strokeWidth={2} />
+              Review {dueCount}
+            </Link>
+          )}
           {quizCount > 0 && (
             <Link
               href={`/folders/${folder.id}/cram`}
