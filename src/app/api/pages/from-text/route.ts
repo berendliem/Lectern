@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { createPageFromTextSchema } from "@/lib/validation";
 import { withValidation } from "@/lib/api-utils";
 import { upsertSearchIndex } from "@/lib/fts";
+import { indexSource } from "@/lib/embeddings";
 
 // Creates a lecture page directly from text (pasted notes/readings or text
 // extracted from a PDF client-side), skipping the audio → transcription step.
@@ -28,6 +29,14 @@ export async function POST(req: NextRequest) {
   });
 
   await upsertSearchIndex(page.id);
+
+  // Semantic index is best-effort: a failed embedding must not fail the write
+  // the user just made. Course ask degrades to FTS when chunks are missing.
+  try {
+    await indexSource({ pageId: page.id });
+  } catch (e) {
+    console.error(`[embeddings] indexing page ${page.id} failed:`, e);
+  }
 
   return NextResponse.json({ page }, { status: 201 });
 }

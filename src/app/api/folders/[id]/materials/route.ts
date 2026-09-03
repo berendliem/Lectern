@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createMaterialSchema } from "@/lib/validation";
 import { jsonError, withValidation } from "@/lib/api-utils";
+import { indexSource } from "@/lib/embeddings";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,6 +28,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       updatedAt: true,
     },
   });
+
+  // Semantic index is best-effort: a failed embedding must not fail the write
+  // the user just made. Course ask degrades to FTS when chunks are missing.
+  try {
+    await indexSource({ materialId: material.id });
+  } catch (e) {
+    console.error(`[embeddings] indexing material ${material.id} failed:`, e);
+  }
 
   return NextResponse.json({ material }, { status: 201 });
 }

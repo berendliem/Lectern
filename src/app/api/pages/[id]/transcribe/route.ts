@@ -5,6 +5,7 @@ import { jsonError } from "@/lib/api-utils";
 import { absoluteAudioPath, mimeTypeForExtension } from "@/lib/audio-storage";
 import { transcribeAudio } from "@/lib/whisper-client";
 import { upsertSearchIndex } from "@/lib/fts";
+import { indexSource } from "@/lib/embeddings";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -41,6 +42,14 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       data: { status: "TRANSCRIBED", errorMessage: null },
     });
     await upsertSearchIndex(id);
+
+    // Semantic index is best-effort: a failed embedding must not fail the write
+    // the user just made. Course ask degrades to FTS when chunks are missing.
+    try {
+      await indexSource({ pageId: id });
+    } catch (e) {
+      console.error(`[embeddings] indexing page ${id} failed:`, e);
+    }
 
     return NextResponse.json({ page: updated });
   } catch (e) {
