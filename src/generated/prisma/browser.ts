@@ -28,6 +28,11 @@ export type Folder = Prisma.FolderModel
  */
 export type Material = Prisma.MaterialModel
 /**
+ * Model CourseTopic
+ * 
+ */
+export type CourseTopic = Prisma.CourseTopicModel
+/**
  * Model Page
  * 
  */

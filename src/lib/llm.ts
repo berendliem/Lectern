@@ -56,6 +56,7 @@ export async function callLLMJSON(opts: {
         { role: "user", content: opts.userPrompt },
       ],
       jsonMode: true,
+      model: opts.stage === "reasoning" ? ollamaReasoningModel() : undefined,
     });
     const cleaned = content.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
     try {

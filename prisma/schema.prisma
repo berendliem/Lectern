@@ -62,6 +62,7 @@ model Folder {
 
   pages     Page[]
   materials Material[]
+  topics    CourseTopic[]
 }
 
 model Material {
@@ -81,6 +82,20 @@ model Material {
   quizQuestions QuizQuestion[]
 
   @@index([folderId, kind])
+}
+
+model CourseTopic {
+  id               String   @id @default(cuid())
+  folderId         String
+  title            String
+  week             Int?
+  order            Int
+  sourceMaterialId String?
+  createdAt        DateTime @default(now())
+
+  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([folderId, order])
 }
 
 model Page {
