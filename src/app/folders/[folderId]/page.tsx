@@ -11,6 +11,7 @@ import { FolderHeader } from "@/components/dashboard/FolderHeader";
 import { PageTabs } from "@/components/page-detail/PageTabs";
 import { MaterialUploadButton } from "@/components/dashboard/MaterialUploadButton";
 import { MaterialList } from "@/components/dashboard/MaterialList";
+import { CourseChat } from "@/components/ask/CourseChat";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,11 @@ export default async function FolderPage({
                 />
               </div>
             ),
+          },
+          {
+            id: "ask",
+            label: "Ask",
+            content: <CourseChat folderId={folder.id} />,
           },
         ]}
       />

@@ -67,3 +67,19 @@ export async function callLLMJSON(opts: {
     userPrompt: opts.userPrompt,
   });
 }
+
+/**
+ * The REASONING tier: course-scoped work that stuffs several retrieved chunks
+ * into one prompt, which is the one place context length and reasoning quality
+ * matter. Provider dispatch is the existing LLM_PROVIDER branch in
+ * callLLMText, so this only names the OpenRouter model; on ollama the model
+ * name is ignored and `ollamaModel()` wins.
+ */
+export function reasoningModel(): string {
+  return (
+    process.env.OPENROUTER_MODEL_REASONING ??
+    process.env.OPENROUTER_MODEL_CHAT ??
+    process.env.OPENROUTER_MODEL_SUMMARY ??
+    "openrouter/free"
+  );
+}
