@@ -9,7 +9,7 @@ from model import get_model
 # No CORS middleware on purpose: this service is only ever called server-side
 # by the Next.js app, never by a browser, so nothing should be granted
 # cross-origin read access to it.
-app = FastAPI(title="AI Notetaker Whisper Service")
+app = FastAPI(title="Lectern Whisper Service")
 
 
 @app.get("/health")
