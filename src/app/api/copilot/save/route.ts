@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { saveSessionSchema } from "@/lib/copilot";
 import { upsertSearchIndex } from "@/lib/fts";
+import { indexSource } from "@/lib/embeddings";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -26,6 +27,14 @@ export async function POST(req: NextRequest) {
     });
 
     await upsertSearchIndex(page.id);
+
+    // Semantic index is best-effort: a failed embedding must not fail the write
+    // the user just made. Course ask degrades to FTS when chunks are missing.
+    try {
+      await indexSource({ pageId: page.id });
+    } catch (e) {
+      console.error(`[embeddings] indexing page ${page.id} failed:`, e);
+    }
 
     return NextResponse.json({ pageId: page.id }, { status: 201 });
   } catch {

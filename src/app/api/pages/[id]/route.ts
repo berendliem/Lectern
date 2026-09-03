@@ -4,6 +4,7 @@ import { updatePageSchema } from "@/lib/validation";
 import { withValidation, jsonError } from "@/lib/api-utils";
 import { deleteAudioFile } from "@/lib/audio-storage";
 import { removeFromSearchIndex, upsertSearchIndex } from "@/lib/fts";
+import { indexSource } from "@/lib/embeddings";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,6 +37,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       update: { markdown: notesMarkdown },
       create: { pageId: id, markdown: notesMarkdown, keyTerms: "[]" },
     });
+
+    // Semantic index is best-effort: a failed embedding must not fail the write
+    // the user just made. Course ask degrades to FTS when chunks are missing.
+    try {
+      await indexSource({ pageId: id });
+    } catch (e) {
+      console.error(`[embeddings] indexing page ${id} failed:`, e);
+    }
   }
 
   const page = await db.page.update({ where: { id }, data: pageFields });
