@@ -354,6 +354,40 @@ export type EnumActionKindWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumActionKindFilter<$PrismaModel>
 }
 
+export type EnumChunkSourceFilter<$PrismaModel = never> = {
+  equals?: $Enums.ChunkSource | Prisma.EnumChunkSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.ChunkSource[]
+  notIn?: $Enums.ChunkSource[]
+  not?: Prisma.NestedEnumChunkSourceFilter<$PrismaModel> | $Enums.ChunkSource
+}
+
+export type BytesFilter<$PrismaModel = never> = {
+  equals?: runtime.Bytes | Prisma.BytesFieldRefInput<$PrismaModel>
+  in?: runtime.Bytes[]
+  notIn?: runtime.Bytes[]
+  not?: Prisma.NestedBytesFilter<$PrismaModel> | runtime.Bytes
+}
+
+export type EnumChunkSourceWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ChunkSource | Prisma.EnumChunkSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.ChunkSource[]
+  notIn?: $Enums.ChunkSource[]
+  not?: Prisma.NestedEnumChunkSourceWithAggregatesFilter<$PrismaModel> | $Enums.ChunkSource
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumChunkSourceFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumChunkSourceFilter<$PrismaModel>
+}
+
+export type BytesWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: runtime.Bytes | Prisma.BytesFieldRefInput<$PrismaModel>
+  in?: runtime.Bytes[]
+  notIn?: runtime.Bytes[]
+  not?: Prisma.NestedBytesWithAggregatesFilter<$PrismaModel> | runtime.Bytes
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBytesFilter<$PrismaModel>
+  _max?: Prisma.NestedBytesFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[]
@@ -687,6 +721,40 @@ export type NestedEnumActionKindWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumActionKindFilter<$PrismaModel>
   _max?: Prisma.NestedEnumActionKindFilter<$PrismaModel>
+}
+
+export type NestedEnumChunkSourceFilter<$PrismaModel = never> = {
+  equals?: $Enums.ChunkSource | Prisma.EnumChunkSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.ChunkSource[]
+  notIn?: $Enums.ChunkSource[]
+  not?: Prisma.NestedEnumChunkSourceFilter<$PrismaModel> | $Enums.ChunkSource
+}
+
+export type NestedBytesFilter<$PrismaModel = never> = {
+  equals?: runtime.Bytes | Prisma.BytesFieldRefInput<$PrismaModel>
+  in?: runtime.Bytes[]
+  notIn?: runtime.Bytes[]
+  not?: Prisma.NestedBytesFilter<$PrismaModel> | runtime.Bytes
+}
+
+export type NestedEnumChunkSourceWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ChunkSource | Prisma.EnumChunkSourceFieldRefInput<$PrismaModel>
+  in?: $Enums.ChunkSource[]
+  notIn?: $Enums.ChunkSource[]
+  not?: Prisma.NestedEnumChunkSourceWithAggregatesFilter<$PrismaModel> | $Enums.ChunkSource
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumChunkSourceFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumChunkSourceFilter<$PrismaModel>
+}
+
+export type NestedBytesWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: runtime.Bytes | Prisma.BytesFieldRefInput<$PrismaModel>
+  in?: runtime.Bytes[]
+  notIn?: runtime.Bytes[]
+  not?: Prisma.NestedBytesWithAggregatesFilter<$PrismaModel> | runtime.Bytes
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBytesFilter<$PrismaModel>
+  _max?: Prisma.NestedBytesFilter<$PrismaModel>
 }
 
 

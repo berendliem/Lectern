@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { createPageFromTextSchema } from "@/lib/validation";
 import { withValidation } from "@/lib/api-utils";
 import { upsertSearchIndex } from "@/lib/fts";
+import { indexSourceSafely } from "@/lib/embeddings";
 
 // Creates a lecture page directly from text (pasted notes/readings or text
 // extracted from a PDF client-side), skipping the audio → transcription step.
@@ -28,6 +29,8 @@ export async function POST(req: NextRequest) {
   });
 
   await upsertSearchIndex(page.id);
+
+  await indexSourceSafely({ pageId: page.id });
 
   return NextResponse.json({ page }, { status: 201 });
 }

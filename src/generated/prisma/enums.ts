@@ -64,3 +64,12 @@ export const MaterialKind = {
 } as const
 
 export type MaterialKind = (typeof MaterialKind)[keyof typeof MaterialKind]
+
+
+export const ChunkSource = {
+  LECTURE_TRANSCRIPT: 'LECTURE_TRANSCRIPT',
+  LECTURE_NOTES: 'LECTURE_NOTES',
+  MATERIAL: 'MATERIAL'
+} as const
+
+export type ChunkSource = (typeof ChunkSource)[keyof typeof ChunkSource]

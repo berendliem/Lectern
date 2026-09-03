@@ -5,6 +5,7 @@ import { jsonError } from "@/lib/api-utils";
 import { absoluteAudioPath, mimeTypeForExtension } from "@/lib/audio-storage";
 import { transcribeAudio } from "@/lib/whisper-client";
 import { upsertSearchIndex } from "@/lib/fts";
+import { indexSourceSafely } from "@/lib/embeddings";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -41,6 +42,8 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       data: { status: "TRANSCRIBED", errorMessage: null },
     });
     await upsertSearchIndex(id);
+
+    await indexSourceSafely({ pageId: id });
 
     return NextResponse.json({ page: updated });
   } catch (e) {

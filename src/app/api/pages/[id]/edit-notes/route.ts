@@ -5,6 +5,7 @@ import { callLLMText } from "@/lib/llm";
 import { EDIT_NOTES_SYSTEM_PROMPT, buildEditNotesUserPrompt } from "@/lib/prompts/edit-notes";
 import { editNotesSchema } from "@/lib/validation";
 import { upsertSearchIndex } from "@/lib/fts";
+import { indexSourceSafely } from "@/lib/embeddings";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -41,6 +42,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     await db.notes.update({ where: { pageId: id }, data: { markdown } });
     await upsertSearchIndex(id);
+
+    await indexSourceSafely({ pageId: id });
 
     return NextResponse.json({ markdown, previousMarkdown: page.notes.markdown });
   } catch (e) {

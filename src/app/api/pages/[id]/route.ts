@@ -4,6 +4,7 @@ import { updatePageSchema } from "@/lib/validation";
 import { withValidation, jsonError } from "@/lib/api-utils";
 import { deleteAudioFile } from "@/lib/audio-storage";
 import { removeFromSearchIndex, upsertSearchIndex } from "@/lib/fts";
+import { indexSourceSafely } from "@/lib/embeddings";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,6 +37,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       update: { markdown: notesMarkdown },
       create: { pageId: id, markdown: notesMarkdown, keyTerms: "[]" },
     });
+
+    await indexSourceSafely({ pageId: id });
   }
 
   const page = await db.page.update({ where: { id }, data: pageFields });

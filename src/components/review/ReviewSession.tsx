@@ -5,15 +5,17 @@ import Link from "next/link";
 import { CheckCheck, PartyPopper } from "lucide-react";
 import { FlashcardFlip } from "@/components/flashcards/FlashcardFlip";
 import { ReviewGradeButtons } from "@/components/review/ReviewGradeButtons";
+import { cardSource } from "@/lib/cards";
 
 type DueCard = {
   id: string;
   prompt: string;
   idealExplanation: string;
-  page: { id: string; title: string };
+  page: { id: string; title: string } | null;
+  material: { id: string; title: string } | null;
 };
 
-export function ReviewSession() {
+export function ReviewSession({ folderId }: { folderId?: string }) {
   const [cards, setCards] = useState<DueCard[] | null>(null);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -21,7 +23,8 @@ export function ReviewSession() {
 
   useEffect(() => {
     let ignore = false;
-    fetch("/api/review/due")
+    const url = folderId ? `/api/review/due?folderId=${encodeURIComponent(folderId)}` : "/api/review/due";
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (!ignore) setCards(data.cards ?? []);
@@ -29,7 +32,7 @@ export function ReviewSession() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [folderId]);
 
   async function handleGrade(quality: number) {
     const card = cards?.[index];
@@ -72,7 +75,10 @@ export function ReviewSession() {
           <p className="text-sm font-medium text-zinc-700">
             Session complete — {reviewedCount} card{reviewedCount === 1 ? "" : "s"} reviewed.
           </p>
-          <Link href="/" className="mt-1 inline-block text-[13px] font-medium text-brand hover:underline">
+          <Link
+            href={folderId ? `/folders/${folderId}` : "/"}
+            className="mt-1 inline-block text-[13px] font-medium text-brand hover:underline"
+          >
             Back to your library
           </Link>
         </div>
@@ -90,9 +96,20 @@ export function ReviewSession() {
           <span>
             Card {index + 1} of {cards.length}
           </span>
-          <Link href={`/pages/${card.page.id}`} className="truncate font-medium hover:text-brand">
-            {card.page.title}
-          </Link>
+          {(() => {
+            const source = cardSource(card);
+            if (source?.kind === "lecture") {
+              return (
+                <Link href={`/pages/${source.id}`} className="truncate font-medium hover:text-brand">
+                  {source.title}
+                </Link>
+              );
+            }
+            if (source) {
+              return <span className="truncate font-medium">{source.title}</span>;
+            }
+            return <span className="truncate font-medium text-zinc-400">Unknown source</span>;
+          })()}
         </div>
         <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
           <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />

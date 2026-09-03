@@ -65,7 +65,8 @@ export const ModelName = {
   DictionaryTerm: 'DictionaryTerm',
   ActionItem: 'ActionItem',
   Tag: 'Tag',
-  TagsOnPages: 'TagsOnPages'
+  TagsOnPages: 'TagsOnPages',
+  Chunk: 'Chunk'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -155,6 +156,7 @@ export type NotesScalarFieldEnum = (typeof NotesScalarFieldEnum)[keyof typeof No
 export const FlashcardScalarFieldEnum = {
   id: 'id',
   pageId: 'pageId',
+  materialId: 'materialId',
   prompt: 'prompt',
   idealExplanation: 'idealExplanation',
   sourceTerm: 'sourceTerm',
@@ -182,6 +184,7 @@ export type ReviewLogScalarFieldEnum = (typeof ReviewLogScalarFieldEnum)[keyof t
 export const QuizQuestionScalarFieldEnum = {
   id: 'id',
   pageId: 'pageId',
+  materialId: 'materialId',
   type: 'type',
   prompt: 'prompt',
   correctAnswer: 'correctAnswer',
@@ -269,6 +272,22 @@ export const TagsOnPagesScalarFieldEnum = {
 } as const
 
 export type TagsOnPagesScalarFieldEnum = (typeof TagsOnPagesScalarFieldEnum)[keyof typeof TagsOnPagesScalarFieldEnum]
+
+
+export const ChunkScalarFieldEnum = {
+  id: 'id',
+  source: 'source',
+  pageId: 'pageId',
+  materialId: 'materialId',
+  ord: 'ord',
+  text: 'text',
+  vector: 'vector',
+  hash: 'hash',
+  model: 'model',
+  createdAt: 'createdAt'
+} as const
+
+export type ChunkScalarFieldEnum = (typeof ChunkScalarFieldEnum)[keyof typeof ChunkScalarFieldEnum]
 
 
 export const SortOrder = {

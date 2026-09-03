@@ -41,6 +41,7 @@ export type FlashcardSumAggregateOutputType = {
 export type FlashcardMinAggregateOutputType = {
   id: string | null
   pageId: string | null
+  materialId: string | null
   prompt: string | null
   idealExplanation: string | null
   sourceTerm: string | null
@@ -56,6 +57,7 @@ export type FlashcardMinAggregateOutputType = {
 export type FlashcardMaxAggregateOutputType = {
   id: string | null
   pageId: string | null
+  materialId: string | null
   prompt: string | null
   idealExplanation: string | null
   sourceTerm: string | null
@@ -71,6 +73,7 @@ export type FlashcardMaxAggregateOutputType = {
 export type FlashcardCountAggregateOutputType = {
   id: number
   pageId: number
+  materialId: number
   prompt: number
   idealExplanation: number
   sourceTerm: number
@@ -100,6 +103,7 @@ export type FlashcardSumAggregateInputType = {
 export type FlashcardMinAggregateInputType = {
   id?: true
   pageId?: true
+  materialId?: true
   prompt?: true
   idealExplanation?: true
   sourceTerm?: true
@@ -115,6 +119,7 @@ export type FlashcardMinAggregateInputType = {
 export type FlashcardMaxAggregateInputType = {
   id?: true
   pageId?: true
+  materialId?: true
   prompt?: true
   idealExplanation?: true
   sourceTerm?: true
@@ -130,6 +135,7 @@ export type FlashcardMaxAggregateInputType = {
 export type FlashcardCountAggregateInputType = {
   id?: true
   pageId?: true
+  materialId?: true
   prompt?: true
   idealExplanation?: true
   sourceTerm?: true
@@ -231,7 +237,8 @@ export type FlashcardGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
 
 export type FlashcardGroupByOutputType = {
   id: string
-  pageId: string
+  pageId: string | null
+  materialId: string | null
   prompt: string
   idealExplanation: string
   sourceTerm: string | null
@@ -269,7 +276,8 @@ export type FlashcardWhereInput = {
   OR?: Prisma.FlashcardWhereInput[]
   NOT?: Prisma.FlashcardWhereInput | Prisma.FlashcardWhereInput[]
   id?: Prisma.StringFilter<"Flashcard"> | string
-  pageId?: Prisma.StringFilter<"Flashcard"> | string
+  pageId?: Prisma.StringNullableFilter<"Flashcard"> | string | null
+  materialId?: Prisma.StringNullableFilter<"Flashcard"> | string | null
   prompt?: Prisma.StringFilter<"Flashcard"> | string
   idealExplanation?: Prisma.StringFilter<"Flashcard"> | string
   sourceTerm?: Prisma.StringNullableFilter<"Flashcard"> | string | null
@@ -280,13 +288,15 @@ export type FlashcardWhereInput = {
   lastReviewedAt?: Prisma.DateTimeNullableFilter<"Flashcard"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
-  page?: Prisma.XOR<Prisma.PageScalarRelationFilter, Prisma.PageWhereInput>
+  page?: Prisma.XOR<Prisma.PageNullableScalarRelationFilter, Prisma.PageWhereInput> | null
+  material?: Prisma.XOR<Prisma.MaterialNullableScalarRelationFilter, Prisma.MaterialWhereInput> | null
   reviewLogs?: Prisma.ReviewLogListRelationFilter
 }
 
 export type FlashcardOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  pageId?: Prisma.SortOrder
+  pageId?: Prisma.SortOrderInput | Prisma.SortOrder
+  materialId?: Prisma.SortOrderInput | Prisma.SortOrder
   prompt?: Prisma.SortOrder
   idealExplanation?: Prisma.SortOrder
   sourceTerm?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -298,6 +308,7 @@ export type FlashcardOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   page?: Prisma.PageOrderByWithRelationInput
+  material?: Prisma.MaterialOrderByWithRelationInput
   reviewLogs?: Prisma.ReviewLogOrderByRelationAggregateInput
 }
 
@@ -306,7 +317,8 @@ export type FlashcardWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.FlashcardWhereInput | Prisma.FlashcardWhereInput[]
   OR?: Prisma.FlashcardWhereInput[]
   NOT?: Prisma.FlashcardWhereInput | Prisma.FlashcardWhereInput[]
-  pageId?: Prisma.StringFilter<"Flashcard"> | string
+  pageId?: Prisma.StringNullableFilter<"Flashcard"> | string | null
+  materialId?: Prisma.StringNullableFilter<"Flashcard"> | string | null
   prompt?: Prisma.StringFilter<"Flashcard"> | string
   idealExplanation?: Prisma.StringFilter<"Flashcard"> | string
   sourceTerm?: Prisma.StringNullableFilter<"Flashcard"> | string | null
@@ -317,13 +329,15 @@ export type FlashcardWhereUniqueInput = Prisma.AtLeast<{
   lastReviewedAt?: Prisma.DateTimeNullableFilter<"Flashcard"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
-  page?: Prisma.XOR<Prisma.PageScalarRelationFilter, Prisma.PageWhereInput>
+  page?: Prisma.XOR<Prisma.PageNullableScalarRelationFilter, Prisma.PageWhereInput> | null
+  material?: Prisma.XOR<Prisma.MaterialNullableScalarRelationFilter, Prisma.MaterialWhereInput> | null
   reviewLogs?: Prisma.ReviewLogListRelationFilter
 }, "id">
 
 export type FlashcardOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  pageId?: Prisma.SortOrder
+  pageId?: Prisma.SortOrderInput | Prisma.SortOrder
+  materialId?: Prisma.SortOrderInput | Prisma.SortOrder
   prompt?: Prisma.SortOrder
   idealExplanation?: Prisma.SortOrder
   sourceTerm?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -346,7 +360,8 @@ export type FlashcardScalarWhereWithAggregatesInput = {
   OR?: Prisma.FlashcardScalarWhereWithAggregatesInput[]
   NOT?: Prisma.FlashcardScalarWhereWithAggregatesInput | Prisma.FlashcardScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Flashcard"> | string
-  pageId?: Prisma.StringWithAggregatesFilter<"Flashcard"> | string
+  pageId?: Prisma.StringNullableWithAggregatesFilter<"Flashcard"> | string | null
+  materialId?: Prisma.StringNullableWithAggregatesFilter<"Flashcard"> | string | null
   prompt?: Prisma.StringWithAggregatesFilter<"Flashcard"> | string
   idealExplanation?: Prisma.StringWithAggregatesFilter<"Flashcard"> | string
   sourceTerm?: Prisma.StringNullableWithAggregatesFilter<"Flashcard"> | string | null
@@ -371,13 +386,15 @@ export type FlashcardCreateInput = {
   lastReviewedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  page: Prisma.PageCreateNestedOneWithoutFlashcardsInput
+  page?: Prisma.PageCreateNestedOneWithoutFlashcardsInput
+  material?: Prisma.MaterialCreateNestedOneWithoutFlashcardsInput
   reviewLogs?: Prisma.ReviewLogCreateNestedManyWithoutFlashcardInput
 }
 
 export type FlashcardUncheckedCreateInput = {
   id?: string
-  pageId: string
+  pageId?: string | null
+  materialId?: string | null
   prompt: string
   idealExplanation: string
   sourceTerm?: string | null
@@ -403,13 +420,15 @@ export type FlashcardUpdateInput = {
   lastReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  page?: Prisma.PageUpdateOneRequiredWithoutFlashcardsNestedInput
+  page?: Prisma.PageUpdateOneWithoutFlashcardsNestedInput
+  material?: Prisma.MaterialUpdateOneWithoutFlashcardsNestedInput
   reviewLogs?: Prisma.ReviewLogUpdateManyWithoutFlashcardNestedInput
 }
 
 export type FlashcardUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  pageId?: Prisma.StringFieldUpdateOperationsInput | string
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   prompt?: Prisma.StringFieldUpdateOperationsInput | string
   idealExplanation?: Prisma.StringFieldUpdateOperationsInput | string
   sourceTerm?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -425,7 +444,8 @@ export type FlashcardUncheckedUpdateInput = {
 
 export type FlashcardCreateManyInput = {
   id?: string
-  pageId: string
+  pageId?: string | null
+  materialId?: string | null
   prompt: string
   idealExplanation: string
   sourceTerm?: string | null
@@ -454,7 +474,8 @@ export type FlashcardUpdateManyMutationInput = {
 
 export type FlashcardUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  pageId?: Prisma.StringFieldUpdateOperationsInput | string
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   prompt?: Prisma.StringFieldUpdateOperationsInput | string
   idealExplanation?: Prisma.StringFieldUpdateOperationsInput | string
   sourceTerm?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -480,6 +501,7 @@ export type FlashcardOrderByRelationAggregateInput = {
 export type FlashcardCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
+  materialId?: Prisma.SortOrder
   prompt?: Prisma.SortOrder
   idealExplanation?: Prisma.SortOrder
   sourceTerm?: Prisma.SortOrder
@@ -501,6 +523,7 @@ export type FlashcardAvgOrderByAggregateInput = {
 export type FlashcardMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
+  materialId?: Prisma.SortOrder
   prompt?: Prisma.SortOrder
   idealExplanation?: Prisma.SortOrder
   sourceTerm?: Prisma.SortOrder
@@ -516,6 +539,7 @@ export type FlashcardMaxOrderByAggregateInput = {
 export type FlashcardMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
+  materialId?: Prisma.SortOrder
   prompt?: Prisma.SortOrder
   idealExplanation?: Prisma.SortOrder
   sourceTerm?: Prisma.SortOrder
@@ -537,6 +561,48 @@ export type FlashcardSumOrderByAggregateInput = {
 export type FlashcardNullableScalarRelationFilter = {
   is?: Prisma.FlashcardWhereInput | null
   isNot?: Prisma.FlashcardWhereInput | null
+}
+
+export type FlashcardCreateNestedManyWithoutMaterialInput = {
+  create?: Prisma.XOR<Prisma.FlashcardCreateWithoutMaterialInput, Prisma.FlashcardUncheckedCreateWithoutMaterialInput> | Prisma.FlashcardCreateWithoutMaterialInput[] | Prisma.FlashcardUncheckedCreateWithoutMaterialInput[]
+  connectOrCreate?: Prisma.FlashcardCreateOrConnectWithoutMaterialInput | Prisma.FlashcardCreateOrConnectWithoutMaterialInput[]
+  createMany?: Prisma.FlashcardCreateManyMaterialInputEnvelope
+  connect?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+}
+
+export type FlashcardUncheckedCreateNestedManyWithoutMaterialInput = {
+  create?: Prisma.XOR<Prisma.FlashcardCreateWithoutMaterialInput, Prisma.FlashcardUncheckedCreateWithoutMaterialInput> | Prisma.FlashcardCreateWithoutMaterialInput[] | Prisma.FlashcardUncheckedCreateWithoutMaterialInput[]
+  connectOrCreate?: Prisma.FlashcardCreateOrConnectWithoutMaterialInput | Prisma.FlashcardCreateOrConnectWithoutMaterialInput[]
+  createMany?: Prisma.FlashcardCreateManyMaterialInputEnvelope
+  connect?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+}
+
+export type FlashcardUpdateManyWithoutMaterialNestedInput = {
+  create?: Prisma.XOR<Prisma.FlashcardCreateWithoutMaterialInput, Prisma.FlashcardUncheckedCreateWithoutMaterialInput> | Prisma.FlashcardCreateWithoutMaterialInput[] | Prisma.FlashcardUncheckedCreateWithoutMaterialInput[]
+  connectOrCreate?: Prisma.FlashcardCreateOrConnectWithoutMaterialInput | Prisma.FlashcardCreateOrConnectWithoutMaterialInput[]
+  upsert?: Prisma.FlashcardUpsertWithWhereUniqueWithoutMaterialInput | Prisma.FlashcardUpsertWithWhereUniqueWithoutMaterialInput[]
+  createMany?: Prisma.FlashcardCreateManyMaterialInputEnvelope
+  set?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+  disconnect?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+  delete?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+  connect?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+  update?: Prisma.FlashcardUpdateWithWhereUniqueWithoutMaterialInput | Prisma.FlashcardUpdateWithWhereUniqueWithoutMaterialInput[]
+  updateMany?: Prisma.FlashcardUpdateManyWithWhereWithoutMaterialInput | Prisma.FlashcardUpdateManyWithWhereWithoutMaterialInput[]
+  deleteMany?: Prisma.FlashcardScalarWhereInput | Prisma.FlashcardScalarWhereInput[]
+}
+
+export type FlashcardUncheckedUpdateManyWithoutMaterialNestedInput = {
+  create?: Prisma.XOR<Prisma.FlashcardCreateWithoutMaterialInput, Prisma.FlashcardUncheckedCreateWithoutMaterialInput> | Prisma.FlashcardCreateWithoutMaterialInput[] | Prisma.FlashcardUncheckedCreateWithoutMaterialInput[]
+  connectOrCreate?: Prisma.FlashcardCreateOrConnectWithoutMaterialInput | Prisma.FlashcardCreateOrConnectWithoutMaterialInput[]
+  upsert?: Prisma.FlashcardUpsertWithWhereUniqueWithoutMaterialInput | Prisma.FlashcardUpsertWithWhereUniqueWithoutMaterialInput[]
+  createMany?: Prisma.FlashcardCreateManyMaterialInputEnvelope
+  set?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+  disconnect?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+  delete?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+  connect?: Prisma.FlashcardWhereUniqueInput | Prisma.FlashcardWhereUniqueInput[]
+  update?: Prisma.FlashcardUpdateWithWhereUniqueWithoutMaterialInput | Prisma.FlashcardUpdateWithWhereUniqueWithoutMaterialInput[]
+  updateMany?: Prisma.FlashcardUpdateManyWithWhereWithoutMaterialInput | Prisma.FlashcardUpdateManyWithWhereWithoutMaterialInput[]
+  deleteMany?: Prisma.FlashcardScalarWhereInput | Prisma.FlashcardScalarWhereInput[]
 }
 
 export type FlashcardCreateNestedManyWithoutPageInput = {
@@ -617,6 +683,82 @@ export type FlashcardUpdateOneWithoutReviewLogsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.FlashcardUpdateToOneWithWhereWithoutReviewLogsInput, Prisma.FlashcardUpdateWithoutReviewLogsInput>, Prisma.FlashcardUncheckedUpdateWithoutReviewLogsInput>
 }
 
+export type FlashcardCreateWithoutMaterialInput = {
+  id?: string
+  prompt: string
+  idealExplanation: string
+  sourceTerm?: string | null
+  easeFactor?: number
+  intervalDays?: number
+  repetitions?: number
+  nextReviewAt?: Date | string
+  lastReviewedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  page?: Prisma.PageCreateNestedOneWithoutFlashcardsInput
+  reviewLogs?: Prisma.ReviewLogCreateNestedManyWithoutFlashcardInput
+}
+
+export type FlashcardUncheckedCreateWithoutMaterialInput = {
+  id?: string
+  pageId?: string | null
+  prompt: string
+  idealExplanation: string
+  sourceTerm?: string | null
+  easeFactor?: number
+  intervalDays?: number
+  repetitions?: number
+  nextReviewAt?: Date | string
+  lastReviewedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reviewLogs?: Prisma.ReviewLogUncheckedCreateNestedManyWithoutFlashcardInput
+}
+
+export type FlashcardCreateOrConnectWithoutMaterialInput = {
+  where: Prisma.FlashcardWhereUniqueInput
+  create: Prisma.XOR<Prisma.FlashcardCreateWithoutMaterialInput, Prisma.FlashcardUncheckedCreateWithoutMaterialInput>
+}
+
+export type FlashcardCreateManyMaterialInputEnvelope = {
+  data: Prisma.FlashcardCreateManyMaterialInput | Prisma.FlashcardCreateManyMaterialInput[]
+}
+
+export type FlashcardUpsertWithWhereUniqueWithoutMaterialInput = {
+  where: Prisma.FlashcardWhereUniqueInput
+  update: Prisma.XOR<Prisma.FlashcardUpdateWithoutMaterialInput, Prisma.FlashcardUncheckedUpdateWithoutMaterialInput>
+  create: Prisma.XOR<Prisma.FlashcardCreateWithoutMaterialInput, Prisma.FlashcardUncheckedCreateWithoutMaterialInput>
+}
+
+export type FlashcardUpdateWithWhereUniqueWithoutMaterialInput = {
+  where: Prisma.FlashcardWhereUniqueInput
+  data: Prisma.XOR<Prisma.FlashcardUpdateWithoutMaterialInput, Prisma.FlashcardUncheckedUpdateWithoutMaterialInput>
+}
+
+export type FlashcardUpdateManyWithWhereWithoutMaterialInput = {
+  where: Prisma.FlashcardScalarWhereInput
+  data: Prisma.XOR<Prisma.FlashcardUpdateManyMutationInput, Prisma.FlashcardUncheckedUpdateManyWithoutMaterialInput>
+}
+
+export type FlashcardScalarWhereInput = {
+  AND?: Prisma.FlashcardScalarWhereInput | Prisma.FlashcardScalarWhereInput[]
+  OR?: Prisma.FlashcardScalarWhereInput[]
+  NOT?: Prisma.FlashcardScalarWhereInput | Prisma.FlashcardScalarWhereInput[]
+  id?: Prisma.StringFilter<"Flashcard"> | string
+  pageId?: Prisma.StringNullableFilter<"Flashcard"> | string | null
+  materialId?: Prisma.StringNullableFilter<"Flashcard"> | string | null
+  prompt?: Prisma.StringFilter<"Flashcard"> | string
+  idealExplanation?: Prisma.StringFilter<"Flashcard"> | string
+  sourceTerm?: Prisma.StringNullableFilter<"Flashcard"> | string | null
+  easeFactor?: Prisma.FloatFilter<"Flashcard"> | number
+  intervalDays?: Prisma.IntFilter<"Flashcard"> | number
+  repetitions?: Prisma.IntFilter<"Flashcard"> | number
+  nextReviewAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
+  lastReviewedAt?: Prisma.DateTimeNullableFilter<"Flashcard"> | Date | string | null
+  createdAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
+}
+
 export type FlashcardCreateWithoutPageInput = {
   id?: string
   prompt: string
@@ -629,11 +771,13 @@ export type FlashcardCreateWithoutPageInput = {
   lastReviewedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  material?: Prisma.MaterialCreateNestedOneWithoutFlashcardsInput
   reviewLogs?: Prisma.ReviewLogCreateNestedManyWithoutFlashcardInput
 }
 
 export type FlashcardUncheckedCreateWithoutPageInput = {
   id?: string
+  materialId?: string | null
   prompt: string
   idealExplanation: string
   sourceTerm?: string | null
@@ -672,24 +816,6 @@ export type FlashcardUpdateManyWithWhereWithoutPageInput = {
   data: Prisma.XOR<Prisma.FlashcardUpdateManyMutationInput, Prisma.FlashcardUncheckedUpdateManyWithoutPageInput>
 }
 
-export type FlashcardScalarWhereInput = {
-  AND?: Prisma.FlashcardScalarWhereInput | Prisma.FlashcardScalarWhereInput[]
-  OR?: Prisma.FlashcardScalarWhereInput[]
-  NOT?: Prisma.FlashcardScalarWhereInput | Prisma.FlashcardScalarWhereInput[]
-  id?: Prisma.StringFilter<"Flashcard"> | string
-  pageId?: Prisma.StringFilter<"Flashcard"> | string
-  prompt?: Prisma.StringFilter<"Flashcard"> | string
-  idealExplanation?: Prisma.StringFilter<"Flashcard"> | string
-  sourceTerm?: Prisma.StringNullableFilter<"Flashcard"> | string | null
-  easeFactor?: Prisma.FloatFilter<"Flashcard"> | number
-  intervalDays?: Prisma.IntFilter<"Flashcard"> | number
-  repetitions?: Prisma.IntFilter<"Flashcard"> | number
-  nextReviewAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
-  lastReviewedAt?: Prisma.DateTimeNullableFilter<"Flashcard"> | Date | string | null
-  createdAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"Flashcard"> | Date | string
-}
-
 export type FlashcardCreateWithoutReviewLogsInput = {
   id?: string
   prompt: string
@@ -702,12 +828,14 @@ export type FlashcardCreateWithoutReviewLogsInput = {
   lastReviewedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  page: Prisma.PageCreateNestedOneWithoutFlashcardsInput
+  page?: Prisma.PageCreateNestedOneWithoutFlashcardsInput
+  material?: Prisma.MaterialCreateNestedOneWithoutFlashcardsInput
 }
 
 export type FlashcardUncheckedCreateWithoutReviewLogsInput = {
   id?: string
-  pageId: string
+  pageId?: string | null
+  materialId?: string | null
   prompt: string
   idealExplanation: string
   sourceTerm?: string | null
@@ -748,12 +876,76 @@ export type FlashcardUpdateWithoutReviewLogsInput = {
   lastReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  page?: Prisma.PageUpdateOneRequiredWithoutFlashcardsNestedInput
+  page?: Prisma.PageUpdateOneWithoutFlashcardsNestedInput
+  material?: Prisma.MaterialUpdateOneWithoutFlashcardsNestedInput
 }
 
 export type FlashcardUncheckedUpdateWithoutReviewLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  pageId?: Prisma.StringFieldUpdateOperationsInput | string
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prompt?: Prisma.StringFieldUpdateOperationsInput | string
+  idealExplanation?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceTerm?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  easeFactor?: Prisma.FloatFieldUpdateOperationsInput | number
+  intervalDays?: Prisma.IntFieldUpdateOperationsInput | number
+  repetitions?: Prisma.IntFieldUpdateOperationsInput | number
+  nextReviewAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type FlashcardCreateManyMaterialInput = {
+  id?: string
+  pageId?: string | null
+  prompt: string
+  idealExplanation: string
+  sourceTerm?: string | null
+  easeFactor?: number
+  intervalDays?: number
+  repetitions?: number
+  nextReviewAt?: Date | string
+  lastReviewedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type FlashcardUpdateWithoutMaterialInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  prompt?: Prisma.StringFieldUpdateOperationsInput | string
+  idealExplanation?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceTerm?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  easeFactor?: Prisma.FloatFieldUpdateOperationsInput | number
+  intervalDays?: Prisma.IntFieldUpdateOperationsInput | number
+  repetitions?: Prisma.IntFieldUpdateOperationsInput | number
+  nextReviewAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  page?: Prisma.PageUpdateOneWithoutFlashcardsNestedInput
+  reviewLogs?: Prisma.ReviewLogUpdateManyWithoutFlashcardNestedInput
+}
+
+export type FlashcardUncheckedUpdateWithoutMaterialInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  prompt?: Prisma.StringFieldUpdateOperationsInput | string
+  idealExplanation?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceTerm?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  easeFactor?: Prisma.FloatFieldUpdateOperationsInput | number
+  intervalDays?: Prisma.IntFieldUpdateOperationsInput | number
+  repetitions?: Prisma.IntFieldUpdateOperationsInput | number
+  nextReviewAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reviewLogs?: Prisma.ReviewLogUncheckedUpdateManyWithoutFlashcardNestedInput
+}
+
+export type FlashcardUncheckedUpdateManyWithoutMaterialInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   prompt?: Prisma.StringFieldUpdateOperationsInput | string
   idealExplanation?: Prisma.StringFieldUpdateOperationsInput | string
   sourceTerm?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -768,6 +960,7 @@ export type FlashcardUncheckedUpdateWithoutReviewLogsInput = {
 
 export type FlashcardCreateManyPageInput = {
   id?: string
+  materialId?: string | null
   prompt: string
   idealExplanation: string
   sourceTerm?: string | null
@@ -792,11 +985,13 @@ export type FlashcardUpdateWithoutPageInput = {
   lastReviewedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  material?: Prisma.MaterialUpdateOneWithoutFlashcardsNestedInput
   reviewLogs?: Prisma.ReviewLogUpdateManyWithoutFlashcardNestedInput
 }
 
 export type FlashcardUncheckedUpdateWithoutPageInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   prompt?: Prisma.StringFieldUpdateOperationsInput | string
   idealExplanation?: Prisma.StringFieldUpdateOperationsInput | string
   sourceTerm?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -812,6 +1007,7 @@ export type FlashcardUncheckedUpdateWithoutPageInput = {
 
 export type FlashcardUncheckedUpdateManyWithoutPageInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   prompt?: Prisma.StringFieldUpdateOperationsInput | string
   idealExplanation?: Prisma.StringFieldUpdateOperationsInput | string
   sourceTerm?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -858,6 +1054,7 @@ export type FlashcardCountOutputTypeCountReviewLogsArgs<ExtArgs extends runtime.
 export type FlashcardSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   pageId?: boolean
+  materialId?: boolean
   prompt?: boolean
   idealExplanation?: boolean
   sourceTerm?: boolean
@@ -868,7 +1065,8 @@ export type FlashcardSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   lastReviewedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
+  page?: boolean | Prisma.Flashcard$pageArgs<ExtArgs>
+  material?: boolean | Prisma.Flashcard$materialArgs<ExtArgs>
   reviewLogs?: boolean | Prisma.Flashcard$reviewLogsArgs<ExtArgs>
   _count?: boolean | Prisma.FlashcardCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["flashcard"]>
@@ -876,6 +1074,7 @@ export type FlashcardSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type FlashcardSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   pageId?: boolean
+  materialId?: boolean
   prompt?: boolean
   idealExplanation?: boolean
   sourceTerm?: boolean
@@ -886,12 +1085,14 @@ export type FlashcardSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   lastReviewedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
+  page?: boolean | Prisma.Flashcard$pageArgs<ExtArgs>
+  material?: boolean | Prisma.Flashcard$materialArgs<ExtArgs>
 }, ExtArgs["result"]["flashcard"]>
 
 export type FlashcardSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   pageId?: boolean
+  materialId?: boolean
   prompt?: boolean
   idealExplanation?: boolean
   sourceTerm?: boolean
@@ -902,12 +1103,14 @@ export type FlashcardSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   lastReviewedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
+  page?: boolean | Prisma.Flashcard$pageArgs<ExtArgs>
+  material?: boolean | Prisma.Flashcard$materialArgs<ExtArgs>
 }, ExtArgs["result"]["flashcard"]>
 
 export type FlashcardSelectScalar = {
   id?: boolean
   pageId?: boolean
+  materialId?: boolean
   prompt?: boolean
   idealExplanation?: boolean
   sourceTerm?: boolean
@@ -920,28 +1123,33 @@ export type FlashcardSelectScalar = {
   updatedAt?: boolean
 }
 
-export type FlashcardOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "pageId" | "prompt" | "idealExplanation" | "sourceTerm" | "easeFactor" | "intervalDays" | "repetitions" | "nextReviewAt" | "lastReviewedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["flashcard"]>
+export type FlashcardOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "pageId" | "materialId" | "prompt" | "idealExplanation" | "sourceTerm" | "easeFactor" | "intervalDays" | "repetitions" | "nextReviewAt" | "lastReviewedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["flashcard"]>
 export type FlashcardInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
+  page?: boolean | Prisma.Flashcard$pageArgs<ExtArgs>
+  material?: boolean | Prisma.Flashcard$materialArgs<ExtArgs>
   reviewLogs?: boolean | Prisma.Flashcard$reviewLogsArgs<ExtArgs>
   _count?: boolean | Prisma.FlashcardCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type FlashcardIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
+  page?: boolean | Prisma.Flashcard$pageArgs<ExtArgs>
+  material?: boolean | Prisma.Flashcard$materialArgs<ExtArgs>
 }
 export type FlashcardIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
+  page?: boolean | Prisma.Flashcard$pageArgs<ExtArgs>
+  material?: boolean | Prisma.Flashcard$materialArgs<ExtArgs>
 }
 
 export type $FlashcardPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Flashcard"
   objects: {
-    page: Prisma.$PagePayload<ExtArgs>
+    page: Prisma.$PagePayload<ExtArgs> | null
+    material: Prisma.$MaterialPayload<ExtArgs> | null
     reviewLogs: Prisma.$ReviewLogPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    pageId: string
+    pageId: string | null
+    materialId: string | null
     prompt: string
     idealExplanation: string
     sourceTerm: string | null
@@ -1346,7 +1554,8 @@ readonly fields: FlashcardFieldRefs;
  */
 export interface Prisma__FlashcardClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  page<T extends Prisma.PageDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.PageDefaultArgs<ExtArgs>>): Prisma.Prisma__PageClient<runtime.Types.Result.GetResult<Prisma.$PagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  page<T extends Prisma.Flashcard$pageArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Flashcard$pageArgs<ExtArgs>>): Prisma.Prisma__PageClient<runtime.Types.Result.GetResult<Prisma.$PagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  material<T extends Prisma.Flashcard$materialArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Flashcard$materialArgs<ExtArgs>>): Prisma.Prisma__MaterialClient<runtime.Types.Result.GetResult<Prisma.$MaterialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   reviewLogs<T extends Prisma.Flashcard$reviewLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Flashcard$reviewLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1379,6 +1588,7 @@ export interface Prisma__FlashcardClient<T, Null = never, ExtArgs extends runtim
 export interface FlashcardFieldRefs {
   readonly id: Prisma.FieldRef<"Flashcard", 'String'>
   readonly pageId: Prisma.FieldRef<"Flashcard", 'String'>
+  readonly materialId: Prisma.FieldRef<"Flashcard", 'String'>
   readonly prompt: Prisma.FieldRef<"Flashcard", 'String'>
   readonly idealExplanation: Prisma.FieldRef<"Flashcard", 'String'>
   readonly sourceTerm: Prisma.FieldRef<"Flashcard", 'String'>
@@ -1785,6 +1995,44 @@ export type FlashcardDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Limit how many Flashcards to delete.
    */
   limit?: number
+}
+
+/**
+ * Flashcard.page
+ */
+export type Flashcard$pageArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Page
+   */
+  select?: Prisma.PageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Page
+   */
+  omit?: Prisma.PageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PageInclude<ExtArgs> | null
+  where?: Prisma.PageWhereInput
+}
+
+/**
+ * Flashcard.material
+ */
+export type Flashcard$materialArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Material
+   */
+  select?: Prisma.MaterialSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Material
+   */
+  omit?: Prisma.MaterialOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MaterialInclude<ExtArgs> | null
+  where?: Prisma.MaterialWhereInput
 }
 
 /**

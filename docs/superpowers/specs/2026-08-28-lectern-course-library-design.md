@@ -167,35 +167,71 @@ slideCount }`. The route stores the `Material`, then indexes it (§7).
 
 ## 7. Retrieval
 
-`src/lib/embeddings.ts`, built on OpenRouter's OpenAI-compatible `/embeddings`
-endpoint. `OPENROUTER_MODEL_EMBED`, default `openai/text-embedding-3-small`.
+`src/lib/embeddings.ts`, local-first. Embedding runs on this machine, in the
+Next.js Node process, via `@huggingface/transformers` (transformers.js v3) with
+`Xenova/all-MiniLM-L6-v2` quantized — mean pooling, normalized, 384 dimensions.
+The model is fetched once and cached on disk; no key, no cost, no rate limit, so
+a full re-index is free.
+
+Embedding stays server-side rather than in the browser deliberately. Indexing
+hangs off server pipeline stages (transcribe, summarize, material upload) next
+to the existing `upsertSearchIndex`; a browser-only embedder cannot reach those,
+and would need a dirty-flag queue drained on next app open plus a query-vector
+round trip for ask. Same local model, none of that machinery.
 
 - `indexSource({ pageId | materialId })` — splits with the existing
   `splitTextIntoChunks(text, 1200)`, hashes each chunk, embeds only chunks whose
   hash or embedding model changed, and replaces the rows in one transaction.
   Called next to the existing `upsertSearchIndex` at each pipeline stage.
-- `searchCourse(folderId, query, k)` — embeds the query, loads that course's
-  chunks, scores by cosine, returns top-k with their source.
+- `searchCourse(folderId, query, k = 8)` — embeds the query, loads that course's
+  chunks **filtered to the active embedding model**, scores by cosine, returns
+  top-k with their source.
   `// ponytail: brute-force cosine over one course's chunks; move to sqlite-vec
   if a course ever exceeds ~50k chunks`
-- `npm run reindex` backfills existing content and re-embeds after a model change.
+- `npm run reindex` backfills existing content and re-embeds every row whose
+  `model` differs from the active one. Required after a provider or model change.
 
 Vectors are stored as a `Float32Array` buffer in `Chunk.vector`.
 
-**Degradation:** if the embeddings call fails (no key, rate limit, network),
-course ask logs the reason and falls back to the existing FTS `searchPages`
+**Provider chain.** `EMBED_PROVIDER=local|openrouter`, default `local`:
+
+```
+local transformers.js → OpenRouter /embeddings (free embed model, if key + model set)
+                      → FTS searchPages scoped to the course
+```
+
+Each rung logs why it fell through. Whether OpenRouter exposes `/embeddings` at
+all, and whether any free embed model exists there, is unverified — a 404 simply
+drops to the next rung, so the chain is correct either way.
+
+**The dimension trap.** MiniLM is 384-dim; OpenAI-family embeds are 1536.
+Cosine across mixed vectors is silently meaningless. `Chunk.model` is what
+prevents it: `searchCourse` scores only chunks whose `model` matches the active
+embedder, so vectors written by a different provider are invisible rather than
+wrong. A provider flip therefore degrades to "fewer results until reindex",
+never to bad results.
+
+**Degradation:** if embedding fails at every rung (model load failure, no key,
+network), course ask logs the reason and falls back to the FTS `searchPages`
 path scoped to the course. Retrieval quality drops; the feature does not break.
 
 ## 8. Model tiers
 
-A new tier for work that needs long context and better reasoning:
+A new tier for work that needs long context and better reasoning, dispatched by
+the existing `LLM_PROVIDER=openrouter|ollama` branch in `src/lib/llm.ts` — no
+new dispatch code:
 
 ```
 OPENROUTER_MODEL_REASONING → OPENROUTER_MODEL_CHAT → OPENROUTER_MODEL_SUMMARY
-                            → meta-llama/llama-3.3-70b-instruct:free
+OLLAMA_MODEL_REASONING     → OLLAMA_MODEL
 ```
 
-Default in `.env.example`: `google/gemini-2.5-flash`.
+Defaults in `.env.example`: `OPENROUTER_MODEL_REASONING="openrouter/free"`,
+`OLLAMA_MODEL_REASONING="qwen3:8b"`. Free on both paths.
+
+Free and local models are context-tight, which is why `searchCourse` defaults to
+`k = 8` (~10k characters of context) instead of stuffing a whole course into one
+prompt.
 
 Used by: syllabus parsing, course ask, coverage matching. Every existing
 per-lecture route keeps its current model and its current cost.
@@ -359,11 +395,15 @@ syllabus should never leave the course stuck with garbage topics.
 
 ## 12. Testing
 
-The repo has no tests today. Add `npm test` → `tsx --test`, assert-based, no
-framework, no fixtures directory beyond inline sample strings.
+`npm test` → `tsx --test`, assert-based, no framework, no fixtures directory
+beyond inline sample strings. The suite exists as of Phase 1.
 
 Covered, because each is non-trivial logic that fails silently:
 - cosine similarity and the hash-diff skip in `embeddings.ts`
+- `searchCourse` ignores chunks written by a different embedding model
+- the `pageId`/`materialId` exclusive-or guard on flashcards and quiz questions
+- `/api/review/due` course filtering across both relations
+- course-ask citation formatting, including the `Slide N` case
 - `pptx-extract` slide ordering and text joining
 - `transcript-import`: Teams VTT with voice tags, Zoom SRT, Teams docx text,
   Otter-style text — asserting segment count, first and last timestamps,
@@ -387,10 +427,17 @@ tabbed shell; vocabulary pass.
 course, and the Teams import produces chapters and exportable subtitles.
 
 **Phase 2 — Retrieval and course AI**
-`Chunk` model; `embeddings.ts`; indexing on write; `reindex` script; the
-`REASONING` tier; course ask; the nullable-`pageId` migration and every call
-site it touches; material-derived flashcards and quiz; course review; cram
-extended to materials.
+`Chunk` model; local `embeddings.ts` and its provider chain; indexing on write;
+`reindex` script; the `REASONING` tier; course ask as a fourth tab on the course
+page (`POST /api/folders/[id]/ask`); the nullable-`pageId` migration and every
+call site it touches; per-material flashcard and quiz generation; course review;
+cram extended to materials.
+
+Citations name the source and, where the chunk carries a slide prefix, the slide
+number. Mapping a transcript chunk back to a timestamp is deferred — it is extra
+machinery for a deep link, and lecture-level citation is enough to trust an
+answer.
+
 *Done when:* asking a question at course scope cites both a lecture and a slide,
 and a flashcard generated from the syllabus appears in that course's review.
 
@@ -416,9 +463,14 @@ returns a speaker-less transcript.
 - **The nullable-`pageId` migration** is the one change that can break existing
   review and cram flows. Mitigation: grep every `pageId` read before writing the
   migration, and land it alone.
-- **Embedding cost and drift.** A large course re-embedding on every save would
-  be wasteful; the hash-diff is what prevents it, so its test matters more than
-  its size suggests.
+- **Embedding drift.** Local embedding is free, so cost is no longer the
+  concern — wasted time and mixed-model corpora are. The hash-diff prevents
+  re-embedding unchanged text and the `model` filter prevents scoring across
+  dimensions, so both of their tests matter more than their size suggests.
+- **The exclusive-or that SQLite cannot enforce.** A flashcard must hang from
+  exactly one of `pageId` or `materialId`; the database cannot express that, so
+  a code-level guard plus its test is the only thing standing between the schema
+  and an orphaned or double-parented card.
 - **Syllabus parsing quality** varies wildly with syllabus formatting. Topics
   are hand-editable for exactly this reason.
 - **Coverage matching** is a similarity heuristic and will be wrong sometimes.

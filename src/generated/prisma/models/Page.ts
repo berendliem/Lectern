@@ -264,6 +264,7 @@ export type PageWhereInput = {
   tags?: Prisma.TagsOnPagesListRelationFilter
   interviewSessions?: Prisma.InterviewSessionListRelationFilter
   actionItems?: Prisma.ActionItemListRelationFilter
+  chunks?: Prisma.ChunkListRelationFilter
 }
 
 export type PageOrderByWithRelationInput = {
@@ -285,6 +286,7 @@ export type PageOrderByWithRelationInput = {
   tags?: Prisma.TagsOnPagesOrderByRelationAggregateInput
   interviewSessions?: Prisma.InterviewSessionOrderByRelationAggregateInput
   actionItems?: Prisma.ActionItemOrderByRelationAggregateInput
+  chunks?: Prisma.ChunkOrderByRelationAggregateInput
 }
 
 export type PageWhereUniqueInput = Prisma.AtLeast<{
@@ -309,6 +311,7 @@ export type PageWhereUniqueInput = Prisma.AtLeast<{
   tags?: Prisma.TagsOnPagesListRelationFilter
   interviewSessions?: Prisma.InterviewSessionListRelationFilter
   actionItems?: Prisma.ActionItemListRelationFilter
+  chunks?: Prisma.ChunkListRelationFilter
 }, "id">
 
 export type PageOrderByWithAggregationInput = {
@@ -363,6 +366,7 @@ export type PageCreateInput = {
   tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateInput = {
@@ -383,6 +387,7 @@ export type PageUncheckedCreateInput = {
   tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageUpdateInput = {
@@ -403,6 +408,7 @@ export type PageUpdateInput = {
   tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateInput = {
@@ -423,6 +429,7 @@ export type PageUncheckedUpdateInput = {
   tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
 }
 
 export type PageCreateManyInput = {
@@ -618,10 +625,12 @@ export type PageCreateNestedOneWithoutFlashcardsInput = {
   connect?: Prisma.PageWhereUniqueInput
 }
 
-export type PageUpdateOneRequiredWithoutFlashcardsNestedInput = {
+export type PageUpdateOneWithoutFlashcardsNestedInput = {
   create?: Prisma.XOR<Prisma.PageCreateWithoutFlashcardsInput, Prisma.PageUncheckedCreateWithoutFlashcardsInput>
   connectOrCreate?: Prisma.PageCreateOrConnectWithoutFlashcardsInput
   upsert?: Prisma.PageUpsertWithoutFlashcardsInput
+  disconnect?: Prisma.PageWhereInput | boolean
+  delete?: Prisma.PageWhereInput | boolean
   connect?: Prisma.PageWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.PageUpdateToOneWithWhereWithoutFlashcardsInput, Prisma.PageUpdateWithoutFlashcardsInput>, Prisma.PageUncheckedUpdateWithoutFlashcardsInput>
 }
@@ -632,10 +641,12 @@ export type PageCreateNestedOneWithoutQuizQuestionsInput = {
   connect?: Prisma.PageWhereUniqueInput
 }
 
-export type PageUpdateOneRequiredWithoutQuizQuestionsNestedInput = {
+export type PageUpdateOneWithoutQuizQuestionsNestedInput = {
   create?: Prisma.XOR<Prisma.PageCreateWithoutQuizQuestionsInput, Prisma.PageUncheckedCreateWithoutQuizQuestionsInput>
   connectOrCreate?: Prisma.PageCreateOrConnectWithoutQuizQuestionsInput
   upsert?: Prisma.PageUpsertWithoutQuizQuestionsInput
+  disconnect?: Prisma.PageWhereInput | boolean
+  delete?: Prisma.PageWhereInput | boolean
   connect?: Prisma.PageWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.PageUpdateToOneWithWhereWithoutQuizQuestionsInput, Prisma.PageUpdateWithoutQuizQuestionsInput>, Prisma.PageUncheckedUpdateWithoutQuizQuestionsInput>
 }
@@ -684,6 +695,22 @@ export type PageUpdateOneRequiredWithoutTagsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.PageUpdateToOneWithWhereWithoutTagsInput, Prisma.PageUpdateWithoutTagsInput>, Prisma.PageUncheckedUpdateWithoutTagsInput>
 }
 
+export type PageCreateNestedOneWithoutChunksInput = {
+  create?: Prisma.XOR<Prisma.PageCreateWithoutChunksInput, Prisma.PageUncheckedCreateWithoutChunksInput>
+  connectOrCreate?: Prisma.PageCreateOrConnectWithoutChunksInput
+  connect?: Prisma.PageWhereUniqueInput
+}
+
+export type PageUpdateOneWithoutChunksNestedInput = {
+  create?: Prisma.XOR<Prisma.PageCreateWithoutChunksInput, Prisma.PageUncheckedCreateWithoutChunksInput>
+  connectOrCreate?: Prisma.PageCreateOrConnectWithoutChunksInput
+  upsert?: Prisma.PageUpsertWithoutChunksInput
+  disconnect?: Prisma.PageWhereInput | boolean
+  delete?: Prisma.PageWhereInput | boolean
+  connect?: Prisma.PageWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.PageUpdateToOneWithWhereWithoutChunksInput, Prisma.PageUpdateWithoutChunksInput>, Prisma.PageUncheckedUpdateWithoutChunksInput>
+}
+
 export type PageCreateWithoutFolderInput = {
   id?: string
   title: string
@@ -701,6 +728,7 @@ export type PageCreateWithoutFolderInput = {
   tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateWithoutFolderInput = {
@@ -720,6 +748,7 @@ export type PageUncheckedCreateWithoutFolderInput = {
   tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageCreateOrConnectWithoutFolderInput = {
@@ -780,6 +809,7 @@ export type PageCreateWithoutTranscriptInput = {
   tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateWithoutTranscriptInput = {
@@ -799,6 +829,7 @@ export type PageUncheckedCreateWithoutTranscriptInput = {
   tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageCreateOrConnectWithoutTranscriptInput = {
@@ -834,6 +865,7 @@ export type PageUpdateWithoutTranscriptInput = {
   tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateWithoutTranscriptInput = {
@@ -853,6 +885,7 @@ export type PageUncheckedUpdateWithoutTranscriptInput = {
   tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
 }
 
 export type PageCreateWithoutNotesInput = {
@@ -872,6 +905,7 @@ export type PageCreateWithoutNotesInput = {
   tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateWithoutNotesInput = {
@@ -891,6 +925,7 @@ export type PageUncheckedCreateWithoutNotesInput = {
   tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageCreateOrConnectWithoutNotesInput = {
@@ -926,6 +961,7 @@ export type PageUpdateWithoutNotesInput = {
   tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateWithoutNotesInput = {
@@ -945,6 +981,7 @@ export type PageUncheckedUpdateWithoutNotesInput = {
   tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
 }
 
 export type PageCreateWithoutFlashcardsInput = {
@@ -964,6 +1001,7 @@ export type PageCreateWithoutFlashcardsInput = {
   tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateWithoutFlashcardsInput = {
@@ -983,6 +1021,7 @@ export type PageUncheckedCreateWithoutFlashcardsInput = {
   tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageCreateOrConnectWithoutFlashcardsInput = {
@@ -1018,6 +1057,7 @@ export type PageUpdateWithoutFlashcardsInput = {
   tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateWithoutFlashcardsInput = {
@@ -1037,6 +1077,7 @@ export type PageUncheckedUpdateWithoutFlashcardsInput = {
   tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
 }
 
 export type PageCreateWithoutQuizQuestionsInput = {
@@ -1056,6 +1097,7 @@ export type PageCreateWithoutQuizQuestionsInput = {
   tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateWithoutQuizQuestionsInput = {
@@ -1075,6 +1117,7 @@ export type PageUncheckedCreateWithoutQuizQuestionsInput = {
   tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageCreateOrConnectWithoutQuizQuestionsInput = {
@@ -1110,6 +1153,7 @@ export type PageUpdateWithoutQuizQuestionsInput = {
   tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateWithoutQuizQuestionsInput = {
@@ -1129,6 +1173,7 @@ export type PageUncheckedUpdateWithoutQuizQuestionsInput = {
   tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
 }
 
 export type PageCreateWithoutInterviewSessionsInput = {
@@ -1148,6 +1193,7 @@ export type PageCreateWithoutInterviewSessionsInput = {
   quizQuestions?: Prisma.QuizQuestionCreateNestedManyWithoutPageInput
   tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateWithoutInterviewSessionsInput = {
@@ -1167,6 +1213,7 @@ export type PageUncheckedCreateWithoutInterviewSessionsInput = {
   quizQuestions?: Prisma.QuizQuestionUncheckedCreateNestedManyWithoutPageInput
   tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageCreateOrConnectWithoutInterviewSessionsInput = {
@@ -1202,6 +1249,7 @@ export type PageUpdateWithoutInterviewSessionsInput = {
   quizQuestions?: Prisma.QuizQuestionUpdateManyWithoutPageNestedInput
   tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateWithoutInterviewSessionsInput = {
@@ -1221,6 +1269,7 @@ export type PageUncheckedUpdateWithoutInterviewSessionsInput = {
   quizQuestions?: Prisma.QuizQuestionUncheckedUpdateManyWithoutPageNestedInput
   tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
 }
 
 export type PageCreateWithoutActionItemsInput = {
@@ -1240,6 +1289,7 @@ export type PageCreateWithoutActionItemsInput = {
   quizQuestions?: Prisma.QuizQuestionCreateNestedManyWithoutPageInput
   tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateWithoutActionItemsInput = {
@@ -1259,6 +1309,7 @@ export type PageUncheckedCreateWithoutActionItemsInput = {
   quizQuestions?: Prisma.QuizQuestionUncheckedCreateNestedManyWithoutPageInput
   tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageCreateOrConnectWithoutActionItemsInput = {
@@ -1294,6 +1345,7 @@ export type PageUpdateWithoutActionItemsInput = {
   quizQuestions?: Prisma.QuizQuestionUpdateManyWithoutPageNestedInput
   tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateWithoutActionItemsInput = {
@@ -1313,6 +1365,7 @@ export type PageUncheckedUpdateWithoutActionItemsInput = {
   quizQuestions?: Prisma.QuizQuestionUncheckedUpdateManyWithoutPageNestedInput
   tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
 }
 
 export type PageCreateWithoutTagsInput = {
@@ -1332,6 +1385,7 @@ export type PageCreateWithoutTagsInput = {
   quizQuestions?: Prisma.QuizQuestionCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkCreateNestedManyWithoutPageInput
 }
 
 export type PageUncheckedCreateWithoutTagsInput = {
@@ -1351,6 +1405,7 @@ export type PageUncheckedCreateWithoutTagsInput = {
   quizQuestions?: Prisma.QuizQuestionUncheckedCreateNestedManyWithoutPageInput
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
   actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+  chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutPageInput
 }
 
 export type PageCreateOrConnectWithoutTagsInput = {
@@ -1386,6 +1441,7 @@ export type PageUpdateWithoutTagsInput = {
   quizQuestions?: Prisma.QuizQuestionUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateWithoutTagsInput = {
@@ -1403,6 +1459,103 @@ export type PageUncheckedUpdateWithoutTagsInput = {
   notes?: Prisma.NotesUncheckedUpdateOneWithoutPageNestedInput
   flashcards?: Prisma.FlashcardUncheckedUpdateManyWithoutPageNestedInput
   quizQuestions?: Prisma.QuizQuestionUncheckedUpdateManyWithoutPageNestedInput
+  interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
+  actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
+}
+
+export type PageCreateWithoutChunksInput = {
+  id?: string
+  title: string
+  audioFilePath?: string | null
+  audioDuration?: number | null
+  status?: $Enums.PageStatus
+  errorMessage?: string | null
+  notionPageId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  folder?: Prisma.FolderCreateNestedOneWithoutPagesInput
+  transcript?: Prisma.TranscriptCreateNestedOneWithoutPageInput
+  notes?: Prisma.NotesCreateNestedOneWithoutPageInput
+  flashcards?: Prisma.FlashcardCreateNestedManyWithoutPageInput
+  quizQuestions?: Prisma.QuizQuestionCreateNestedManyWithoutPageInput
+  tags?: Prisma.TagsOnPagesCreateNestedManyWithoutPageInput
+  interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutPageInput
+  actionItems?: Prisma.ActionItemCreateNestedManyWithoutPageInput
+}
+
+export type PageUncheckedCreateWithoutChunksInput = {
+  id?: string
+  title: string
+  folderId?: string | null
+  audioFilePath?: string | null
+  audioDuration?: number | null
+  status?: $Enums.PageStatus
+  errorMessage?: string | null
+  notionPageId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  transcript?: Prisma.TranscriptUncheckedCreateNestedOneWithoutPageInput
+  notes?: Prisma.NotesUncheckedCreateNestedOneWithoutPageInput
+  flashcards?: Prisma.FlashcardUncheckedCreateNestedManyWithoutPageInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedCreateNestedManyWithoutPageInput
+  tags?: Prisma.TagsOnPagesUncheckedCreateNestedManyWithoutPageInput
+  interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutPageInput
+  actionItems?: Prisma.ActionItemUncheckedCreateNestedManyWithoutPageInput
+}
+
+export type PageCreateOrConnectWithoutChunksInput = {
+  where: Prisma.PageWhereUniqueInput
+  create: Prisma.XOR<Prisma.PageCreateWithoutChunksInput, Prisma.PageUncheckedCreateWithoutChunksInput>
+}
+
+export type PageUpsertWithoutChunksInput = {
+  update: Prisma.XOR<Prisma.PageUpdateWithoutChunksInput, Prisma.PageUncheckedUpdateWithoutChunksInput>
+  create: Prisma.XOR<Prisma.PageCreateWithoutChunksInput, Prisma.PageUncheckedCreateWithoutChunksInput>
+  where?: Prisma.PageWhereInput
+}
+
+export type PageUpdateToOneWithWhereWithoutChunksInput = {
+  where?: Prisma.PageWhereInput
+  data: Prisma.XOR<Prisma.PageUpdateWithoutChunksInput, Prisma.PageUncheckedUpdateWithoutChunksInput>
+}
+
+export type PageUpdateWithoutChunksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  audioFilePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audioDuration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.EnumPageStatusFieldUpdateOperationsInput | $Enums.PageStatus
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notionPageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  folder?: Prisma.FolderUpdateOneWithoutPagesNestedInput
+  transcript?: Prisma.TranscriptUpdateOneWithoutPageNestedInput
+  notes?: Prisma.NotesUpdateOneWithoutPageNestedInput
+  flashcards?: Prisma.FlashcardUpdateManyWithoutPageNestedInput
+  quizQuestions?: Prisma.QuizQuestionUpdateManyWithoutPageNestedInput
+  tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
+  interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
+  actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+}
+
+export type PageUncheckedUpdateWithoutChunksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  folderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audioFilePath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  audioDuration?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  status?: Prisma.EnumPageStatusFieldUpdateOperationsInput | $Enums.PageStatus
+  errorMessage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notionPageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  transcript?: Prisma.TranscriptUncheckedUpdateOneWithoutPageNestedInput
+  notes?: Prisma.NotesUncheckedUpdateOneWithoutPageNestedInput
+  flashcards?: Prisma.FlashcardUncheckedUpdateManyWithoutPageNestedInput
+  quizQuestions?: Prisma.QuizQuestionUncheckedUpdateManyWithoutPageNestedInput
+  tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
 }
@@ -1436,6 +1589,7 @@ export type PageUpdateWithoutFolderInput = {
   tags?: Prisma.TagsOnPagesUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateWithoutFolderInput = {
@@ -1455,6 +1609,7 @@ export type PageUncheckedUpdateWithoutFolderInput = {
   tags?: Prisma.TagsOnPagesUncheckedUpdateManyWithoutPageNestedInput
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutPageNestedInput
   actionItems?: Prisma.ActionItemUncheckedUpdateManyWithoutPageNestedInput
+  chunks?: Prisma.ChunkUncheckedUpdateManyWithoutPageNestedInput
 }
 
 export type PageUncheckedUpdateManyWithoutFolderInput = {
@@ -1480,6 +1635,7 @@ export type PageCountOutputType = {
   tags: number
   interviewSessions: number
   actionItems: number
+  chunks: number
 }
 
 export type PageCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1488,6 +1644,7 @@ export type PageCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   tags?: boolean | PageCountOutputTypeCountTagsArgs
   interviewSessions?: boolean | PageCountOutputTypeCountInterviewSessionsArgs
   actionItems?: boolean | PageCountOutputTypeCountActionItemsArgs
+  chunks?: boolean | PageCountOutputTypeCountChunksArgs
 }
 
 /**
@@ -1535,6 +1692,13 @@ export type PageCountOutputTypeCountActionItemsArgs<ExtArgs extends runtime.Type
   where?: Prisma.ActionItemWhereInput
 }
 
+/**
+ * PageCountOutputType without action
+ */
+export type PageCountOutputTypeCountChunksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChunkWhereInput
+}
+
 
 export type PageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1555,6 +1719,7 @@ export type PageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   tags?: boolean | Prisma.Page$tagsArgs<ExtArgs>
   interviewSessions?: boolean | Prisma.Page$interviewSessionsArgs<ExtArgs>
   actionItems?: boolean | Prisma.Page$actionItemsArgs<ExtArgs>
+  chunks?: boolean | Prisma.Page$chunksArgs<ExtArgs>
   _count?: boolean | Prisma.PageCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["page"]>
 
@@ -1609,6 +1774,7 @@ export type PageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   tags?: boolean | Prisma.Page$tagsArgs<ExtArgs>
   interviewSessions?: boolean | Prisma.Page$interviewSessionsArgs<ExtArgs>
   actionItems?: boolean | Prisma.Page$actionItemsArgs<ExtArgs>
+  chunks?: boolean | Prisma.Page$chunksArgs<ExtArgs>
   _count?: boolean | Prisma.PageCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type PageIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1629,6 +1795,7 @@ export type $PagePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     tags: Prisma.$TagsOnPagesPayload<ExtArgs>[]
     interviewSessions: Prisma.$InterviewSessionPayload<ExtArgs>[]
     actionItems: Prisma.$ActionItemPayload<ExtArgs>[]
+    chunks: Prisma.$ChunkPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2043,6 +2210,7 @@ export interface Prisma__PageClient<T, Null = never, ExtArgs extends runtime.Typ
   tags<T extends Prisma.Page$tagsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Page$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TagsOnPagesPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   interviewSessions<T extends Prisma.Page$interviewSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Page$interviewSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   actionItems<T extends Prisma.Page$actionItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Page$actionItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ActionItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  chunks<T extends Prisma.Page$chunksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Page$chunksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2655,6 +2823,30 @@ export type Page$actionItemsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.ActionItemScalarFieldEnum | Prisma.ActionItemScalarFieldEnum[]
+}
+
+/**
+ * Page.chunks
+ */
+export type Page$chunksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Chunk
+   */
+  select?: Prisma.ChunkSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Chunk
+   */
+  omit?: Prisma.ChunkOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChunkInclude<ExtArgs> | null
+  where?: Prisma.ChunkWhereInput
+  orderBy?: Prisma.ChunkOrderByWithRelationInput | Prisma.ChunkOrderByWithRelationInput[]
+  cursor?: Prisma.ChunkWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChunkScalarFieldEnum | Prisma.ChunkScalarFieldEnum[]
 }
 
 /**

@@ -2,18 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
-import { assertSingleParent } from "@/lib/cards";
 import { callLLMJSON } from "@/lib/llm";
 import { QUIZ_SYSTEM_PROMPT, buildQuizUserPrompt } from "@/lib/prompts/quiz";
 import { quizResponseSchema } from "@/lib/validation";
+import { assertSingleParent } from "@/lib/cards";
+
+const MAX_PROMPT_CHARS = 24_000;
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const page = await db.page.findUnique({ where: { id }, include: { notes: true } });
-  if (!page) return jsonError("Page not found", 404);
-  if (!page.notes) return jsonError("This page has no notes to generate a quiz from yet", 422);
-
-  await db.page.update({ where: { id }, data: { status: "GENERATING_GUIDE", errorMessage: null } });
+  const material = await db.material.findUnique({
+    where: { id },
+    select: { id: true, text: true },
+  });
+  if (!material) return jsonError("Material not found", 404);
+  if (!material.text.trim()) return jsonError("This material has no text to generate from", 422);
 
   const model = process.env.OPENROUTER_MODEL_QUIZ ?? "meta-llama/llama-3.3-70b-instruct:free";
 
@@ -21,14 +24,14 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     const raw = await callLLMJSON({
       model,
       systemPrompt: QUIZ_SYSTEM_PROMPT,
-      userPrompt: buildQuizUserPrompt(page.notes.markdown),
+      userPrompt: buildQuizUserPrompt(material.text.slice(0, MAX_PROMPT_CHARS)),
     });
     const parsed = await quizResponseSchema.parseAsync(raw);
 
-    await db.quizQuestion.deleteMany({ where: { pageId: id } });
+    await db.quizQuestion.deleteMany({ where: { materialId: id } });
     await db.quizQuestion.createMany({
       data: parsed.questions.map((q) => ({
-        ...assertSingleParent({ pageId: id }),
+        ...assertSingleParent({ materialId: id }),
         type: q.type,
         prompt: q.prompt,
         correctAnswer: q.correctAnswer,
@@ -37,13 +40,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       })),
     });
 
-    const flashcardCount = await db.flashcard.count({ where: { pageId: id } });
-    const updated = await db.page.update({
-      where: { id },
-      data: { errorMessage: null, status: flashcardCount > 0 ? "READY" : "GENERATING_GUIDE" },
-    });
-
-    return NextResponse.json({ page: updated });
+    return NextResponse.json({ count: parsed.questions.length });
   } catch (e) {
     const message =
       e instanceof ZodError
@@ -51,7 +48,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         : e instanceof Error
           ? e.message
           : "Quiz generation failed";
-    await db.page.update({ where: { id }, data: { status: "ERROR", errorMessage: message } });
     return jsonError(message, 502);
   }
 }

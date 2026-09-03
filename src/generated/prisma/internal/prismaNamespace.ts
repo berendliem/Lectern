@@ -398,7 +398,8 @@ export const ModelName = {
   DictionaryTerm: 'DictionaryTerm',
   ActionItem: 'ActionItem',
   Tag: 'Tag',
-  TagsOnPages: 'TagsOnPages'
+  TagsOnPages: 'TagsOnPages',
+  Chunk: 'Chunk'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -414,7 +415,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "folder" | "material" | "page" | "transcript" | "notes" | "flashcard" | "reviewLog" | "quizQuestion" | "quizAttempt" | "interviewSession" | "interviewTurn" | "dictionaryTerm" | "actionItem" | "tag" | "tagsOnPages"
+    modelProps: "folder" | "material" | "page" | "transcript" | "notes" | "flashcard" | "reviewLog" | "quizQuestion" | "quizAttempt" | "interviewSession" | "interviewTurn" | "dictionaryTerm" | "actionItem" | "tag" | "tagsOnPages" | "chunk"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1528,6 +1529,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Chunk: {
+      payload: Prisma.$ChunkPayload<ExtArgs>
+      fields: Prisma.ChunkFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ChunkFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ChunkFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>
+        }
+        findFirst: {
+          args: Prisma.ChunkFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ChunkFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>
+        }
+        findMany: {
+          args: Prisma.ChunkFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>[]
+        }
+        create: {
+          args: Prisma.ChunkCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>
+        }
+        createMany: {
+          args: Prisma.ChunkCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ChunkCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>[]
+        }
+        delete: {
+          args: Prisma.ChunkDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>
+        }
+        update: {
+          args: Prisma.ChunkUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>
+        }
+        deleteMany: {
+          args: Prisma.ChunkDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ChunkUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ChunkUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>[]
+        }
+        upsert: {
+          args: Prisma.ChunkUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ChunkPayload>
+        }
+        aggregate: {
+          args: Prisma.ChunkAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateChunk>
+        }
+        groupBy: {
+          args: Prisma.ChunkGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChunkGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ChunkCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ChunkCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1638,6 +1713,7 @@ export type NotesScalarFieldEnum = (typeof NotesScalarFieldEnum)[keyof typeof No
 export const FlashcardScalarFieldEnum = {
   id: 'id',
   pageId: 'pageId',
+  materialId: 'materialId',
   prompt: 'prompt',
   idealExplanation: 'idealExplanation',
   sourceTerm: 'sourceTerm',
@@ -1665,6 +1741,7 @@ export type ReviewLogScalarFieldEnum = (typeof ReviewLogScalarFieldEnum)[keyof t
 export const QuizQuestionScalarFieldEnum = {
   id: 'id',
   pageId: 'pageId',
+  materialId: 'materialId',
   type: 'type',
   prompt: 'prompt',
   correctAnswer: 'correctAnswer',
@@ -1752,6 +1829,22 @@ export const TagsOnPagesScalarFieldEnum = {
 } as const
 
 export type TagsOnPagesScalarFieldEnum = (typeof TagsOnPagesScalarFieldEnum)[keyof typeof TagsOnPagesScalarFieldEnum]
+
+
+export const ChunkScalarFieldEnum = {
+  id: 'id',
+  source: 'source',
+  pageId: 'pageId',
+  materialId: 'materialId',
+  ord: 'ord',
+  text: 'text',
+  vector: 'vector',
+  hash: 'hash',
+  model: 'model',
+  createdAt: 'createdAt'
+} as const
+
+export type ChunkScalarFieldEnum = (typeof ChunkScalarFieldEnum)[keyof typeof ChunkScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1850,6 +1943,20 @@ export type EnumInterviewStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$
  * Reference to a field of type 'ActionKind'
  */
 export type EnumActionKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActionKind'>
+    
+
+
+/**
+ * Reference to a field of type 'ChunkSource'
+ */
+export type EnumChunkSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ChunkSource'>
+    
+
+
+/**
+ * Reference to a field of type 'Bytes'
+ */
+export type BytesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Bytes'>
     
 
 /**
@@ -1977,6 +2084,7 @@ export type GlobalOmitConfig = {
   actionItem?: Prisma.ActionItemOmit
   tag?: Prisma.TagOmit
   tagsOnPages?: Prisma.TagsOnPagesOmit
+  chunk?: Prisma.ChunkOmit
 }
 
 /* Types for Logging */

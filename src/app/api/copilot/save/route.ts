@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { saveSessionSchema } from "@/lib/copilot";
 import { upsertSearchIndex } from "@/lib/fts";
+import { indexSourceSafely } from "@/lib/embeddings";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -26,6 +27,8 @@ export async function POST(req: NextRequest) {
     });
 
     await upsertSearchIndex(page.id);
+
+    await indexSourceSafely({ pageId: page.id });
 
     return NextResponse.json({ pageId: page.id }, { status: 201 });
   } catch {

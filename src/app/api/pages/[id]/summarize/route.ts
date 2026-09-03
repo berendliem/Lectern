@@ -14,6 +14,7 @@ import {
 import { splitTextIntoChunks } from "@/lib/text-chunks";
 import { summaryResponseSchema } from "@/lib/validation";
 import { upsertSearchIndex } from "@/lib/fts";
+import { indexSourceSafely } from "@/lib/embeddings";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -89,6 +90,8 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       data: { status: "SUMMARIZED", errorMessage: null },
     });
     await upsertSearchIndex(id);
+
+    await indexSourceSafely({ pageId: id });
 
     return NextResponse.json({ page: updated });
   } catch (e) {
