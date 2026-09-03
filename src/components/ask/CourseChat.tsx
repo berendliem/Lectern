@@ -65,7 +65,8 @@ export function CourseChat({ folderId }: { folderId: string }) {
 
       {degraded && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12.5px] text-amber-800">
-          Semantic search is unavailable, so this answer used keyword search instead. Run{" "}
+          Semantic search is unavailable, so this answer used keyword search over this
+          course&apos;s lectures only — uploaded materials aren&apos;t searched in this mode. Run{" "}
           <code className="font-mono">npm run reindex</code> to rebuild the index.
         </p>
       )}
