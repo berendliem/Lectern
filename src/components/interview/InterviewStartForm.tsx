@@ -6,9 +6,16 @@ import { Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 
-export function InterviewStartForm() {
-  const [topic, setTopic] = useState("");
-  const [title, setTitle] = useState("");
+export function InterviewStartForm({
+  initialTopic = "",
+  initialTitle = "",
+}: {
+  /** Pre-filled when the interview was launched from a course. */
+  initialTopic?: string;
+  initialTitle?: string;
+}) {
+  const [topic, setTopic] = useState(initialTopic);
+  const [title, setTitle] = useState(initialTitle);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();

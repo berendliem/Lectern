@@ -7,11 +7,35 @@ import { shortDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function InterviewHubPage() {
-  const sessions = await db.interviewSession.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { turns: true } } },
-  });
+// Syllabus topics handed to the interviewer as the subject. More than this
+// stops being a subject and starts being the whole course.
+const MAX_TOPICS = 12;
+
+export default async function InterviewHubPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ folderId?: string }>;
+}) {
+  const { folderId } = await searchParams;
+  const [sessions, course] = await Promise.all([
+    db.interviewSession.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { turns: true } } },
+    }),
+    folderId
+      ? db.folder.findUnique({
+          where: { id: folderId },
+          select: { name: true, topics: { orderBy: { order: "asc" }, select: { title: true } } },
+        })
+      : null,
+  ]);
+
+  const topics = course?.topics.slice(0, MAX_TOPICS).map((t) => t.title) ?? [];
+  const initialTopic = course
+    ? topics.length > 0
+      ? `Grill me on the course "${course.name}", covering: ${topics.join("; ")}.`
+      : `Grill me on the course "${course.name}".`
+    : "";
 
   return (
     <div className="flex flex-col gap-6">
@@ -22,7 +46,10 @@ export default async function InterviewHubPage() {
         </p>
       </div>
 
-      <InterviewStartForm />
+      <InterviewStartForm
+        initialTopic={initialTopic}
+        initialTitle={course ? `${course.name} interview` : ""}
+      />
 
       <div className="flex flex-col gap-2">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Past interviews</h2>

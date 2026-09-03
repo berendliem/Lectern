@@ -38,10 +38,21 @@ function pickMime(): string | undefined {
   return MIME_CANDIDATES.find((t) => MediaRecorder.isTypeSupported(t));
 }
 
-export function FeynmanCoach() {
+export function FeynmanCoach({
+  suggestions = EXAMPLES,
+  initialReference = "",
+  contextLabel,
+}: {
+  /** Concepts to offer as one-click starters — a lecture's key terms or a course's syllabus topics. */
+  suggestions?: string[];
+  /** Pre-filled ground truth, e.g. the lecture's notes. */
+  initialReference?: string;
+  /** "Lecture 4 — Recursion", shown so it's obvious what the coach is grading against. */
+  contextLabel?: string;
+}) {
   const [concept, setConcept] = useState("");
-  const [reference, setReference] = useState("");
-  const [showReference, setShowReference] = useState(false);
+  const [reference, setReference] = useState(initialReference);
+  const [showReference, setShowReference] = useState(initialReference.length > 0);
   const [explanation, setExplanation] = useState("");
   const [rounds, setRounds] = useState<Round[]>([]);
   const [loading, setLoading] = useState(false);
@@ -150,6 +161,11 @@ export function FeynmanCoach() {
           If you can&apos;t explain it simply, you don&apos;t understand it yet. Explain a concept in plain words — by voice
           or text — and get scored on clarity, gaps, and hidden jargon.
         </p>
+        {contextLabel && (
+          <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-[12.5px] font-medium text-brand">
+            <BookOpen className="h-3.5 w-3.5" strokeWidth={2.2} /> {contextLabel}
+          </p>
+        )}
       </div>
 
       {/* Concept + optional reference */}
@@ -164,9 +180,9 @@ export function FeynmanCoach() {
           />
         </label>
 
-        {!started && (
+        {!started && suggestions.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {EXAMPLES.map((ex) => (
+            {suggestions.map((ex) => (
               <button
                 key={ex}
                 onClick={() => setConcept(ex)}
