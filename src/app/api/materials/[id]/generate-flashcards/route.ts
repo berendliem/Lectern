@@ -16,7 +16,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const material = await db.material.findUnique({
     where: { id },
-    select: { id: true, title: true, text: true },
+    select: { id: true, text: true },
   });
   if (!material) return jsonError("Material not found", 404);
   if (!material.text.trim()) return jsonError("This material has no text to generate from", 422);

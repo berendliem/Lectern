@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCheck, PartyPopper } from "lucide-react";
 import { FlashcardFlip } from "@/components/flashcards/FlashcardFlip";
 import { ReviewGradeButtons } from "@/components/review/ReviewGradeButtons";
+import { cardSource } from "@/lib/cards";
 
 type DueCard = {
   id: string;
@@ -74,7 +75,10 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
           <p className="text-sm font-medium text-zinc-700">
             Session complete — {reviewedCount} card{reviewedCount === 1 ? "" : "s"} reviewed.
           </p>
-          <Link href="/" className="mt-1 inline-block text-[13px] font-medium text-brand hover:underline">
+          <Link
+            href={folderId ? `/folders/${folderId}` : "/"}
+            className="mt-1 inline-block text-[13px] font-medium text-brand hover:underline"
+          >
             Back to your library
           </Link>
         </div>
@@ -92,15 +96,20 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
           <span>
             Card {index + 1} of {cards.length}
           </span>
-          {card.page ? (
-            <Link href={`/pages/${card.page.id}`} className="truncate font-medium hover:text-brand">
-              {card.page.title}
-            </Link>
-          ) : card.material ? (
-            <span className="truncate font-medium">{card.material.title}</span>
-          ) : (
-            <span className="truncate font-medium text-zinc-400">Unknown source</span>
-          )}
+          {(() => {
+            const source = cardSource(card);
+            if (source?.kind === "lecture") {
+              return (
+                <Link href={`/pages/${source.id}`} className="truncate font-medium hover:text-brand">
+                  {source.title}
+                </Link>
+              );
+            }
+            if (source) {
+              return <span className="truncate font-medium">{source.title}</span>;
+            }
+            return <span className="truncate font-medium text-zinc-400">Unknown source</span>;
+          })()}
         </div>
         <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
           <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />

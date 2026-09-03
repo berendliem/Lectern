@@ -49,13 +49,26 @@ async function main() {
   }
 
   // Anything still tagged with another model belongs to content that no longer
-  // exists; leaving it would keep it invisible but occupying space.
-  const orphaned = await db.chunk.deleteMany({ where: { model: { not: model } } });
+  // exists; leaving it would keep it invisible but occupying space. Only safe
+  // to sweep when every source was re-embedded — otherwise a source that
+  // failed above would lose its old (stale but present) index entirely,
+  // trading a stale index for no index.
+  let orphanedCount = 0;
+  if (failed === 0) {
+    orphanedCount = (await db.chunk.deleteMany({ where: { model: { not: model } } })).count;
+  } else {
+    console.log(`Skipping stale-row cleanup: ${failed} source(s) failed this run.`);
+  }
 
   console.log(
-    `\nDone: ${indexed} chunks embedded, ${skipped} reused, ${orphaned.count} stale rows removed, ${failed} sources failed.`
+    `\nDone: ${indexed} chunks embedded, ${skipped} reused, ${orphanedCount} stale rows removed, ${failed} sources failed.`
   );
   if (failed > 0) process.exitCode = 1;
 }
 
-main().finally(() => db.$disconnect());
+main()
+  .catch((e) => {
+    console.error("Reindex failed:", e instanceof Error ? e.message : e);
+    process.exitCode = 1;
+  })
+  .finally(() => db.$disconnect());
