@@ -24,6 +24,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await db.courseTopic.delete({ where: { id } });
+  // deleteMany rather than delete: deleting an already-deleted topic (a
+  // double-click, or a second tab) is a no-op, not a 500.
+  await db.courseTopic.deleteMany({ where: { id } });
   return NextResponse.json({ ok: true });
 }
