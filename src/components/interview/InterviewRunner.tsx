@@ -148,11 +148,11 @@ export function InterviewRunner({
     return (
       <div className="flex flex-col gap-5">
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-brand-border bg-gradient-to-br from-brand-soft to-lavender-soft/60 px-4 py-8 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-brand shadow-sm">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-brand shadow-sm">
             <Trophy className="h-6 w-6" strokeWidth={2} />
           </span>
-          <p className="text-lg font-semibold text-zinc-900">Interview complete</p>
-          <p className="text-sm text-zinc-600">
+          <p className="text-lg font-semibold text-ink">Interview complete</p>
+          <p className="text-sm text-ink-soft">
             {history.length} question{history.length === 1 ? "" : "s"} · average score{" "}
             <span className="font-semibold text-brand">{avg.toFixed(1)}/5</span>
           </p>
@@ -170,7 +170,7 @@ export function InterviewRunner({
   }
 
   if (!current) {
-    return <p className="text-sm text-zinc-400">Loading…</p>;
+    return <p className="text-sm text-muted-2">Loading…</p>;
   }
 
   const answeredCount = history.length;
@@ -178,13 +178,13 @@ export function InterviewRunner({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <div className="mb-1.5 flex items-center justify-between text-xs text-zinc-400">
+        <div className="mb-1.5 flex items-center justify-between text-xs text-muted-2">
           <span>
             Question {answeredCount + 1} of {totalQuestions}
           </span>
           <span className="truncate font-medium">{title}</span>
         </div>
-        <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
+        <div className="h-1 w-full overflow-hidden rounded-full bg-surface-3">
           <div
             className="h-full rounded-full bg-gradient-to-r from-brand to-[#9b5cff] transition-all"
             style={{ width: `${(answeredCount / totalQuestions) * 100}%` }}
@@ -192,9 +192,9 @@ export function InterviewRunner({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-6">
+      <div className="rounded-2xl border border-line/80 bg-surface p-6">
         <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand">Interviewer</p>
-        <p className="text-lg leading-7 text-zinc-900">{current.question}</p>
+        <p className="text-lg leading-7 text-ink">{current.question}</p>
       </div>
 
       {reviewing ? (
@@ -241,9 +241,9 @@ export function InterviewRunner({
 function FeedbackBlock({ feedback }: { feedback: InterviewFeedback }) {
   const [showModel, setShowModel] = useState(false);
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200/80 bg-white p-5">
+    <div className="flex flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-zinc-900">Feedback</p>
+        <p className="text-sm font-semibold text-ink">Feedback</p>
         <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-semibold text-brand">
           {feedback.score}/5
         </span>
@@ -253,7 +253,7 @@ function FeedbackBlock({ feedback }: { feedback: InterviewFeedback }) {
           <p className="mb-1.5 text-xs font-semibold text-moss-ink">Strengths</p>
           <ul className="flex flex-col gap-1">
             {feedback.strengths.map((s, i) => (
-              <li key={i} className="flex gap-1.5 text-[13px] leading-5 text-zinc-700">
+              <li key={i} className="flex gap-1.5 text-[13px] leading-5 text-ink-soft">
                 <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-moss-ink" strokeWidth={2.5} />
                 {s}
               </li>
@@ -264,7 +264,7 @@ function FeedbackBlock({ feedback }: { feedback: InterviewFeedback }) {
           <p className="mb-1.5 text-xs font-semibold text-daisy-ink">To improve</p>
           <ul className="flex flex-col gap-1">
             {feedback.improvements.map((s, i) => (
-              <li key={i} className="flex gap-1.5 text-[13px] leading-5 text-zinc-700">
+              <li key={i} className="flex gap-1.5 text-[13px] leading-5 text-ink-soft">
                 <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-daisy-ink" strokeWidth={2} />
                 {s}
               </li>
@@ -279,7 +279,7 @@ function FeedbackBlock({ feedback }: { feedback: InterviewFeedback }) {
         <ChevronDown className={clsx("h-4 w-4 transition-transform", showModel && "rotate-180")} strokeWidth={2} />
         {showModel ? "Hide model answer" : "Show model answer"}
       </button>
-      {showModel && <p className="rounded-xl bg-zinc-50 p-3 text-[13px] leading-6 text-zinc-700">{feedback.modelAnswer}</p>}
+      {showModel && <p className="rounded-xl bg-surface-2 p-3 text-[13px] leading-6 text-ink-soft">{feedback.modelAnswer}</p>}
     </div>
   );
 }
@@ -296,17 +296,17 @@ function ReviewCard({
   feedback: InterviewFeedback;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4">
+    <div className="rounded-2xl border border-line/80 bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-zinc-900">
-          <span className="text-zinc-400">Q{index + 1}.</span> {question}
+        <p className="text-sm font-medium text-ink">
+          <span className="text-muted-2">Q{index + 1}.</span> {question}
         </p>
         <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand">
           {feedback.score}/5
         </span>
       </div>
-      <p className="mt-2 text-[13px] leading-5 text-zinc-500">
-        <span className="font-medium text-zinc-600">Your answer:</span> {answer}
+      <p className="mt-2 text-[13px] leading-5 text-muted">
+        <span className="font-medium text-ink-soft">Your answer:</span> {answer}
       </p>
     </div>
   );

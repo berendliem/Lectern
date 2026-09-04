@@ -60,24 +60,24 @@ export function LibraryChat() {
           <BrainCircuit className="h-6 w-6 text-brand" strokeWidth={2.2} />
           Ask all courses
         </h1>
-        <p className="mt-0.5 text-[13px] text-zinc-500">
+        <p className="mt-0.5 text-[13px] text-muted">
           One assistant across every lecture you&apos;ve captured. It finds the relevant notes and answers with citations.
         </p>
       </div>
 
-      <div className="flex min-h-[24rem] flex-col gap-3 rounded-2xl border border-zinc-200/80 bg-white p-4">
+      <div className="flex min-h-[24rem] flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-4">
         {messages.length === 0 && (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
               <BrainCircuit className="h-5 w-5" strokeWidth={2} />
             </span>
-            <p className="text-[13px] text-zinc-400">Ask anything spanning your whole library.</p>
+            <p className="text-[13px] text-muted-2">Ask anything spanning your whole library.</p>
             <div className="flex flex-wrap justify-center gap-1.5">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-600 transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand"
+                  className="rounded-full border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand"
                 >
                   {s}
                 </button>
@@ -91,7 +91,7 @@ export function LibraryChat() {
             <div
               className={clsx(
                 "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[13.5px] leading-6",
-                m.role === "user" ? "rounded-br-md bg-zinc-900 text-white" : "rounded-bl-md bg-zinc-100 text-zinc-800"
+                m.role === "user" ? "rounded-br-md bg-ink text-surface" : "rounded-bl-md bg-surface-3 text-ink"
               )}
             >
               {m.content}
@@ -114,7 +114,7 @@ export function LibraryChat() {
         ))}
 
         {sending && (
-          <div className="flex items-center gap-2 self-start rounded-2xl rounded-bl-md bg-zinc-100 px-3.5 py-2 text-[13px] text-zinc-500">
+          <div className="flex items-center gap-2 self-start rounded-2xl rounded-bl-md bg-surface-3 px-3.5 py-2 text-[13px] text-muted">
             <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.2} /> Searching your notes…
           </div>
         )}
@@ -134,7 +134,7 @@ export function LibraryChat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask across all your lectures…"
-          className="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+          className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
         />
         <button
           type="submit"

@@ -16,12 +16,12 @@ function SuggestionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4">
+    <div className="rounded-2xl border border-line/80 bg-surface p-4">
       <div className="flex items-center gap-2">
         <span className={clsx("flex h-7 w-7 shrink-0 items-center justify-center rounded-lg", iconClasses)}>
           {icon}
         </span>
-        <h3 className="text-sm font-semibold text-zinc-900">{title}</h3>
+        <h3 className="text-sm font-semibold text-ink">{title}</h3>
       </div>
       <div className="mt-3">{children}</div>
     </div>
@@ -29,7 +29,7 @@ function SuggestionCard({
 }
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
-  return <p className="text-[13px] text-zinc-400">{children}</p>;
+  return <p className="text-[13px] text-muted-2">{children}</p>;
 }
 
 export function SuggestionsPanel({
@@ -56,7 +56,7 @@ export function SuggestionsPanel({
         iconClasses="bg-daisy-soft text-daisy-ink"
       >
         {suggestion && suggestion.talkingPoints.length > 0 ? (
-          <ul className="flex flex-col gap-1.5 text-[13.5px] leading-5 text-zinc-700">
+          <ul className="flex flex-col gap-1.5 text-[13.5px] leading-5 text-ink-soft">
             {suggestion.talkingPoints.map((point, i) => (
               <li key={i} className="flex gap-2">
                 <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-daisy-ink" />
@@ -77,7 +77,7 @@ export function SuggestionsPanel({
         iconClasses="bg-lavender-soft text-lavender-ink"
       >
         {suggestion && suggestion.followUps.length > 0 ? (
-          <ul className="flex flex-col gap-1.5 text-[13.5px] leading-5 text-zinc-700">
+          <ul className="flex flex-col gap-1.5 text-[13.5px] leading-5 text-ink-soft">
             {suggestion.followUps.map((question, i) => (
               <li key={i} className="flex gap-2">
                 <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-lavender-ink" />
@@ -98,14 +98,14 @@ export function SuggestionsPanel({
         iconClasses="bg-moss-soft text-moss-ink"
       >
         {suggestion?.summary ? (
-          <p className="text-[13.5px] leading-5 text-zinc-700">{suggestion.summary}</p>
+          <p className="text-[13.5px] leading-5 text-ink-soft">{suggestion.summary}</p>
         ) : (
           <EmptyHint>{loading ? "Thinking…" : "A running summary will appear here."}</EmptyHint>
         )}
       </SuggestionCard>
 
       {loading && (
-        <div className="flex items-center gap-1.5 text-[12.5px] text-zinc-400">
+        <div className="flex items-center gap-1.5 text-[12.5px] text-muted-2">
           <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
           Updating suggestions…
         </div>

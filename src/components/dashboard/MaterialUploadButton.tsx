@@ -137,7 +137,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
       </Button>
       <Modal open={open} onClose={close} title="Add course material">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="flex gap-1 rounded-lg border border-zinc-200 p-0.5 text-[12.5px] font-medium">
+          <div className="flex gap-1 rounded-lg border border-line p-0.5 text-[12.5px] font-medium">
             {KINDS.map((k) => (
               <button
                 key={k.value}
@@ -146,7 +146,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
                 className={
                   kind === k.value
                     ? "flex-1 rounded-md bg-brand-soft px-2 py-1 text-brand"
-                    : "flex-1 rounded-md px-2 py-1 text-zinc-500 hover:text-zinc-700"
+                    : "flex-1 rounded-md px-2 py-1 text-muted hover:text-ink-soft"
                 }
               >
                 {k.label}
@@ -165,7 +165,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 px-4 py-3 text-[13px] text-zinc-500 transition-colors hover:border-brand-border hover:bg-brand-soft/40"
+            className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-line-strong px-4 py-3 text-[13px] text-muted transition-colors hover:border-brand-border hover:bg-brand-soft/40"
           >
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />
@@ -187,7 +187,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
           />
 
           {text && (
-            <p className="text-[12.5px] text-zinc-500">
+            <p className="text-[12.5px] text-muted">
               {slideCount !== null ? `${slideCount} slides · ` : ""}
               {text.length.toLocaleString()} characters extracted in your browser. The file itself is
               never uploaded.

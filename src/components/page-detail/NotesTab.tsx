@@ -152,7 +152,7 @@ export function NotesTab({
     <div className="flex flex-col gap-4">
       <form
         onSubmit={applyEdit}
-        className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3"
+        className="flex flex-col gap-2 rounded-xl border border-line bg-surface-2/60 p-3"
       >
         <div className="flex items-center gap-2">
           <Wand2 className="h-4 w-4 shrink-0 text-brand" strokeWidth={2.2} />
@@ -165,7 +165,7 @@ export function NotesTab({
                 : 'Edit the notes… e.g. "add a summary at the top", "simplify the jargon"'
             }
             maxLength={500}
-            className="min-w-0 flex-1 bg-transparent text-sm text-zinc-800 outline-none placeholder:text-zinc-400"
+            className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted-2"
           />
           <button
             type="button"
@@ -174,7 +174,7 @@ export function NotesTab({
             className={
               recording
                 ? "rounded-lg bg-red-100 p-1.5 text-red-600"
-                : "rounded-lg p-1.5 text-zinc-400 transition-colors hover:bg-zinc-200/60 hover:text-zinc-700"
+                : "rounded-lg p-1.5 text-muted-2 transition-colors hover:bg-surface-3 hover:text-ink-soft"
             }
             aria-label={recording ? "Stop voice instruction" : "Speak the instruction"}
             title="Speak the instruction (transcribed locally)"
@@ -198,13 +198,13 @@ export function NotesTab({
           )}
         </div>
         {selectedText && (
-          <div className="flex items-center gap-1.5 text-[12.5px] text-zinc-500">
-            <span className="shrink-0 font-medium text-zinc-600">Selection:</span>
+          <div className="flex items-center gap-1.5 text-[12.5px] text-muted">
+            <span className="shrink-0 font-medium text-ink-soft">Selection:</span>
             <span className="truncate">“{selectedText}”</span>
             <button
               type="button"
               onClick={() => setSelectedText(null)}
-              className="rounded p-0.5 text-zinc-400 hover:bg-zinc-200/60 hover:text-zinc-700"
+              className="rounded p-0.5 text-muted-2 hover:bg-surface-3 hover:text-ink-soft"
               aria-label="Clear selection"
             >
               <X className="h-3.5 w-3.5" strokeWidth={2.2} />

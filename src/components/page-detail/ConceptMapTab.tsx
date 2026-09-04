@@ -100,13 +100,13 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
 
   if (!hasMaterial) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 px-4 py-14 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-4 py-14 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
           <Waypoints className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
-          <p className="text-sm font-medium text-zinc-700">Nothing to map yet</p>
-          <p className="mt-1 text-[13px] text-zinc-400">
+          <p className="text-sm font-medium text-ink-soft">Nothing to map yet</p>
+          <p className="mt-1 text-[13px] text-muted-2">
             Transcribe the lecture first — then generate a map of how its concepts connect.
           </p>
         </div>
@@ -116,13 +116,13 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
 
   if (!map) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-zinc-200/80 bg-white px-4 py-14 text-center">
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-line/80 bg-surface px-4 py-14 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
           <Waypoints className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
-          <p className="text-sm font-medium text-zinc-700">See how the ideas connect</p>
-          <p className="mt-1 text-[13px] text-zinc-400">
+          <p className="text-sm font-medium text-ink-soft">See how the ideas connect</p>
+          <p className="mt-1 text-[13px] text-muted-2">
             AI extracts the lecture&apos;s key concepts and draws the relationships between them.
           </p>
         </div>
@@ -142,13 +142,13 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-[13px] text-zinc-500">
+        <p className="text-[13px] text-muted">
           Hover a concept to spotlight its connections. Click Regenerate for a fresh take.
         </p>
         <button
           onClick={generate}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-[13px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2 disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.2} /> : <RefreshCw className="h-3.5 w-3.5" strokeWidth={2.2} />}
           Regenerate
@@ -156,7 +156,7 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200/80 bg-white">
+      <div className="overflow-hidden rounded-xl border border-line/80 bg-surface">
         <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" onMouseLeave={() => setHovered(null)}>
           {/* Edges under nodes */}
           {map.edges.map((edge, i) => {

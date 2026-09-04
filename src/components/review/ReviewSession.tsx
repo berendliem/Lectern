@@ -48,18 +48,18 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
   }
 
   if (cards === null) {
-    return <p className="text-sm text-zinc-400">Loading…</p>;
+    return <p className="text-sm text-muted-2">Loading…</p>;
   }
 
   if (cards.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 px-4 py-16 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-4 py-16 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-moss-soft text-moss-ink">
           <CheckCheck className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
-          <p className="text-sm font-medium text-zinc-700">All caught up</p>
-          <p className="mt-1 text-[13px] text-zinc-400">No cards are due right now — come back later.</p>
+          <p className="text-sm font-medium text-ink-soft">All caught up</p>
+          <p className="mt-1 text-[13px] text-muted-2">No cards are due right now — come back later.</p>
         </div>
       </div>
     );
@@ -67,12 +67,12 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
 
   if (index >= cards.length) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-300 px-4 py-16 text-center">
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-4 py-16 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
           <PartyPopper className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
-          <p className="text-sm font-medium text-zinc-700">
+          <p className="text-sm font-medium text-ink-soft">
             Session complete — {reviewedCount} card{reviewedCount === 1 ? "" : "s"} reviewed.
           </p>
           <Link
@@ -92,7 +92,7 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5">
       <div className="w-full">
-        <div className="mb-1.5 flex items-center justify-between text-xs text-zinc-400">
+        <div className="mb-1.5 flex items-center justify-between text-xs text-muted-2">
           <span>
             Card {index + 1} of {cards.length}
           </span>
@@ -108,10 +108,10 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
             if (source) {
               return <span className="truncate font-medium">{source.title}</span>;
             }
-            return <span className="truncate font-medium text-zinc-400">Unknown source</span>;
+            return <span className="truncate font-medium text-muted-2">Unknown source</span>;
           })()}
         </div>
-        <div className="h-1 w-full overflow-hidden rounded-full bg-zinc-100">
+        <div className="h-1 w-full overflow-hidden rounded-full bg-surface-3">
           <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
         </div>
       </div>

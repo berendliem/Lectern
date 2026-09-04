@@ -66,7 +66,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
 
   if (materials.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-zinc-300 px-4 py-14 text-center text-sm text-zinc-400">
+      <div className="rounded-2xl border border-dashed border-line-strong px-4 py-14 text-center text-sm text-muted-2">
         No materials yet. Add the syllabus and the lecturer&apos;s slides so this course knows what it
         covers.
       </div>
@@ -82,14 +82,14 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
           return (
             <li
               key={material.id}
-              className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3"
+              className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
                 <Icon className="h-4 w-4" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-900">{material.title}</p>
-                <p className="truncate text-[12.5px] text-zinc-400">
+                <p className="truncate text-sm font-medium text-ink">{material.title}</p>
+                <p className="truncate text-[12.5px] text-muted-2">
                   {material.kind.toLowerCase()}
                   {material.slideCount !== null ? ` · ${material.slideCount} slides` : ""}
                   {material.sourceFileName ? ` · ${material.sourceFileName}` : ""}
@@ -99,7 +99,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
               <button
                 onClick={() => generate(material.id, "flashcards")}
                 disabled={generating !== null}
-                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-zinc-500 transition-colors hover:bg-brand-soft/50 hover:text-brand disabled:opacity-50"
+                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand disabled:opacity-50"
               >
                 {generating === `${material.id}:flashcards`
                   ? "Generating…"
@@ -110,7 +110,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
               <button
                 onClick={() => generate(material.id, "quiz")}
                 disabled={generating !== null}
-                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-zinc-500 transition-colors hover:bg-brand-soft/50 hover:text-brand disabled:opacity-50"
+                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand disabled:opacity-50"
               >
                 {generating === `${material.id}:quiz`
                   ? "Generating…"
@@ -122,7 +122,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                 onClick={() => remove(material.id)}
                 disabled={deleting === material.id}
                 aria-label={`Delete ${material.title}`}
-                className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                className="rounded-md p-1.5 text-muted-2 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
               >
                 <Trash2 className="h-4 w-4" strokeWidth={2} />
               </button>

@@ -157,7 +157,7 @@ export function FeynmanCoach({
           <Lightbulb className="h-6 w-6 text-brand" strokeWidth={2.2} />
           Feynman coach
         </h1>
-        <p className="mt-0.5 text-[13px] text-zinc-500">
+        <p className="mt-0.5 text-[13px] text-muted">
           If you can&apos;t explain it simply, you don&apos;t understand it yet. Explain a concept in plain words — by voice
           or text — and get scored on clarity, gaps, and hidden jargon.
         </p>
@@ -169,14 +169,14 @@ export function FeynmanCoach({
       </div>
 
       {/* Concept + optional reference */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200/80 bg-white p-5">
+      <div className="flex flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-5">
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Concept to master</span>
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-2">Concept to master</span>
           <input
             value={concept}
             onChange={(ev) => setConcept(ev.target.value)}
             placeholder="e.g. How does a neural network learn?"
-            className="w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+            className="w-full rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
           />
         </label>
 
@@ -186,7 +186,7 @@ export function FeynmanCoach({
               <button
                 key={ex}
                 onClick={() => setConcept(ex)}
-                className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs text-zinc-600 transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand"
+                className="rounded-full border border-line bg-surface-2 px-3 py-1 text-xs text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand"
               >
                 {ex}
               </button>
@@ -196,7 +196,7 @@ export function FeynmanCoach({
 
         {showReference ? (
           <label className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-2">
               <BookOpen className="h-3.5 w-3.5" strokeWidth={2.2} /> Reference material (optional — the ground truth)
             </span>
             <textarea
@@ -204,7 +204,7 @@ export function FeynmanCoach({
               onChange={(ev) => setReference(ev.target.value)}
               rows={4}
               placeholder="Paste your notes or the textbook passage so the coach can check your explanation for accuracy and completeness…"
-              className="w-full resize-y rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+              className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
             />
           </label>
         ) : (
@@ -220,8 +220,8 @@ export function FeynmanCoach({
       {/* Previous rounds */}
       {rounds.map((round, i) => (
         <div key={i} className="flex flex-col gap-3">
-          <div className="self-end max-w-[90%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-zinc-900 px-4 py-2.5 text-[13.5px] leading-6 text-white">
-            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-white/50">
+          <div className="self-end max-w-[90%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-ink px-4 py-2.5 text-[13.5px] leading-6 text-surface">
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-surface/50">
               Attempt {i + 1}
             </span>
             {round.explanation}
@@ -240,7 +240,7 @@ export function FeynmanCoach({
           onChange={(ev) => setExplanation(ev.target.value)}
           rows={5}
           placeholder="Start explaining… use everyday words and an analogy if you can. Tap the mic to speak instead of type."
-          className="w-full resize-y rounded-xl border border-zinc-300 bg-white px-3.5 py-3 text-sm leading-6 text-zinc-900 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+          className="w-full resize-y rounded-xl border border-line-strong bg-surface px-3.5 py-3 text-sm leading-6 text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
         />
         <div className="flex items-center justify-between gap-3">
           <button
@@ -250,7 +250,7 @@ export function FeynmanCoach({
               "flex items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors disabled:opacity-50",
               recording
                 ? "bg-red-600 text-white hover:bg-red-500"
-                : "border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                : "border border-line bg-surface text-ink-soft hover:border-line-strong hover:bg-surface-2"
             )}
           >
             {transcribing ? (
@@ -341,7 +341,7 @@ function FeedbackList({
       </p>
       <ul className="flex flex-col gap-1">
         {items.map((it, i) => (
-          <li key={i} className="flex gap-2 text-[13.5px] leading-6 text-zinc-700">
+          <li key={i} className="flex gap-2 text-[13.5px] leading-6 text-ink-soft">
             <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-zinc-300" />
             {it}
           </li>
@@ -354,12 +354,12 @@ function FeedbackList({
 function FeedbackCard({ feedback }: { feedback: Feedback }) {
   const band = scoreBand(feedback.score);
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200/80 bg-white p-5">
+    <div className="flex flex-col gap-4 rounded-2xl border border-line/80 bg-surface p-5">
       <div className="flex items-center gap-4">
         <ScoreRing score={feedback.score} />
         <div>
           <p className={clsx("text-sm font-semibold", band.text)}>{band.label}</p>
-          <p className="mt-0.5 text-[13.5px] leading-6 text-zinc-600">{feedback.verdict}</p>
+          <p className="mt-0.5 text-[13.5px] leading-6 text-ink-soft">{feedback.verdict}</p>
         </div>
       </div>
 
@@ -372,7 +372,7 @@ function FeedbackCard({ feedback }: { feedback: Feedback }) {
           <p className="mb-1 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wide text-sky-ink">
             <Lightbulb className="h-3.5 w-3.5" strokeWidth={2.4} /> Push deeper
           </p>
-          <p className="text-[13.5px] leading-6 text-zinc-700">{feedback.followUp}</p>
+          <p className="text-[13.5px] leading-6 text-ink-soft">{feedback.followUp}</p>
         </div>
       )}
     </div>

@@ -91,7 +91,7 @@ export function SyncedTranscriptPlayer({
       />
 
       {/* Player bar */}
-      <div className="flex items-center gap-3 rounded-xl border border-zinc-200/80 bg-white px-4 py-3">
+      <div className="flex items-center gap-3 rounded-xl border border-line/80 bg-surface px-4 py-3">
         <button
           onClick={toggle}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full grad-brand text-white shadow-brand transition-transform hover:scale-105 active:scale-95"
@@ -104,7 +104,7 @@ export function SyncedTranscriptPlayer({
           )}
         </button>
 
-        <span className="w-10 shrink-0 text-right font-mono text-[11.5px] tabular-nums text-zinc-500">
+        <span className="w-10 shrink-0 text-right font-mono text-[11.5px] tabular-nums text-muted">
           {fmt(currentTime)}
         </span>
 
@@ -118,15 +118,15 @@ export function SyncedTranscriptPlayer({
           aria-label="Seek"
           className="h-1.5 w-full cursor-pointer appearance-none rounded-full accent-brand"
           style={{
-            background: `linear-gradient(to right, var(--color-brand) ${progress * 100}%, var(--color-zinc-200, #e4e4e7) ${progress * 100}%)`,
+            background: `linear-gradient(to right, var(--color-brand) ${progress * 100}%, var(--line) ${progress * 100}%)`,
           }}
         />
 
-        <span className="w-10 shrink-0 font-mono text-[11.5px] tabular-nums text-zinc-400">{fmt(effectiveDuration)}</span>
+        <span className="w-10 shrink-0 font-mono text-[11.5px] tabular-nums text-muted-2">{fmt(effectiveDuration)}</span>
 
         <button
           onClick={cycleSpeed}
-          className="shrink-0 rounded-lg border border-zinc-200 px-2 py-1 font-mono text-[11.5px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+          className="shrink-0 rounded-lg border border-line px-2 py-1 font-mono text-[11.5px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2"
           aria-label="Playback speed"
         >
           {SPEEDS[speedIndex]}×
@@ -148,10 +148,10 @@ export function SyncedTranscriptPlayer({
                   "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
                   active
                     ? "border-transparent bg-brand-soft text-brand"
-                    : "border-zinc-200 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50"
+                    : "border-line text-ink-soft hover:border-line-strong hover:bg-surface-2"
                 )}
               >
-                <span className="font-mono text-[11px] text-zinc-400">{fmt(chapter.startSec)}</span>
+                <span className="font-mono text-[11px] text-muted-2">{fmt(chapter.startSec)}</span>
                 {i + 1}. {chapter.title}
               </button>
             );
@@ -174,18 +174,18 @@ export function SyncedTranscriptPlayer({
             onClick={() => seekTo(segment.start, true)}
             className={clsx(
               "flex gap-3 rounded-lg px-2 py-1.5 text-left text-sm leading-6 transition-colors",
-              i === activeIndex ? "bg-brand-soft/70" : "hover:bg-zinc-50"
+              i === activeIndex ? "bg-brand-soft/70" : "hover:bg-surface-2"
             )}
           >
             <span
               className={clsx(
                 "w-14 shrink-0 font-mono text-xs leading-6",
-                i === activeIndex ? "font-semibold text-brand" : "text-zinc-400"
+                i === activeIndex ? "font-semibold text-brand" : "text-muted-2"
               )}
             >
               {fmt(segment.start)}
             </span>
-            <span className={clsx(i === activeIndex ? "text-zinc-900" : "text-zinc-700")}>{segment.text}</span>
+            <span className={clsx(i === activeIndex ? "text-ink" : "text-ink-soft")}>{segment.text}</span>
           </button>
           </Fragment>
         ))}

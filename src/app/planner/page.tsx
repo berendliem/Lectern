@@ -32,7 +32,7 @@ export default async function PlannerPage() {
     <div className="flex max-w-3xl flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gradient">Study planner</h1>
-        <p className="mt-0.5 text-[13px] text-zinc-500">Keep your streak alive and see what&apos;s coming due.</p>
+        <p className="mt-0.5 text-[13px] text-muted">Keep your streak alive and see what&apos;s coming due.</p>
       </div>
 
       {/* Streak hero */}
@@ -41,10 +41,10 @@ export default async function PlannerPage() {
           <Flame className="h-7 w-7" strokeWidth={2} />
         </span>
         <div>
-          <p className="text-3xl font-bold leading-none text-zinc-900">
-            {streak} <span className="text-lg font-semibold text-zinc-500">day{streak === 1 ? "" : "s"}</span>
+          <p className="text-3xl font-bold leading-none text-ink">
+            {streak} <span className="text-lg font-semibold text-muted">day{streak === 1 ? "" : "s"}</span>
           </p>
-          <p className="mt-1 text-[13px] text-zinc-500">
+          <p className="mt-1 text-[13px] text-muted">
             {streak === 0
               ? "Review a card today to start a streak."
               : reviewedToday > 0
@@ -64,12 +64,12 @@ export default async function PlannerPage() {
                 <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
               </span>
               <span>
-                <span className="block text-lg font-semibold leading-6 text-zinc-900">{s.value}</span>
-                <span className="block text-[12.5px] leading-4 text-zinc-500">{s.label}</span>
+                <span className="block text-lg font-semibold leading-6 text-ink">{s.value}</span>
+                <span className="block text-[12.5px] leading-4 text-muted">{s.label}</span>
               </span>
             </>
           );
-          const cls = "flex items-center gap-3 rounded-xl border border-zinc-200/80 bg-white p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]";
+          const cls = "flex items-center gap-3 rounded-xl border border-line/80 bg-surface p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]";
           return s.href ? (
             <Link key={s.label} href={s.href} className={clsx(cls, "transition-colors hover:border-brand-border hover:bg-brand-soft/40")}>
               {inner}
@@ -83,15 +83,15 @@ export default async function PlannerPage() {
       </div>
 
       {/* Upcoming 7-day schedule */}
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-5">
-        <h2 className="mb-4 text-sm font-semibold text-zinc-900">Next 7 days</h2>
+      <div className="rounded-2xl border border-line/80 bg-surface p-5">
+        <h2 className="mb-4 text-sm font-semibold text-ink">Next 7 days</h2>
         <div className="flex flex-col gap-2.5">
           {schedule.map((d) => (
             <div key={d.key} className="flex items-center gap-3">
-              <span className={clsx("w-16 shrink-0 text-[13px]", d.isToday ? "font-semibold text-brand" : "text-zinc-500")}>
+              <span className={clsx("w-16 shrink-0 text-[13px]", d.isToday ? "font-semibold text-brand" : "text-muted")}>
                 {d.label}
               </span>
-              <div className="h-5 flex-1 overflow-hidden rounded-md bg-zinc-100">
+              <div className="h-5 flex-1 overflow-hidden rounded-md bg-surface-3">
                 {d.count > 0 && (
                   <div
                     className="h-full rounded-md grad-brand"
@@ -99,12 +99,12 @@ export default async function PlannerPage() {
                   />
                 )}
               </div>
-              <span className="w-8 shrink-0 text-right text-[13px] tabular-nums text-zinc-500">{d.count}</span>
+              <span className="w-8 shrink-0 text-right text-[13px] tabular-nums text-muted">{d.count}</span>
             </div>
           ))}
         </div>
         {totalCards === 0 && (
-          <p className="mt-4 text-[13px] text-zinc-400">
+          <p className="mt-4 text-[13px] text-muted-2">
             No flashcards yet — generate a learning guide on a lecture to start scheduling reviews.
           </p>
         )}

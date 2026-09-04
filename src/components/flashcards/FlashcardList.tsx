@@ -18,9 +18,9 @@ export function FlashcardList({ flashcards }: { flashcards: FlashcardListItem[] 
         const due = new Date(card.nextReviewAt) <= new Date();
         const mastery = masteryOf(card.repetitions, card.lastReviewedAt);
         return (
-          <li key={card.id} className="rounded-xl border border-zinc-200 bg-white p-3">
+          <li key={card.id} className="rounded-xl border border-line bg-surface p-3">
             <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-medium text-zinc-900">{card.prompt}</p>
+              <p className="text-sm font-medium text-ink">{card.prompt}</p>
               <span className="flex shrink-0 items-center gap-1.5">
                 <span
                   className={clsx(
@@ -35,7 +35,7 @@ export function FlashcardList({ flashcards }: { flashcards: FlashcardListItem[] 
                 </Badge>
               </span>
             </div>
-            <p className="mt-1 text-sm text-zinc-500">{card.idealExplanation}</p>
+            <p className="mt-1 text-sm text-muted">{card.idealExplanation}</p>
           </li>
         );
       })}

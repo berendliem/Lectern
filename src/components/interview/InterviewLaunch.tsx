@@ -31,8 +31,8 @@ export function InterviewLaunch({ pageId, pageTitle }: { pageId: string; pageTit
           <MessagesSquare className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
         <div>
-          <p className="text-sm font-medium text-zinc-900">Get interviewed on this lecture</p>
-          <p className="text-[12.5px] text-zinc-500">An AI interviewer asks adaptive questions and coaches your answers.</p>
+          <p className="text-sm font-medium text-ink">Get interviewed on this lecture</p>
+          <p className="text-[12.5px] text-muted">An AI interviewer asks adaptive questions and coaches your answers.</p>
         </div>
       </div>
       <Button variant="brand" size="sm" onClick={start} disabled={loading}>

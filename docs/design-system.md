@@ -242,12 +242,16 @@ onto the brand and removes the decoration that fights the content.
    the existing topic list, with its text summary (`CourseOverview.tsx`).
 5. **Focus states** — a single gold focus ring token, applied wherever
    `ring-brand-soft` appears.
-6. **Sweep** — every screen at 375px and 1440px, light only (the app has no dark
-   mode and this phase does not add one).
+6. **Sweep** — every screen at 375px and 1440px, in **both** themes.
 
-**Explicitly not in scope:** dark mode, a new typeface, an icon-set change,
-touching the six pastel state families, and any layout restructuring. This phase
-changes colour, not composition.
+**Explicitly not in scope:** a new typeface, an icon-set change, touching the
+six pastel state families, and any layout restructuring. This phase changes
+colour, not composition.
+
+Dark mode is **already shipped** (§9) and is what makes this phase cheaper than
+it looks: every surface now reads its colour from a semantic token, so the
+navy/gold migration is a change to token values plus the gradient call sites,
+not a sweep through 183 hardcoded utility classes.
 
 **Risks**
 
@@ -276,3 +280,55 @@ been checked at both widths.
    icon-only control.
 5. No motion on load; motion only where something changed.
 6. Read the copy back as a sentence a student would say.
+
+
+---
+
+## 9. Themes (shipped)
+
+Light and dark, switched by the control in the header and remembered per
+browser.
+
+**How it works.** The theme's home is a `dark` class on `<html>`. An inline
+script in `layout.tsx` sets it before first paint — from `localStorage`
+(`lectern.theme`), falling back to `prefers-color-scheme` — so a reload never
+flashes the wrong theme. `ThemeToggle.tsx` reads that class through
+`useSyncExternalStore` rather than owning a copy of the state, which is why the
+server-rendered HTML and the hydrated client agree.
+
+**Semantic tokens.** Components no longer name literal colours. Every surface,
+line, and text tone comes from a token that has a value in each theme:
+
+| Token | Light | Dark | Used for |
+|---|---|---|---|
+| `--surface` | `#ffffff` | `#161922` | Cards, rows, panels, inputs |
+| `--surface-2` | `#fafafa` | `#1c202b` | Hover fills, quiet blocks |
+| `--surface-3` | `#f4f4f5` | `#232834` | Chips, assistant bubbles |
+| `--line` | `#e4e4e7` | `#2b3140` | Borders, dividers |
+| `--line-strong` | `#d4d4d8` | `#3a4152` | Hover borders, inputs |
+| `--ink` | `#18181b` | `#f2f3f7` | Primary text |
+| `--ink-soft` | `#3f3f46` | `#d3d6de` | Secondary text |
+| `--muted` / `--muted-2` | `#71717a` / `#a1a1aa` | `#9ba2b0` / `#7b8290` | Labels, metadata |
+| `--background` | `#fbfaff` | `#0d0f16` | Page ground |
+| brand ramp | violet → magenta | lifted violet → magenta | CTAs, active nav |
+
+Three rules fell out of building it, and they are the ones to keep:
+
+1. **A near-black chip is not a colour, it is an inversion.** The chat "you"
+   bubbles were `bg-zinc-900 text-white`; on a dark ground they vanished. They
+   are now `bg-ink text-surface` — the same appearance in light, correctly
+   flipped in dark.
+2. **White is a surface, not a stroke.** The focus timer's ring track was
+   `#ffffff` and blew out in dark; it reads `var(--surface)` now.
+3. **The logo needs a second file, not a filter.** The mark's navy has to lift
+   on a dark ground while the gold stays gold, which no single CSS filter does.
+   `lectern-logo-dark.png` recolours only the navy family; the sidebar swaps the
+   two with `dark:hidden` / `hidden dark:block`.
+
+The violet radial washes on `body` are light-mode only — on a near-black ground
+they turn to smears, so dark mode gets a flat field.
+
+**Still to check** when content exists on screen: the six pastel state families
+were picked against white and are bright on dark. They stay legible (dark ink on
+a pastel fill), but a future pass should give them dark-theme values rather than
+reusing the light ones.

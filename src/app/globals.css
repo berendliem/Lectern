@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* Dark mode is a class on <html>, set before first paint by the inline script
+   in layout.tsx, so a reload never flashes the wrong theme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Brand: an energetic violet→magenta identity on a soft, faintly tinted canvas.
    Pastel content families stay for status/section accents. */
 :root {
@@ -10,20 +14,76 @@
   --brand-from: #7c3aed;
   --brand-mid: #a21caf;
   --brand-to: #db2777;
+
+  /* Semantic surface tokens. Components use these (bg-surface, text-ink,
+     border-line…) instead of literal zinc/white, which is what lets one class
+     on <html> repaint the whole app. */
+  --surface: #ffffff;
+  --surface-2: #fafafa;
+  --surface-3: #f4f4f5;
+  --line: #e4e4e7;
+  --line-strong: #d4d4d8;
+  --ink: #18181b;
+  --ink-soft: #3f3f46;
+  --muted: #71717a;
+  --muted-2: #a1a1aa;
+
+  --brand: #7c3aed;
+  --brand-hover: #6d28d9;
+  --brand-soft: #f2ecff;
+  --brand-border: #ddd0fe;
+}
+
+.dark {
+  --background: #0d0f16;
+  --foreground: #e6e7ec;
+
+  /* The brand ramp lifts in dark: the light-mode violet is too dense to read
+     as a light source against a near-black ground. */
+  --brand-from: #9061f9;
+  --brand-mid: #c026d3;
+  --brand-to: #f0459a;
+
+  --surface: #161922;
+  --surface-2: #1c202b;
+  --surface-3: #232834;
+  --line: #2b3140;
+  --line-strong: #3a4152;
+  --ink: #f2f3f7;
+  --ink-soft: #d3d6de;
+  --muted: #9ba2b0;
+  --muted-2: #7b8290;
+
+  --brand: #a78bfa;
+  --brand-hover: #c4b5fd;
+  --brand-soft: #241d3d;
+  --brand-border: #3b2f63;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-border: var(--brand-border);
+}
+
 @theme {
-  --color-brand: #7c3aed;
-  --color-brand-hover: #6d28d9;
-  --color-brand-soft: #f2ecff;
-  --color-brand-border: #ddd0fe;
 
   /* Pastel families */
   --color-blush: #ffb9ad;
@@ -54,6 +114,12 @@ body {
     var(--background);
   background-attachment: fixed;
   color: var(--foreground);
+}
+
+/* The violet washes are a light-mode device; on a near-black ground they turn
+   into muddy smears, so dark mode gets a flat field instead. */
+.dark body {
+  background: var(--background);
 }
 
 .line-clamp-2 {

@@ -77,7 +77,7 @@ export function PipelineStatusBanner({
 
   if (!hasAudio && !hasTranscript && !hasNotes) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-500">
+      <div className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
         Record or upload lecture audio below — transcription starts automatically once it&apos;s saved.
       </div>
     );
@@ -91,7 +91,7 @@ export function PipelineStatusBanner({
           ? "border-moss bg-moss-soft/40"
           : message && !running
             ? "border-red-200 bg-red-50"
-            : "border-zinc-200 bg-white"
+            : "border-line bg-surface"
       )}
     >
       <div className="flex flex-col gap-2">
@@ -101,7 +101,7 @@ export function PipelineStatusBanner({
             const isRunning = runningStage === stage.id;
             return (
               <li key={stage.id} className="flex items-center gap-1">
-                {i > 0 && <span className="mx-1 h-px w-3.5 bg-zinc-200" aria-hidden="true" />}
+                {i > 0 && <span className="mx-1 h-px w-3.5 bg-line" aria-hidden="true" />}
                 <span
                   className={clsx(
                     "flex items-center gap-1.5 rounded-full py-1 pl-2 pr-2.5 text-xs font-medium",
@@ -109,7 +109,7 @@ export function PipelineStatusBanner({
                       ? "bg-moss-soft text-moss-ink"
                       : isRunning
                         ? "bg-brand-soft text-brand"
-                        : "bg-zinc-100 text-zinc-400"
+                        : "bg-surface-3 text-muted-2"
                   )}
                 >
                   {isDone ? (
