@@ -47,8 +47,9 @@ that it stands out.
 - **Minimum size:** 96px wide / 32px tall. Below that the microphone stem and
   the gap between the book's pages stop resolving. The sidebar renders it at
   `h-12 w-auto` (48px tall, ~144px wide).
-- **Grounds:** white, the sidebar's `from-white to-[#f4efff]` gradient, or navy
-  `#001B42`.
+- **Grounds:** the sidebar's `from-surface to-brand-soft` gradient in either
+  theme, plain white, or navy `#001B42`. On dark grounds use
+  `lectern-logo-dark.png` (§9), never a filter.
 - **Never:** recolour, add a shadow, box it in a coloured chip, set it on a
   mid-tone or busy ground, stretch it, or pair it with a text label — the lockup
   already contains the wordmark.
@@ -133,7 +134,7 @@ institutional voice; the UI does not need a second display face.
 | Page title | `text-2xl font-bold tracking-tight text-gradient` | Drop `text-gradient` → navy. A gradient headline is decoration pretending to be hierarchy |
 | Section heading | `text-[15px] font-semibold` | Keep |
 | Body / row | `text-sm` | Keep |
-| Secondary line | `text-[13px]` / `text-[12.5px]`, zinc-500/400 | Keep |
+| Secondary line | `text-[13px]` / `text-[12.5px]`, `text-muted` / `text-muted-2` | Keep |
 | Eyebrow | `text-[11px] font-semibold uppercase tracking-wider` | Keep **only** where it labels a navigation tier (`GLOBAL`, `YOUR COURSES`). An all-caps eyebrow above ordinary content is template chrome |
 | Numerals | add `tabular-nums` | Keep — counts sit in columns and must not jitter |
 
@@ -146,11 +147,14 @@ already sit inside `max-w-4xl`/`max-w-3xl`; keep new reading surfaces there.
 
 | Element | Recipe (existing) |
 |---|---|
-| List row | `rounded-xl border border-zinc-200 bg-white px-4 py-3` |
-| Panel | `rounded-2xl border border-zinc-200/80 bg-white p-5` |
-| Empty state | `rounded-2xl border border-dashed border-zinc-300 py-14 text-center text-sm text-zinc-400` |
+| List row | `rounded-xl border border-line bg-surface px-4 py-3` |
+| Panel | `rounded-2xl border border-line/80 bg-surface p-5` |
+| Empty state | `rounded-2xl border border-dashed border-line-strong py-14 text-center text-sm text-muted-2` |
 | Primary button | `rounded-lg grad-brand px-3 py-2 text-sm font-medium text-white shadow-brand` → becomes solid navy |
-| Secondary button | `rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600` |
+| Secondary button | `rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft` |
+
+These are the semantic tokens from §9 — a literal `bg-white` or `text-zinc-500`
+in new code is a bug, because it will not follow the theme.
 
 Radii: `lg` for controls, `xl` for rows, `2xl` for panels, `full` for pills. One
 shadow, on primary actions only — under the new palette, `.shadow-brand`'s violet
@@ -273,7 +277,8 @@ been checked at both widths.
 
 1. Reuse a recipe from §4 before writing new classes.
 2. Colour by meaning: navy for ink and action, gold as accent fill, a pastel
-   family for state, zinc for structure.
+   family for state, the `surface`/`line`/`ink` tokens for structure — never a
+   literal zinc or white.
 3. Check contrast on any new colour: 4.5 : 1 body, 3 : 1 large text and
    meaningful icons.
 4. Visible focus ring on every interactive element; `aria-label` on every
