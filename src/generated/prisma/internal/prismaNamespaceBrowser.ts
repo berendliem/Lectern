@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Folder: 'Folder',
   Material: 'Material',
+  CourseTopic: 'CourseTopic',
   Page: 'Page',
   Transcript: 'Transcript',
   Notes: 'Notes',
@@ -107,6 +108,19 @@ export const MaterialScalarFieldEnum = {
 } as const
 
 export type MaterialScalarFieldEnum = (typeof MaterialScalarFieldEnum)[keyof typeof MaterialScalarFieldEnum]
+
+
+export const CourseTopicScalarFieldEnum = {
+  id: 'id',
+  folderId: 'folderId',
+  title: 'title',
+  week: 'week',
+  order: 'order',
+  sourceMaterialId: 'sourceMaterialId',
+  createdAt: 'createdAt'
+} as const
+
+export type CourseTopicScalarFieldEnum = (typeof CourseTopicScalarFieldEnum)[keyof typeof CourseTopicScalarFieldEnum]
 
 
 export const PageScalarFieldEnum = {

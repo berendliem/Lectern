@@ -10,6 +10,7 @@
  */
 export type * from './models/Folder.ts'
 export type * from './models/Material.ts'
+export type * from './models/CourseTopic.ts'
 export type * from './models/Page.ts'
 export type * from './models/Transcript.ts'
 export type * from './models/Notes.ts'

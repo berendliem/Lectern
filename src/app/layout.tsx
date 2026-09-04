@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Notetaker",
-  description: "Local AI notetaker: record lectures, summarize them, and study with a Feynman-style learning guide.",
+  title: "Lectern",
+  description: "Lectern: a local course library that records lectures, summarizes them, and studies with you.",
 };
 
 export default function RootLayout({

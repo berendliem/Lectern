@@ -12,7 +12,14 @@ type DictionaryTerm = {
   createdAt: string;
 };
 
-export function DictionaryManager() {
+export function DictionaryManager({
+  /** Key terms from a lecture, offered as one-click additions. */
+  suggestions = [],
+  contextLabel,
+}: {
+  suggestions?: { term: string; hint: string }[];
+  contextLabel?: string;
+} = {}) {
   const [terms, setTerms] = useState<DictionaryTerm[]>([]);
   const [loading, setLoading] = useState(true);
   const [term, setTerm] = useState("");
@@ -38,25 +45,31 @@ export function DictionaryManager() {
     };
   }, []);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    if (!term.trim()) return;
+  async function add(newTerm: string, newHint: string) {
     setSubmitting(true);
     setError(null);
     const res = await fetch("/api/dictionary", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ term: term.trim(), hint: hint.trim() || undefined }),
+      body: JSON.stringify({ term: newTerm, hint: newHint || undefined }),
     });
     setSubmitting(false);
     if (res.ok) {
       const data = await res.json();
       setTerms((prev) => [data.term, ...prev]);
+      return true;
+    }
+    const body = await res.json().catch(() => ({}));
+    setError(body.error ?? "Could not add the term. Try again.");
+    return false;
+  }
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!term.trim()) return;
+    if (await add(term.trim(), hint.trim())) {
       setTerm("");
       setHint("");
-    } else {
-      const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Could not add the term. Try again.");
     }
   }
 
@@ -69,6 +82,11 @@ export function DictionaryManager() {
       if (data) setTerms(data.terms ?? []);
     }
   }
+
+  // Terms already in the dictionary drop out of the suggestion strip, so the
+  // strip shrinks to nothing as you add them.
+  const known = new Set(terms.map((t) => t.term.toLowerCase()));
+  const pending = suggestions.filter((s) => !known.has(s.term.toLowerCase()));
 
   return (
     <div className="flex flex-col gap-6">
@@ -105,6 +123,27 @@ export function DictionaryManager() {
         </Button>
       </form>
       {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {pending.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-xl border border-brand-border grad-brand-soft p-4">
+          <p className="text-[12.5px] font-semibold uppercase tracking-wide text-brand">
+            {contextLabel ? `Key terms from ${contextLabel}` : "Suggested terms"}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {pending.map((s) => (
+              <button
+                key={s.term}
+                disabled={submitting}
+                onClick={() => add(s.term, s.hint)}
+                title={s.hint}
+                className="inline-flex items-center gap-1 rounded-full border border-brand-border bg-white px-3 py-1 text-xs font-medium text-brand transition-colors hover:bg-brand-soft disabled:opacity-50"
+              >
+                <Plus className="h-3 w-3" strokeWidth={2.4} /> {s.term}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-sm text-zinc-400">Loading…</p>

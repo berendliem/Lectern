@@ -20,9 +20,9 @@ import clsx from "@/lib/clsx";
 type Command = { id: string; label: string; hint: string; icon: typeof Search; href: string };
 
 const NAV_COMMANDS: Command[] = [
-  { id: "nav-library", label: "Library", hint: "All pages", icon: LayoutGrid, href: "/" },
-  { id: "nav-ask", label: "Ask your library", hint: "AI across all lectures", icon: BrainCircuit, href: "/ask" },
-  { id: "nav-review", label: "Review", hint: "Spaced-repetition session", icon: GraduationCap, href: "/review" },
+  { id: "nav-library", label: "Courses", hint: "Every lecture, filed by course", icon: LayoutGrid, href: "/" },
+  { id: "nav-ask", label: "Ask all courses", hint: "AI across every lecture", icon: BrainCircuit, href: "/ask" },
+  { id: "nav-review", label: "Review all", hint: "Spaced-repetition session", icon: GraduationCap, href: "/review" },
   { id: "nav-planner", label: "Planner", hint: "Streaks & schedule", icon: CalendarDays, href: "/planner" },
   { id: "nav-focus", label: "Focus timer", hint: "Pomodoro", icon: Timer, href: "/focus" },
   { id: "nav-feynman", label: "Feynman coach", hint: "Explain it simply", icon: Lightbulb, href: "/feynman" },

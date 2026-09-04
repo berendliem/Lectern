@@ -22,7 +22,7 @@ async function connectServer(name: string): Promise<Client> {
     );
   }
 
-  const client = new Client({ name: "ai-notetaker", version: "1.0.0" });
+  const client = new Client({ name: "lectern", version: "1.0.0" });
   const transport = new StdioClientTransport({
     command: entry.command,
     args: entry.args,

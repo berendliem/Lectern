@@ -58,7 +58,7 @@ export function LibraryChat() {
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gradient">
           <BrainCircuit className="h-6 w-6 text-brand" strokeWidth={2.2} />
-          Ask your library
+          Ask all courses
         </h1>
         <p className="mt-0.5 text-[13px] text-zinc-500">
           One assistant across every lecture you&apos;ve captured. It finds the relevant notes and answers with citations.

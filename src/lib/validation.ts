@@ -137,6 +137,26 @@ export const createDictionaryTermSchema = z.object({
   hint: singleLine(200).pipe(z.string().max(200)).optional(),
 });
 
+export const syllabusTopicsResponseSchema = z.object({
+  topics: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1).max(300),
+        // A syllabus that numbers its weeks past 60 is not a syllabus; a
+        // hallucinated 2026 here would sort every real topic above it.
+        week: z.number().int().min(0).max(60).nullish(),
+      })
+    )
+    .max(200),
+});
+
+export const createTopicSchema = z.object({
+  title: z.string().trim().min(1).max(300),
+  week: z.number().int().min(0).max(60).nullable().optional(),
+});
+
+export const updateTopicSchema = createTopicSchema.partial();
+
 export const chaptersResponseSchema = z.object({
   chapters: z
     .array(

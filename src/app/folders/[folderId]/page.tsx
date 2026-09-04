@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCheck, GraduationCap } from "lucide-react";
+import { CheckCheck, GraduationCap, Lightbulb, MessagesSquare } from "lucide-react";
 import { db } from "@/lib/db";
 import { courseScopeFilter } from "@/lib/cards";
+import { classifyTopic, coverageThreshold, rollUpMastery } from "@/lib/coverage";
+import { scoreTopics } from "@/lib/embeddings";
+import { CourseOverview, type TopicRow } from "@/components/course/CourseOverview";
 import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
 import { ImportButton } from "@/components/dashboard/ImportButton";
@@ -24,7 +27,7 @@ export default async function FolderPage({
   const folder = await db.folder.findUnique({ where: { id: folderId } });
   if (!folder) notFound();
 
-  const [pages, quizCount, dueCount, materials] = await Promise.all([
+  const [pages, quizCount, dueCount, materials, topics, cards] = await Promise.all([
     db.page.findMany({
       where: { folderId },
       orderBy: { updatedAt: "desc" },
@@ -51,7 +54,20 @@ export default async function FolderPage({
         _count: { select: { flashcards: true, quizQuestions: true } },
       },
     }),
+    db.courseTopic.findMany({ where: { folderId }, orderBy: { order: "asc" } }),
+    db.flashcard.findMany({
+      where: courseScopeFilter(folderId),
+      select: { pageId: true, materialId: true, repetitions: true, lastReviewedAt: true },
+    }),
   ]);
+
+  const topicRows = await buildTopicRows(folderId, topics, cards);
+  // A topic with no match at all means nothing in this course is indexed for
+  // the active embedder (or embedding failed) — not that the syllabus is
+  // uncovered. Coverage stays silent rather than accusing every topic.
+  const coverageAvailable = topicRows.some((t) => t.matchTitle !== null);
+  const hasSyllabus = materials.some((m) => m.kind === "SYLLABUS");
+  const uncovered = coverageAvailable ? topicRows.filter((t) => !t.covered).length : 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -76,6 +92,20 @@ export default async function FolderPage({
               Exam cram
             </Link>
           )}
+          <Link
+            href={`/feynman?folderId=${folder.id}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+          >
+            <Lightbulb className="h-4 w-4" strokeWidth={2} />
+            Feynman
+          </Link>
+          <Link
+            href={`/interview?folderId=${folder.id}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+          >
+            <MessagesSquare className="h-4 w-4" strokeWidth={2} />
+            Interview
+          </Link>
           <NewPageButton folderId={folder.id} />
           <FolderHeader folderId={folder.id} name={folder.name} />
         </div>
@@ -83,6 +113,18 @@ export default async function FolderPage({
 
       <PageTabs
         tabs={[
+          {
+            id: "overview",
+            label: uncovered > 0 ? `Overview (${uncovered} uncovered)` : "Overview",
+            content: (
+              <CourseOverview
+                folderId={folder.id}
+                topics={topicRows}
+                hasSyllabus={hasSyllabus}
+                coverageAvailable={coverageAvailable}
+              />
+            ),
+          },
           {
             id: "lectures",
             label: `Lectures (${pages.length})`,
@@ -128,4 +170,60 @@ export default async function FolderPage({
       />
     </div>
   );
+}
+
+type TopicRecord = { id: string; title: string; week: number | null };
+type CardRecord = {
+  pageId: string | null;
+  materialId: string | null;
+  repetitions: number;
+  lastReviewedAt: Date | null;
+};
+
+/**
+ * Coverage for the whole syllabus in one embedding pass. Embedding can fail
+ * (model download, provider outage) and the course page must still render, so
+ * a failure degrades to "no match known" rather than an error page.
+ */
+async function buildTopicRows(
+  folderId: string,
+  topics: TopicRecord[],
+  cards: CardRecord[]
+): Promise<TopicRow[]> {
+  if (topics.length === 0) return [];
+
+  let matches;
+  try {
+    matches = await scoreTopics(folderId, topics.map((t) => t.title));
+  } catch (e) {
+    console.error(`[coverage] scoring topics for course ${folderId} failed:`, e);
+    matches = topics.map(() => null);
+  }
+
+  const threshold = coverageThreshold();
+  const cardsBySource = new Map<string, CardRecord[]>();
+  for (const card of cards) {
+    const key = card.pageId ? `p:${card.pageId}` : card.materialId ? `m:${card.materialId}` : null;
+    if (!key) continue;
+    const list = cardsBySource.get(key);
+    if (list) list.push(card);
+    else cardsBySource.set(key, [card]);
+  }
+
+  return topics.map((topic, i) => {
+    const { covered, match } = classifyTopic(matches[i], threshold);
+    const key = match?.pageId ? `p:${match.pageId}` : match?.materialId ? `m:${match.materialId}` : null;
+    return {
+      id: topic.id,
+      title: topic.title,
+      week: topic.week,
+      covered,
+      matchTitle: match?.title ?? null,
+      // Materials have no page of their own to link to.
+      matchHref: match?.pageId ? `/pages/${match.pageId}` : null,
+      // Mastery of what the covering source actually teaches you, which is
+      // only meaningful once that source has cards.
+      mastery: covered && key ? rollUpMastery(cardsBySource.get(key) ?? []) : null,
+    };
+  });
 }
