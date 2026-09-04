@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  AudioLines,
   BookOpen,
   BrainCircuit,
   CalendarDays,
@@ -109,14 +109,17 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-brand-border/40 bg-gradient-to-b from-white to-[#f4efff]">
       <div className="px-4 pb-2 pt-5">
-        <Link href="/" className="flex items-center gap-2.5" onClick={onNavigate}>
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-[10px] grad-brand shadow-brand"
-            aria-hidden="true"
-          >
-            <AudioLines className="h-4.5 w-4.5 text-white" strokeWidth={2.2} />
-          </span>
-          <span className="text-[15px] font-semibold tracking-tight text-gradient">Lectern</span>
+        <Link href="/" className="flex items-center" onClick={onNavigate}>
+          {/* The lockup already contains the wordmark, so the alt text is the
+              app name and no text label sits beside it. */}
+          <Image
+            src="/brand/lectern-logo.png"
+            alt="Lectern"
+            width={2170}
+            height={725}
+            priority
+            className="h-7 w-auto"
+          />
         </Link>
       </div>
 
