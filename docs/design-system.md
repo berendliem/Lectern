@@ -23,8 +23,8 @@ software logo.
 
 | Fact | Value |
 |---|---|
-| File | `public/brand/lectern-logo.png` |
-| Pixels | 2170 × 725 (2.99 : 1 — treat as 3 : 1) |
+| File | `public/brand/lectern-lockup.png` |
+| Pixels | 2172 × 724 (3.00 : 1) |
 | Background | transparent; only 15% of the canvas is opaque ink |
 | Navy | `#001B42` (89% of the ink) |
 | Gold | `#D5A95C` (8%) |
@@ -49,7 +49,7 @@ that it stands out.
   `h-12 w-auto` (48px tall, ~144px wide).
 - **Grounds:** the sidebar's `from-surface to-brand-soft` gradient in either
   theme, plain white, or navy `#001B42`. On dark grounds use
-  `lectern-logo-dark.png` (§9), never a filter.
+  `lectern-lockup-dark.png` (§9), never a filter.
 - **Never:** recolour, add a shadow, box it in a coloured chip, set it on a
   mid-tone or busy ground, stretch it, or pair it with a text label — the lockup
   already contains the wordmark.
@@ -327,7 +327,7 @@ Three rules fell out of building it, and they are the ones to keep:
    `#ffffff` and blew out in dark; it reads `var(--surface)` now.
 3. **The logo needs a second file, not a filter.** The mark's navy has to lift
    on a dark ground while the gold stays gold, which no single CSS filter does.
-   `lectern-logo-dark.png` recolours only the navy family; the sidebar swaps the
+   `lectern-lockup-dark.png` recolours only the navy family; the sidebar swaps the
    two with `dark:hidden` / `hidden dark:block`.
 
 The violet radial washes on `body` are light-mode only — on a near-black ground

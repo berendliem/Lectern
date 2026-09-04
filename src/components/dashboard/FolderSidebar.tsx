@@ -115,19 +115,19 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               CSS filter: the navy has to lift on a dark ground while the gold
               stays gold, which no single filter does. */}
           <Image
-            src="/brand/lectern-logo.png"
+            src="/brand/lectern-lockup.png"
             alt="Lectern"
-            width={2170}
-            height={725}
+            width={2172}
+            height={724}
             priority
             className="h-12 w-auto dark:hidden"
           />
           <Image
-            src="/brand/lectern-logo-dark.png"
+            src="/brand/lectern-lockup-dark.png"
             alt=""
             aria-hidden="true"
-            width={2170}
-            height={725}
+            width={2172}
+            height={724}
             priority
             className="hidden h-12 w-auto dark:block"
           />
