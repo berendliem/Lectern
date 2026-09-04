@@ -108,7 +108,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-brand-border/40 bg-gradient-to-b from-white to-[#f4efff]">
-      <div className="px-4 pb-2 pt-5">
+      <div className="px-4 pb-3 pt-5">
         <Link href="/" className="flex items-center" onClick={onNavigate}>
           {/* The lockup already contains the wordmark, so the alt text is the
               app name and no text label sits beside it. */}
@@ -118,7 +118,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
             width={2170}
             height={725}
             priority
-            className="h-7 w-auto"
+            className="h-12 w-auto"
           />
         </Link>
       </div>
