@@ -110,17 +110,26 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-line bg-gradient-to-b from-surface to-brand-soft">
       <div className="px-4 pb-3 pt-5">
         <Link href="/" className="flex items-center" onClick={onNavigate}>
-          {/* One lockup for both themes: the ivory glyphs carry a navy
-              outline, so they hold their shape on the light sidebar instead of
-              dissolving into it. The lockup already contains the wordmark, so
-              no text label sits beside it. */}
+          {/* The lockup already contains the wordmark, so the alt text is the
+              app name and no text label sits beside it. Two files rather than a
+              CSS filter: the navy has to lift on a dark ground while the gold
+              stays gold, which no single filter does. */}
           <Image
-            src="/brand/lectern-wordmark.png"
+            src="/brand/lectern-lockup.png"
             alt="Lectern"
             width={2172}
             height={724}
             priority
-            className="h-12 w-auto"
+            className="h-12 w-auto dark:hidden"
+          />
+          <Image
+            src="/brand/lectern-lockup-dark.png"
+            alt=""
+            aria-hidden="true"
+            width={2172}
+            height={724}
+            priority
+            className="hidden h-12 w-auto dark:block"
           />
         </Link>
       </div>
