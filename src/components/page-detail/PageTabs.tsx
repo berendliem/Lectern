@@ -12,7 +12,7 @@ export function PageTabs({
 
   return (
     <div>
-      <div className="flex gap-1 border-b border-zinc-200">
+      <div className="flex gap-1 border-b border-line">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -21,7 +21,7 @@ export function PageTabs({
               "border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
               active === tab.id
                 ? "border-brand text-brand"
-                : "border-transparent text-zinc-500 hover:text-zinc-700"
+                : "border-transparent text-muted hover:text-ink-soft"
             )}
           >
             {tab.label}

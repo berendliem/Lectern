@@ -94,14 +94,14 @@ export default async function FolderPage({
           )}
           <Link
             href={`/feynman?folderId=${folder.id}`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2"
           >
             <Lightbulb className="h-4 w-4" strokeWidth={2} />
             Feynman
           </Link>
           <Link
             href={`/interview?folderId=${folder.id}`}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2"
           >
             <MessagesSquare className="h-4 w-4" strokeWidth={2} />
             Interview

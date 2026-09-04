@@ -5,6 +5,7 @@ import { Command as CommandIcon, Menu } from "lucide-react";
 import { FolderSidebar } from "@/components/dashboard/FolderSidebar";
 import { SearchBox } from "@/components/search/SearchBox";
 import { CommandPalette } from "@/components/command/CommandPalette";
+import { ThemeToggle } from "@/components/dashboard/ThemeToggle";
 import clsx from "@/lib/clsx";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -28,23 +29,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <FolderSidebar onNavigate={() => setSidebarOpen(false)} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-zinc-200/80 bg-white/90 px-4 py-2.5 backdrop-blur sm:px-8">
+        <header className="flex items-center gap-3 border-b border-line/80 bg-surface/90 px-4 py-2.5 backdrop-blur sm:px-8">
           <button
             onClick={() => setSidebarOpen((o) => !o)}
-            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 md:hidden"
+            className="rounded-lg p-1.5 text-muted hover:bg-surface-3 md:hidden"
             aria-label="Toggle navigation"
           >
             <Menu className="h-5 w-5" strokeWidth={2} />
           </button>
           <SearchBox />
-          <button
-            onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
-            className="ml-auto hidden items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[12.5px] font-medium text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-zinc-50 sm:flex"
-            aria-label="Open command palette"
-          >
-            <CommandIcon className="h-3.5 w-3.5" strokeWidth={2.2} />
-            <kbd className="font-sans">⌘K</kbd>
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+              className="hidden items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-[12.5px] font-medium text-muted transition-colors hover:border-line-strong hover:bg-surface-2 sm:flex"
+              aria-label="Open command palette"
+            >
+              <CommandIcon className="h-3.5 w-3.5" strokeWidth={2.2} />
+              <kbd className="font-sans">⌘K</kbd>
+            </button>
+            <ThemeToggle />
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</div>

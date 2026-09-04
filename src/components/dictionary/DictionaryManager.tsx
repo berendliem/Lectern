@@ -91,11 +91,11 @@ export function DictionaryManager({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight text-zinc-900">
+        <h1 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight text-ink">
           <BookOpen className="h-5 w-5 text-brand" strokeWidth={2.2} />
           Personal dictionary
         </h1>
-        <p className="mt-1.5 max-w-2xl text-sm text-zinc-500">
+        <p className="mt-1.5 max-w-2xl text-sm text-muted">
           Names, acronyms, and jargon you add here are passed to the local whisper model as
           vocabulary hints, so they&apos;re transcribed with the right spelling — and the
           summarizer keeps them spelled correctly in your notes.
@@ -136,7 +136,7 @@ export function DictionaryManager({
                 disabled={submitting}
                 onClick={() => add(s.term, s.hint)}
                 title={s.hint}
-                className="inline-flex items-center gap-1 rounded-full border border-brand-border bg-white px-3 py-1 text-xs font-medium text-brand transition-colors hover:bg-brand-soft disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-full border border-brand-border bg-surface px-3 py-1 text-xs font-medium text-brand transition-colors hover:bg-brand-soft disabled:opacity-50"
               >
                 <Plus className="h-3 w-3" strokeWidth={2.4} /> {s.term}
               </button>
@@ -146,20 +146,20 @@ export function DictionaryManager({
       )}
 
       {loading ? (
-        <p className="text-sm text-zinc-400">Loading…</p>
+        <p className="text-sm text-muted-2">Loading…</p>
       ) : terms.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-400">
+        <div className="rounded-lg border border-dashed border-line-strong px-4 py-10 text-center text-sm text-muted-2">
           No terms yet. Add the names and jargon whisper keeps getting wrong.
         </div>
       ) : (
-        <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white">
+        <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
           {terms.map((t) => (
             <li key={t.id} className="flex items-center gap-3 px-4 py-2.5">
-              <span className="text-sm font-medium text-zinc-800">{t.term}</span>
-              {t.hint && <span className="truncate text-[13px] text-zinc-400">{t.hint}</span>}
+              <span className="text-sm font-medium text-ink">{t.term}</span>
+              {t.hint && <span className="truncate text-[13px] text-muted-2">{t.hint}</span>}
               <button
                 onClick={() => handleDelete(t.id)}
-                className="ml-auto rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                className="ml-auto rounded-md p-1.5 text-muted-2 transition-colors hover:bg-red-50 hover:text-red-600"
                 aria-label={`Remove ${t.term}`}
               >
                 <Trash2 className="h-4 w-4" strokeWidth={2} />

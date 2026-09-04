@@ -23,22 +23,22 @@ export function PageCard({ page }: { page: PageCardData }) {
   return (
     <Link
       href={`/pages/${page.id}`}
-      className="group flex flex-col rounded-xl border border-zinc-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+      className="group flex flex-col rounded-xl border border-line/80 bg-surface p-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-all hover:-translate-y-0.5 hover:border-line-strong hover:shadow-md"
     >
       <div className="flex items-start gap-3">
         <span
           className={clsx(
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-            page.folder ? FOLDER_CHIP_CLASSES[family] : "bg-zinc-100 text-zinc-500"
+            page.folder ? FOLDER_CHIP_CLASSES[family] : "bg-surface-3 text-muted"
           )}
         >
           <FileAudio className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-[14.5px] font-semibold leading-5 text-zinc-900 group-hover:text-black">
+          <h3 className="line-clamp-2 text-[14.5px] font-semibold leading-5 text-ink group-hover:text-black">
             {page.title}
           </h3>
-          <p className="mt-0.5 truncate text-xs text-zinc-400">
+          <p className="mt-0.5 truncate text-xs text-muted-2">
             {page.folder ? page.folder.name : "No course"} · {shortDate(page.updatedAt)}
           </p>
         </div>
@@ -54,8 +54,8 @@ export function PageCard({ page }: { page: PageCardData }) {
         </div>
       )}
 
-      <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3">
-        <span className="flex items-center gap-3 text-xs text-zinc-400">
+      <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
+        <span className="flex items-center gap-3 text-xs text-muted-2">
           <span className="flex items-center gap-1">
             <Layers className="h-3.5 w-3.5" strokeWidth={2} />
             {page._count.flashcards}

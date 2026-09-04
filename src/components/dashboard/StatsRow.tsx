@@ -58,13 +58,13 @@ export function StatsRow({
               <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
             </span>
             <span className="min-w-0">
-              <span className="block text-lg font-semibold leading-6 text-zinc-900">{compact(tile.value)}</span>
-              <span className="block truncate text-[12.5px] leading-4 text-zinc-500">{tile.label}</span>
+              <span className="block text-lg font-semibold leading-6 text-ink">{compact(tile.value)}</span>
+              <span className="block truncate text-[12.5px] leading-4 text-muted">{tile.label}</span>
             </span>
           </>
         );
         const classes =
-          "flex items-center gap-3 rounded-xl border border-zinc-200/80 bg-white p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]";
+          "flex items-center gap-3 rounded-xl border border-line/80 bg-surface p-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.03)]";
         return tile.href ? (
           <Link
             key={tile.label}

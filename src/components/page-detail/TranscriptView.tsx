@@ -8,7 +8,7 @@ export function TranscriptView({
   segments: TranscriptSegment[];
 }) {
   if (segments.length === 0) {
-    return <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700">{rawText}</p>;
+    return <p className="whitespace-pre-wrap text-sm leading-6 text-ink-soft">{rawText}</p>;
   }
 
   return (
@@ -25,10 +25,10 @@ export function TranscriptView({
               </span>
             )}
             <div className="flex gap-3 text-sm leading-6">
-              <span className="w-14 shrink-0 font-mono text-xs text-zinc-400">
+              <span className="w-14 shrink-0 font-mono text-xs text-muted-2">
                 {formatTimestamp(segment.start)}
               </span>
-              <span className="text-zinc-700">{segment.text}</span>
+              <span className="text-ink-soft">{segment.text}</span>
             </div>
           </div>
         );

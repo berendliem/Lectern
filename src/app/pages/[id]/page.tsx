@@ -130,7 +130,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-400">
+    <div className="rounded-lg border border-dashed border-line-strong px-4 py-10 text-center text-sm text-muted-2">
       {message}
     </div>
   );

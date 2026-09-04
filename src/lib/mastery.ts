@@ -17,7 +17,7 @@ export const MASTERY_LABEL: Record<Mastery, string> = {
 };
 
 export const MASTERY_CLASSES: Record<Mastery, string> = {
-  new: "bg-zinc-100 text-zinc-600",
+  new: "bg-surface-3 text-ink-soft",
   learning: "bg-yellow-100 text-yellow-700",
   mastered: "bg-green-100 text-green-700",
 };

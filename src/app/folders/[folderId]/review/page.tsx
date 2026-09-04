@@ -24,7 +24,7 @@ export default async function CourseReviewPage({
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
       <Link
         href={`/folders/${folder.id}`}
-        className="flex items-center gap-1 self-start text-[13px] font-medium text-zinc-400 hover:text-brand"
+        className="flex items-center gap-1 self-start text-[13px] font-medium text-muted-2 hover:text-brand"
       >
         <ArrowLeft className="h-4 w-4" strokeWidth={2} />
         {folder.name}
@@ -35,10 +35,10 @@ export default async function CourseReviewPage({
           <CheckCheck className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-zinc-900">
+          <h1 className="text-lg font-bold tracking-tight text-ink">
             Review · {folder.name}
           </h1>
-          <p className="text-[13px] text-zinc-500">
+          <p className="text-[13px] text-muted">
             {dueCount} card{dueCount === 1 ? "" : "s"} due from this course&apos;s lectures and
             materials.
           </p>

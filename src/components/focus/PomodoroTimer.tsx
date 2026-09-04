@@ -290,7 +290,7 @@ export function PomodoroTimer({
           <Timer className="h-6 w-6 text-brand" strokeWidth={2.2} />
           Focus timer
         </h1>
-        <p className="mt-0.5 text-[13px] text-zinc-500">
+        <p className="mt-0.5 text-[13px] text-muted">
           The Pomodoro technique: {settings.focus} min of focus, then a break — it cycles automatically.
         </p>
         {lecture && (
@@ -318,7 +318,9 @@ export function PomodoroTimer({
                 <stop offset="100%" stopColor={meta.stops[1]} />
               </linearGradient>
             </defs>
-            <circle cx="150" cy="150" r={RADIUS} fill="none" stroke="#ffffff" strokeWidth="16" />
+            {/* The unfilled part of the ring is a surface, not a colour: white here
+                blows out on a dark ground. */}
+            <circle cx="150" cy="150" r={RADIUS} fill="none" stroke="var(--surface)" strokeWidth="16" />
             <circle
               cx="150"
               cy="150"
@@ -333,8 +335,8 @@ export function PomodoroTimer({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-mono text-6xl font-bold tabular-nums tracking-tight text-zinc-900">{fmt(remaining)}</span>
-            <span className="mt-1 text-[13px] text-zinc-500">{meta.blurb}</span>
+            <span className="font-mono text-6xl font-bold tabular-nums tracking-tight text-ink">{fmt(remaining)}</span>
+            <span className="mt-1 text-[13px] text-muted">{meta.blurb}</span>
           </div>
         </div>
 
@@ -342,7 +344,7 @@ export function PomodoroTimer({
         <div className="flex items-center gap-3">
           <button
             onClick={reset}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-800"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-muted transition-colors hover:border-line-strong hover:text-ink"
             aria-label="Reset"
           >
             <RotateCcw className="h-4.5 w-4.5" strokeWidth={2.2} />
@@ -356,7 +358,7 @@ export function PomodoroTimer({
           </button>
           <button
             onClick={() => advance(false)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-800"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-muted transition-colors hover:border-line-strong hover:text-ink"
             aria-label="Skip to next phase"
           >
             <SkipForward className="h-4.5 w-4.5" strokeWidth={2.2} />
@@ -368,26 +370,26 @@ export function PomodoroTimer({
           {Array.from({ length: settings.longEvery }).map((_, i) => (
             <span
               key={i}
-              className={clsx("h-2 w-2 rounded-full transition-colors", i < dotsFilled ? "grad-brand" : "bg-white/70 ring-1 ring-brand-border")}
+              className={clsx("h-2 w-2 rounded-full transition-colors", i < dotsFilled ? "grad-brand" : "bg-surface/70 ring-1 ring-brand-border")}
             />
           ))}
         </div>
       </div>
 
       {/* Stats + settings toggle */}
-      <div className="flex items-center justify-between rounded-xl border border-zinc-200/80 bg-white p-4">
+      <div className="flex items-center justify-between rounded-xl border border-line/80 bg-surface p-4">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft text-brand">
             <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} />
           </span>
           <span>
-            <span className="block text-lg font-semibold leading-6 text-zinc-900">{completedToday}</span>
-            <span className="block text-[12.5px] leading-4 text-zinc-500">Focus sessions today</span>
+            <span className="block text-lg font-semibold leading-6 text-ink">{completedToday}</span>
+            <span className="block text-[12.5px] leading-4 text-muted">Focus sessions today</span>
           </span>
         </div>
         <button
           onClick={() => setShowSettings((v) => !v)}
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-[13px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+          className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2"
         >
           <Settings2 className="h-4 w-4" strokeWidth={2} />
           Settings
@@ -395,17 +397,17 @@ export function PomodoroTimer({
       </div>
 
       {showSettings && (
-        <div className="grid grid-cols-2 gap-4 rounded-xl border border-zinc-200/80 bg-white p-5 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 rounded-xl border border-line/80 bg-surface p-5 sm:grid-cols-4">
           <DurationField label="Focus" value={settings.focus} onChange={(v) => saveSettings({ ...settings, focus: v })} />
           <DurationField label="Short break" value={settings.short} onChange={(v) => saveSettings({ ...settings, short: v })} />
           <DurationField label="Long break" value={settings.long} onChange={(v) => saveSettings({ ...settings, long: v })} />
           <DurationField label="Long break every" value={settings.longEvery} min={2} max={8} suffix="×" onChange={(v) => saveSettings({ ...settings, longEvery: v })} />
-          <label className="col-span-2 flex items-center gap-2 text-[13px] text-zinc-600 sm:col-span-4">
+          <label className="col-span-2 flex items-center gap-2 text-[13px] text-ink-soft sm:col-span-4">
             <input
               type="checkbox"
               checked={settings.autoStart}
               onChange={(e) => saveSettings({ ...settings, autoStart: e.target.checked })}
-              className="h-4 w-4 rounded border-zinc-300 accent-brand"
+              className="h-4 w-4 rounded border-line-strong accent-brand"
             />
             Automatically start the next focus session and break
           </label>
@@ -432,7 +434,7 @@ function DurationField({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">{label}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-2">{label}</span>
       <span className="flex items-center gap-1.5">
         <input
           type="number"
@@ -443,9 +445,9 @@ function DurationField({
             const n = Math.round(Number(e.target.value));
             if (Number.isFinite(n)) onChange(Math.min(max, Math.max(min, n)));
           }}
-          className="w-16 rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-sm text-zinc-900 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+          className="w-16 rounded-lg border border-line-strong bg-surface px-2.5 py-1.5 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
         />
-        <span className="text-[12px] text-zinc-400">{suffix}</span>
+        <span className="text-[12px] text-muted-2">{suffix}</span>
       </span>
     </label>
   );

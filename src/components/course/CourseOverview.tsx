@@ -93,11 +93,11 @@ export function CourseOverview({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-zinc-900">
+          <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
             <ScrollText className="h-4 w-4 text-brand" strokeWidth={2.2} />
             Syllabus coverage
           </h2>
-          <p className="mt-0.5 text-[13px] text-zinc-500">
+          <p className="mt-0.5 text-[13px] text-muted">
             {topics.length === 0
               ? "Parse the syllabus to see what this course is meant to cover."
               : `${covered} of ${topics.length} topics have a lecture or material behind them.`}
@@ -106,7 +106,7 @@ export function CourseOverview({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setAdding((a) => !a)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-[13px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2"
           >
             <Plus className="h-3.5 w-3.5" strokeWidth={2.2} /> Topic
           </button>
@@ -125,7 +125,7 @@ export function CourseOverview({
       {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
 
       {!coverageAvailable && topics.length > 0 && (
-        <p className="rounded-xl border border-zinc-200 bg-daisy-soft/50 px-4 py-3 text-[13px] text-zinc-700">
+        <p className="rounded-xl border border-line bg-daisy-soft/50 px-4 py-3 text-[13px] text-ink-soft">
           Coverage is unavailable: nothing in this course is indexed for semantic search yet, or
           embedding failed. Topics are listed without a coverage verdict — none of them is being
           called uncovered.
@@ -139,7 +139,7 @@ export function CourseOverview({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="Topic the syllabus covers"
-            className="flex-1 rounded-lg border border-zinc-300 bg-white px-3.5 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+            className="flex-1 rounded-lg border border-line-strong bg-surface px-3.5 py-2 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
           />
           <button
             type="submit"
@@ -152,7 +152,7 @@ export function CourseOverview({
       )}
 
       {topics.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 px-4 py-14 text-center text-sm text-zinc-400">
+        <div className="rounded-2xl border border-dashed border-line-strong px-4 py-14 text-center text-sm text-muted-2">
           No topics yet. Upload the syllabus as a material, then parse it — or add topics by hand.
         </div>
       ) : (
@@ -160,12 +160,12 @@ export function CourseOverview({
           {topics.map((topic) => (
             <li
               key={topic.id}
-              className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3"
+              className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3"
             >
               <span
                 className={clsx(
                   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                  topic.covered ? "bg-moss-soft text-moss-ink" : "bg-zinc-100 text-zinc-400"
+                  topic.covered ? "bg-moss-soft text-moss-ink" : "bg-surface-3 text-muted-2"
                 )}
                 aria-hidden="true"
               >
@@ -176,15 +176,15 @@ export function CourseOverview({
                 )}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-zinc-900">
+                <p className="truncate text-sm font-medium text-ink">
                   {topic.week !== null && (
-                    <span className="mr-2 text-[12px] font-semibold uppercase tracking-wide text-zinc-400">
+                    <span className="mr-2 text-[12px] font-semibold uppercase tracking-wide text-muted-2">
                       Week {topic.week}
                     </span>
                   )}
                   {topic.title}
                 </p>
-                <p className="truncate text-[12.5px] text-zinc-400">
+                <p className="truncate text-[12.5px] text-muted-2">
                   {topic.covered && topic.matchTitle ? (
                     topic.matchHref ? (
                       <>
@@ -226,7 +226,7 @@ export function CourseOverview({
                 }
                 disabled={busy === topic.id}
                 aria-label={`Delete ${topic.title}`}
-                className="rounded-md p-1.5 text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                className="rounded-md p-1.5 text-muted-2 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
               >
                 <Trash2 className="h-4 w-4" strokeWidth={2} />
               </button>

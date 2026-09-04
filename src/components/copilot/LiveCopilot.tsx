@@ -118,7 +118,7 @@ export function LiveCopilot() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200/80 bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line/80 bg-surface p-4">
         <div className="flex items-center gap-3">
           <span
             className={
@@ -130,10 +130,10 @@ export function LiveCopilot() {
             <Radio className={isRecording ? "h-5 w-5 animate-pulse" : "h-5 w-5"} strokeWidth={2} />
           </span>
           <div>
-            <p className="text-sm font-semibold text-zinc-900">
+            <p className="text-sm font-semibold text-ink">
               {isRecording ? "Listening…" : "Live copilot"}
             </p>
-            <p className="font-mono text-xs tabular-nums text-zinc-400">{formatElapsed(recorder.elapsedSeconds)}</p>
+            <p className="font-mono text-xs tabular-nums text-muted-2">{formatElapsed(recorder.elapsedSeconds)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -143,7 +143,7 @@ Then in `.env` set either:
 
 The app can act as an MCP client. Copy `mcp.config.example.json` to `mcp.config.json` (gitignored — it holds tokens) and fill in:
 
-- **Notion**: create an internal integration at notion.so/profile/integrations, put its token in `NOTION_TOKEN`, share a parent Notion page with the integration, and set that page's id as `NOTION_PARENT_PAGE_ID` in `.env`. Synced lecture pages are created under it.
+- **Notion**: uses Notion's hosted MCP server (`https://mcp.notion.com/mcp`) through the `mcp-remote` proxy — the app's MCP client speaks stdio only, and Notion's own open-source token server is no longer maintained. No token to paste: run `npx -y mcp-remote https://mcp.notion.com/mcp` once in a terminal and authorize in the browser that opens; the grant is cached in `~/.mcp-auth` and reused by the app. Set `NOTION_PARENT_PAGE_ID` in `.env` to a page the authorized account can edit — synced lecture pages are created under it.
 - **Google Calendar**: follow [@cocal/google-calendar-mcp's auth guide](https://github.com/nspady/google-calendar-mcp) — create a Google Cloud OAuth *Desktop app* client, save the JSON, and point `GOOGLE_OAUTH_CREDENTIALS` at it. The first connection opens a browser consent screen; tokens refresh automatically afterward. (Publish the OAuth app to Production or refresh tokens expire weekly.)
 
 Then open **Integrations** in the sidebar and hit **Test** on each server (the first connection runs `npx` and can take a few seconds). Servers run locally as child processes; nothing goes through any third-party middleman.

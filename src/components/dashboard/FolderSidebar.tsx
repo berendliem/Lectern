@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  AudioLines,
   BookOpen,
   BrainCircuit,
   CalendarDays,
@@ -107,21 +107,35 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-brand-border/40 bg-gradient-to-b from-white to-[#f4efff]">
-      <div className="px-4 pb-2 pt-5">
-        <Link href="/" className="flex items-center gap-2.5" onClick={onNavigate}>
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-[10px] grad-brand shadow-brand"
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-line bg-gradient-to-b from-surface to-brand-soft">
+      <div className="px-4 pb-3 pt-5">
+        <Link href="/" className="flex items-center" onClick={onNavigate}>
+          {/* The lockup already contains the wordmark, so the alt text is the
+              app name and no text label sits beside it. Two files rather than a
+              CSS filter: the navy has to lift on a dark ground while the gold
+              stays gold, which no single filter does. */}
+          <Image
+            src="/brand/lectern-lockup.png"
+            alt="Lectern"
+            width={2172}
+            height={724}
+            priority
+            className="h-12 w-auto dark:hidden"
+          />
+          <Image
+            src="/brand/lectern-lockup-dark.png"
+            alt=""
             aria-hidden="true"
-          >
-            <AudioLines className="h-4.5 w-4.5 text-white" strokeWidth={2.2} />
-          </span>
-          <span className="text-[15px] font-semibold tracking-tight text-gradient">Lectern</span>
+            width={2172}
+            height={724}
+            priority
+            className="hidden h-12 w-auto dark:block"
+          />
         </Link>
       </div>
 
       <div className="mt-4 pl-[22px] pr-3">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Global</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-2">Global</span>
       </div>
 
       <nav className="mt-1 flex flex-col gap-0.5 px-3" onClick={onNavigate}>
@@ -135,7 +149,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-all",
                 active
                   ? "grad-brand text-white shadow-brand"
-                  : "text-zinc-500 hover:bg-white/70 hover:text-zinc-800"
+                  : "text-muted hover:bg-surface/70 hover:text-ink"
               )}
             >
               <Icon className="h-4 w-4" strokeWidth={active ? 2.4 : 2} />
@@ -144,7 +158,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 <span
                   className={clsx(
                     "rounded-full px-1.5 py-px text-[11px] font-semibold leading-4",
-                    active ? "bg-white/25 text-white" : "bg-brand text-white"
+                    active ? "bg-surface/25 text-white" : "bg-brand text-white"
                   )}
                 >
                   {dueCount}
@@ -156,10 +170,10 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="mt-7 flex items-center justify-between pl-[22px] pr-3">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Your courses</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-2">Your courses</span>
         <button
           onClick={() => setModalOpen(true)}
-          className="rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-200/60 hover:text-zinc-700"
+          className="rounded-md p-1 text-muted-2 transition-colors hover:bg-surface-3 hover:text-ink-soft"
           aria-label="New course"
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={2.2} />
@@ -167,9 +181,9 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="mt-1 flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-4" onClick={onNavigate}>
-        {loading && <p className="px-2.5 py-1.5 text-[13px] text-zinc-400">Loading…</p>}
+        {loading && <p className="px-2.5 py-1.5 text-[13px] text-muted-2">Loading…</p>}
         {!loading && folders.length === 0 && (
-          <p className="px-2.5 py-1.5 text-[13px] text-zinc-400">No courses yet</p>
+          <p className="px-2.5 py-1.5 text-[13px] text-muted-2">No courses yet</p>
         )}
         {folders.map((folder) => {
           const active = pathname === `/folders/${folder.id}`;
@@ -179,7 +193,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               href={`/folders/${folder.id}`}
               className={clsx(
                 "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors",
-                active ? "bg-brand-soft font-medium text-brand" : "text-zinc-500 hover:bg-white/70 hover:text-zinc-800"
+                active ? "bg-brand-soft font-medium text-brand" : "text-muted hover:bg-surface/70 hover:text-ink"
               )}
             >
               <FolderIcon
@@ -189,7 +203,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 fillOpacity={0.25}
               />
               <span className="flex-1 truncate">{folder.name}</span>
-              <span className="text-[11.5px] tabular-nums text-zinc-400">{folder._count.pages}</span>
+              <span className="text-[11.5px] tabular-nums text-muted-2">{folder._count.pages}</span>
             </Link>
           );
         })}

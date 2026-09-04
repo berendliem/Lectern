@@ -19,7 +19,7 @@ export function MultipleChoiceQuestion({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-lg text-zinc-900">{prompt}</p>
+      <p className="text-lg text-ink">{prompt}</p>
       <div className="flex flex-col gap-2">
         {options.map((option) => (
           <button
@@ -30,7 +30,7 @@ export function MultipleChoiceQuestion({
               "rounded-lg border px-4 py-2.5 text-left text-sm transition-colors",
               selected === option
                 ? "border-brand bg-brand-soft text-brand"
-                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300"
+                : "border-line bg-surface text-ink-soft hover:border-line-strong"
             )}
           >
             {option}

@@ -29,7 +29,7 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gradient">Courses</h1>
-          <p className="mt-0.5 text-[13px] text-zinc-500">Every lecture you&apos;ve captured, filed by course.</p>
+          <p className="mt-0.5 text-[13px] text-muted">Every lecture you&apos;ve captured, filed by course.</p>
         </div>
         <div className="flex items-center gap-2">
           <ImportButton />

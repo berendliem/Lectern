@@ -43,12 +43,12 @@ export function PageDetailHeader({
     <div className="flex items-start justify-between gap-4">
       <div>
         {folder && (
-          <Link href={`/folders/${folder.id}`} className="text-xs font-medium text-zinc-400 hover:text-brand">
+          <Link href={`/folders/${folder.id}`} className="text-xs font-medium text-muted-2 hover:text-brand">
             {folder.name}
           </Link>
         )}
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold text-zinc-900">{title}</h1>
+          <h1 className="text-2xl font-semibold text-ink">{title}</h1>
           <Badge tone={PAGE_STATUS_TONE[status]}>{PAGE_STATUS_LABEL[status]}</Badge>
         </div>
         <div className="mt-2">
@@ -58,7 +58,7 @@ export function PageDetailHeader({
       <div className="flex items-center gap-2">
         <ExportMenu pageId={pageId} />
         <Button variant="ghost" size="sm" onClick={handleDelete} disabled={deleting} aria-label="Delete page">
-          <Trash2 className="h-4 w-4 text-zinc-400" strokeWidth={2} />
+          <Trash2 className="h-4 w-4 text-muted-2" strokeWidth={2} />
         </Button>
       </div>
     </div>

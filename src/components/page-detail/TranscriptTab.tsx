@@ -88,14 +88,14 @@ export function TranscriptTab({
       {transcript && (
         <div className="flex flex-wrap items-center gap-2">
           {cleanText && (
-            <div className="flex rounded-lg border border-zinc-200 p-0.5 text-[12.5px] font-medium">
+            <div className="flex rounded-lg border border-line p-0.5 text-[12.5px] font-medium">
               {(["clean", "raw"] as const).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
                   className={clsx(
                     "rounded-md px-2.5 py-1 transition-colors",
-                    view === v ? "bg-brand-soft text-brand" : "text-zinc-500 hover:text-zinc-700"
+                    view === v ? "bg-brand-soft text-brand" : "text-muted hover:text-ink-soft"
                   )}
                 >
                   {v === "clean" ? "Cleaned" : "Raw + timestamps"}
@@ -107,7 +107,7 @@ export function TranscriptTab({
             <button
               onClick={detectChapters}
               disabled={chaptering}
-              className="ml-auto flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[12.5px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:opacity-50"
+              className="ml-auto flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2 disabled:opacity-50"
               title="Divide the lecture into named topic chapters you can jump between"
             >
               {chaptering ? (
@@ -122,7 +122,7 @@ export function TranscriptTab({
             onClick={cleanup}
             disabled={cleaning}
             className={clsx(
-              "flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-[12.5px] font-medium text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-50 disabled:opacity-50",
+              "flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2 disabled:opacity-50",
               segments.length < 4 && "ml-auto"
             )}
             title="Remove filler words, collapse self-corrections, and fix speech-recognition errors — the original stays available"
@@ -145,7 +145,7 @@ export function TranscriptTab({
       ) : transcript ? (
         <TranscriptView rawText={transcript} segments={segments} />
       ) : hasAudio ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-400">
+        <div className="rounded-lg border border-dashed border-line-strong px-4 py-10 text-center text-sm text-muted-2">
           Audio saved. Use the banner above to transcribe it and generate study materials.
         </div>
       ) : null}

@@ -10,12 +10,12 @@ export function NotesView({ markdown, keyTerms }: { markdown: string; keyTerms: 
       </div>
       {keyTerms.length > 0 && (
         <div>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Key terms</h3>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-2">Key terms</h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {keyTerms.map((kt) => (
               <div key={kt.term} className="rounded-xl border border-lavender-soft bg-lavender-soft/40 p-3">
-                <p className="text-sm font-medium text-zinc-900">{kt.term}</p>
-                <p className="text-sm text-zinc-600">{kt.definition}</p>
+                <p className="text-sm font-medium text-ink">{kt.term}</p>
+                <p className="text-sm text-ink-soft">{kt.definition}</p>
               </div>
             ))}
           </div>

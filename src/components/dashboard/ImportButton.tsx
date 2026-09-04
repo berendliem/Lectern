@@ -86,7 +86,7 @@ export function ImportButton({ folderId }: { folderId?: string }) {
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={extracting}
-            className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-zinc-300 px-4 py-3 text-[13px] text-zinc-500 transition-colors hover:border-brand-border hover:bg-brand-soft/40"
+            className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-line-strong px-4 py-3 text-[13px] text-muted transition-colors hover:border-brand-border hover:bg-brand-soft/40"
           >
             {extracting ? (
               <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />

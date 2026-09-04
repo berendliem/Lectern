@@ -83,7 +83,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
 
   if (!hasTranscript) {
     return (
-      <div className="rounded-lg border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-400">
+      <div className="rounded-lg border border-dashed border-line-strong px-4 py-10 text-center text-sm text-muted-2">
         Action items are extracted from the transcript — transcribe this page first.
       </div>
     );
@@ -94,7 +94,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted">
           Assigned work, decisions, and unresolved questions pulled from the recording — like a
           meeting notetaker&apos;s follow-up notes.
         </p>
@@ -110,9 +110,9 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {items === null ? (
-        <p className="text-sm text-zinc-400">Loading…</p>
+        <p className="text-sm text-muted-2">Loading…</p>
       ) : !hasItems ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-400">
+        <div className="rounded-lg border border-dashed border-line-strong px-4 py-10 text-center text-sm text-muted-2">
           {loading
             ? "Reading the transcript…"
             : "Nothing extracted yet. Click Extract — purely expository lectures may genuinely have none."}
@@ -123,11 +123,11 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
           if (group.length === 0) return null;
           return (
             <section key={kind}>
-              <h3 className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider text-zinc-400">
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider text-muted-2">
                 <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
                 {label}
               </h3>
-              <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white">
+              <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
                 {group.map((item) => (
                   <li key={item.id}>
                     <label className="flex cursor-pointer items-start gap-3 px-4 py-2.5">
@@ -140,7 +140,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
                       <span
                         className={clsx(
                           "text-sm",
-                          item.done ? "text-zinc-400 line-through" : "text-zinc-700"
+                          item.done ? "text-muted-2 line-through" : "text-ink-soft"
                         )}
                       >
                         {item.text}

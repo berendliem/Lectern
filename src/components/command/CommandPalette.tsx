@@ -138,9 +138,9 @@ export function CommandPalette() {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[12vh]" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={close} aria-hidden="true" />
-      <div className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-2xl">
-        <div className="flex items-center gap-2.5 border-b border-zinc-100 px-4">
-          <Search className="h-4 w-4 shrink-0 text-zinc-400" strokeWidth={2.2} />
+      <div className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl">
+        <div className="flex items-center gap-2.5 border-b border-line px-4">
+          <Search className="h-4 w-4 shrink-0 text-muted-2" strokeWidth={2.2} />
           <input
             ref={inputRef}
             autoFocus
@@ -151,15 +151,15 @@ export function CommandPalette() {
             }}
             onKeyDown={onInputKeyDown}
             placeholder="Jump to a page or section…"
-            className="w-full bg-transparent py-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none"
+            className="w-full bg-transparent py-3.5 text-sm text-ink placeholder:text-muted-2 focus:outline-none"
           />
-          <kbd className="hidden shrink-0 rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 sm:block">
+          <kbd className="hidden shrink-0 rounded border border-line bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-muted-2 sm:block">
             ESC
           </kbd>
         </div>
 
         <div className="max-h-80 overflow-y-auto py-2">
-          {items.length === 0 && <p className="px-4 py-6 text-center text-[13px] text-zinc-400">No matches.</p>}
+          {items.length === 0 && <p className="px-4 py-6 text-center text-[13px] text-muted-2">No matches.</p>}
           {items.map((item, i) => {
             const showGroup = item.group !== lastGroup;
             lastGroup = item.group;
@@ -168,7 +168,7 @@ export function CommandPalette() {
             return (
               <div key={item.id}>
                 {showGroup && (
-                  <p className="px-4 pb-1 pt-2 text-[10.5px] font-semibold uppercase tracking-wider text-zinc-400">
+                  <p className="px-4 pb-1 pt-2 text-[10.5px] font-semibold uppercase tracking-wider text-muted-2">
                     {item.group}
                   </p>
                 )}
@@ -177,12 +177,12 @@ export function CommandPalette() {
                   onMouseMove={() => setActive(i)}
                   className={clsx(
                     "flex w-full items-center gap-3 px-4 py-2 text-left transition-colors",
-                    isActive ? "bg-brand-soft/60" : "hover:bg-zinc-50"
+                    isActive ? "bg-brand-soft/60" : "hover:bg-surface-2"
                   )}
                 >
-                  <Icon className={clsx("h-4 w-4 shrink-0", isActive ? "text-brand" : "text-zinc-400")} strokeWidth={2} />
-                  <span className="flex-1 truncate text-[13.5px] font-medium text-zinc-800">{item.label}</span>
-                  <span className="truncate text-[12px] text-zinc-400">{item.hint}</span>
+                  <Icon className={clsx("h-4 w-4 shrink-0", isActive ? "text-brand" : "text-muted-2")} strokeWidth={2} />
+                  <span className="flex-1 truncate text-[13.5px] font-medium text-ink">{item.label}</span>
+                  <span className="truncate text-[12px] text-muted-2">{item.hint}</span>
                   {isActive && <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-brand" strokeWidth={2.2} />}
                 </button>
               </div>

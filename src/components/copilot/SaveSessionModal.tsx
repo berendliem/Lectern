@@ -29,7 +29,7 @@ export function SaveSessionModal({
   return (
     <Modal open={open} onClose={onClose} title="Save as lecture">
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <p className="text-[13px] text-zinc-500">
+        <p className="text-[13px] text-muted">
           This saves the live transcript as a new lecture page you can summarize, quiz yourself on, and review later.
         </p>
         <Input
