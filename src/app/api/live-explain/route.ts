@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   const model =
     process.env.OPENROUTER_MODEL_CHAT ??
     process.env.OPENROUTER_MODEL_SUMMARY ??
-    "meta-llama/llama-3.3-70b-instruct:free";
+    "openrouter/free";
 
   try {
     const explanation = await callLLMText({

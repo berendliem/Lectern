@@ -58,7 +58,7 @@ ${UNTRUSTED_CONTENT_CLAUSE}`;
  */
 export async function parseEventsList(listingText: string): Promise<ParsedEvent[]> {
   const raw = await callLLMJSON({
-    model: process.env.OPENROUTER_MODEL_SUMMARY ?? "meta-llama/llama-3.3-70b-instruct:free",
+    model: process.env.OPENROUTER_MODEL_SUMMARY ?? "openrouter/free",
     stage: "summary",
     systemPrompt: PARSE_EVENTS_SYSTEM_PROMPT,
     userPrompt: `EVENT LISTING:\n"""\n${listingText.slice(0, 24_000)}\n"""`,

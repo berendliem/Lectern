@@ -18,7 +18,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (!material) return jsonError("Material not found", 404);
   if (!material.text.trim()) return jsonError("This material has no text to generate from", 422);
 
-  const model = process.env.OPENROUTER_MODEL_QUIZ ?? "meta-llama/llama-3.3-70b-instruct:free";
+  const model = process.env.OPENROUTER_MODEL_QUIZ ?? "openrouter/free";
 
   try {
     const raw = await callLLMJSON({

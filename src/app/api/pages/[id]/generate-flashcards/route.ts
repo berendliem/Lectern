@@ -16,7 +16,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   await db.page.update({ where: { id }, data: { status: "GENERATING_GUIDE", errorMessage: null } });
 
-  const model = process.env.OPENROUTER_MODEL_FLASHCARDS ?? "meta-llama/llama-3.3-70b-instruct:free";
+  const model = process.env.OPENROUTER_MODEL_FLASHCARDS ?? "openrouter/free";
 
   try {
     const raw = await callLLMJSON({

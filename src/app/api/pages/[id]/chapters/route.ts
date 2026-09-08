@@ -33,7 +33,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     step *= 2;
   } while (outline.length > MAX_OUTLINE_CHARS && step <= 64);
 
-  const model = process.env.OPENROUTER_MODEL_SUMMARY ?? "meta-llama/llama-3.3-70b-instruct:free";
+  const model = process.env.OPENROUTER_MODEL_SUMMARY ?? "openrouter/free";
   const lastEnd = segments[segments.length - 1].end;
 
   try {

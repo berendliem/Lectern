@@ -24,7 +24,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   await db.page.update({ where: { id }, data: { status: "SUMMARIZING", errorMessage: null } });
 
-  const model = process.env.OPENROUTER_MODEL_SUMMARY ?? "meta-llama/llama-3.3-70b-instruct:free";
+  const model = process.env.OPENROUTER_MODEL_SUMMARY ?? "openrouter/free";
 
   try {
     // Inside the try: a misconfigured LLM_PROVIDER throws here, and must land

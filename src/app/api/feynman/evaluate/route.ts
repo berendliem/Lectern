@@ -8,7 +8,7 @@ const MODEL =
   process.env.OPENROUTER_MODEL_FEYNMAN ??
   process.env.OPENROUTER_MODEL_CHAT ??
   process.env.OPENROUTER_MODEL_SUMMARY ??
-  "meta-llama/llama-3.3-70b-instruct:free";
+  "openrouter/free";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
