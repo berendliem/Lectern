@@ -95,7 +95,7 @@ export function TranscriptTab({
                   onClick={() => setView(v)}
                   className={clsx(
                     "rounded-md px-2.5 py-1 transition-colors",
-                    view === v ? "bg-brand-soft text-brand" : "text-muted hover:text-ink-soft"
+                    view === v ? "bg-brand-soft text-brand-ink" : "text-muted hover:text-ink-soft"
                   )}
                 >
                   {v === "clean" ? "Cleaned" : "Raw + timestamps"}

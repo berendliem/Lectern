@@ -145,7 +145,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
                 onClick={() => setKind(k.value)}
                 className={
                   kind === k.value
-                    ? "flex-1 rounded-md bg-brand-soft px-2 py-1 text-brand"
+                    ? "flex-1 rounded-md bg-brand-soft px-2 py-1 text-brand-ink"
                     : "flex-1 rounded-md px-2 py-1 text-muted hover:text-ink-soft"
                 }
               >
@@ -168,9 +168,9 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
             className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-line-strong px-4 py-3 text-[13px] text-muted transition-colors hover:border-brand-border hover:bg-brand-soft/40"
           >
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />
+              <Loader2 className="h-4 w-4 animate-spin text-brand-ink" strokeWidth={2} />
             ) : (
-              <FileText className="h-4 w-4 text-brand" strokeWidth={2} />
+              <FileText className="h-4 w-4 text-brand-ink" strokeWidth={2} />
             )}
             {busy ? "Extracting text…" : "Choose a PDF, PowerPoint or Word file"}
           </button>

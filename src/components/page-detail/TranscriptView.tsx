@@ -20,7 +20,7 @@ export function TranscriptView({
         return (
           <div key={i} className="flex flex-col gap-0.5">
             {showSpeaker && (
-              <span className="pl-[4.25rem] text-[12.5px] font-semibold text-brand">
+              <span className="pl-[4.25rem] text-[12.5px] font-semibold text-brand-ink">
                 {segment.speaker}
               </span>
             )}

@@ -107,7 +107,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-line bg-gradient-to-b from-surface to-brand-soft">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-line bg-surface-2">
       <div className="px-4 pb-3 pt-5">
         <Link href="/" className="flex items-center" onClick={onNavigate}>
           {/* The lockup already contains the wordmark, so the alt text is the
@@ -148,7 +148,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               className={clsx(
                 "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-all",
                 active
-                  ? "grad-brand text-white shadow-brand"
+                  ? "bg-brand text-white shadow-[inset_3px_0_0_0_var(--gold)]"
                   : "text-muted hover:bg-surface/70 hover:text-ink"
               )}
             >
@@ -193,7 +193,9 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
               href={`/folders/${folder.id}`}
               className={clsx(
                 "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors",
-                active ? "bg-brand-soft font-medium text-brand" : "text-muted hover:bg-surface/70 hover:text-ink"
+                active
+                  ? "bg-brand-soft font-medium text-brand-ink shadow-[inset_3px_0_0_0_var(--gold)]"
+                  : "text-muted hover:bg-surface/70 hover:text-ink"
               )}
             >
               <FolderIcon

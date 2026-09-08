@@ -29,7 +29,7 @@ export function StatsRow({
       label: "Due for review",
       value: dueCount,
       icon: GraduationCap,
-      iconClasses: "bg-brand-soft text-brand",
+      iconClasses: "bg-brand-soft text-brand-ink",
       href: dueCount > 0 ? "/review" : null,
     },
     {

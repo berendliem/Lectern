@@ -28,7 +28,7 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gradient">Courses</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Courses</h1>
           <p className="mt-0.5 text-[13px] text-muted">Every lecture you&apos;ve captured, filed by course.</p>
         </div>
         <div className="flex items-center gap-2">

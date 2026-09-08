@@ -29,7 +29,7 @@ export function MultipleChoiceQuestion({
             className={clsx(
               "rounded-lg border px-4 py-2.5 text-left text-sm transition-colors",
               selected === option
-                ? "border-brand bg-brand-soft text-brand"
+                ? "border-brand bg-brand-soft text-brand-ink"
                 : "border-line bg-surface text-ink-soft hover:border-line-strong"
             )}
           >

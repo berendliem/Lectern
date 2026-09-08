@@ -24,7 +24,7 @@ export function FlashcardFlip({
       <p
         className={clsx(
           "mb-2 text-xs font-semibold uppercase tracking-wide",
-          flipped ? "text-brand" : "text-muted-2"
+          flipped ? "text-brand-ink" : "text-muted-2"
         )}
       >
         {flipped ? "Reference explanation" : "Explain in your own words"}

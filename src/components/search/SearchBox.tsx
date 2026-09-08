@@ -21,7 +21,7 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
         placeholder="Search notes, transcripts, flashcards…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="w-full rounded-lg border border-transparent bg-surface-3 py-1.5 pl-9 pr-3 text-sm text-ink placeholder:text-muted-2 transition-colors focus:border-brand focus:bg-surface focus:outline-none focus:ring-2 focus:ring-brand-soft"
+        className="w-full rounded-lg border border-transparent bg-surface-3 py-1.5 pl-9 pr-3 text-sm text-ink placeholder:text-muted-2 transition-colors focus:border-brand focus:bg-surface focus:outline-none focus:ring-2 focus:ring-gold"
       />
     </form>
   );

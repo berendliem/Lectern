@@ -94,7 +94,7 @@ export function SyncedTranscriptPlayer({
       <div className="flex items-center gap-3 rounded-xl border border-line/80 bg-surface px-4 py-3">
         <button
           onClick={toggle}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full grad-brand text-white shadow-brand transition-transform hover:scale-105 active:scale-95"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-brand transition-transform hover:scale-105 active:scale-95"
           aria-label={playing ? "Pause" : "Play"}
         >
           {playing ? (
@@ -147,7 +147,7 @@ export function SyncedTranscriptPlayer({
                 className={clsx(
                   "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
                   active
-                    ? "border-transparent bg-brand-soft text-brand"
+                    ? "border-transparent bg-brand-soft text-brand-ink"
                     : "border-line text-ink-soft hover:border-line-strong hover:bg-surface-2"
                 )}
               >
@@ -166,7 +166,7 @@ export function SyncedTranscriptPlayer({
           // imported transcript keeps its attribution once audio is attached.
           <Fragment key={i}>
             {!!segment.speaker && segment.speaker !== segments[i - 1]?.speaker && (
-              <span className="pl-[4.75rem] text-[12.5px] font-semibold text-brand">
+              <span className="pl-[4.75rem] text-[12.5px] font-semibold text-brand-ink">
                 {segment.speaker}
               </span>
             )}
@@ -180,7 +180,7 @@ export function SyncedTranscriptPlayer({
             <span
               className={clsx(
                 "w-14 shrink-0 font-mono text-xs leading-6",
-                i === activeIndex ? "font-semibold text-brand" : "text-muted-2"
+                i === activeIndex ? "font-semibold text-brand-ink" : "text-muted-2"
               )}
             >
               {fmt(segment.start)}

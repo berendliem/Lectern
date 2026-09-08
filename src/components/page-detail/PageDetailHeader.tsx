@@ -43,7 +43,7 @@ export function PageDetailHeader({
     <div className="flex items-start justify-between gap-4">
       <div>
         {folder && (
-          <Link href={`/folders/${folder.id}`} className="text-xs font-medium text-muted-2 hover:text-brand">
+          <Link href={`/folders/${folder.id}`} className="text-xs font-medium text-muted-2 hover:text-brand-ink">
             {folder.name}
           </Link>
         )}

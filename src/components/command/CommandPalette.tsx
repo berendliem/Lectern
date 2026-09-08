@@ -180,10 +180,10 @@ export function CommandPalette() {
                     isActive ? "bg-brand-soft/60" : "hover:bg-surface-2"
                   )}
                 >
-                  <Icon className={clsx("h-4 w-4 shrink-0", isActive ? "text-brand" : "text-muted-2")} strokeWidth={2} />
+                  <Icon className={clsx("h-4 w-4 shrink-0", isActive ? "text-brand-ink" : "text-muted-2")} strokeWidth={2} />
                   <span className="flex-1 truncate text-[13.5px] font-medium text-ink">{item.label}</span>
                   <span className="truncate text-[12px] text-muted-2">{item.hint}</span>
-                  {isActive && <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-brand" strokeWidth={2.2} />}
+                  {isActive && <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-brand-ink" strokeWidth={2.2} />}
                 </button>
               </div>
             );

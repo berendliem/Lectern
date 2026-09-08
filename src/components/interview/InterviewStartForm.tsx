@@ -50,7 +50,7 @@ export function InterviewStartForm({
       className="flex flex-col gap-3 rounded-2xl border border-brand-border bg-gradient-to-br from-brand-soft/70 to-lavender-soft/40 p-5"
     >
       <div className="flex items-center gap-2.5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-brand shadow-sm">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-brand-ink shadow-sm">
           <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
         <div>

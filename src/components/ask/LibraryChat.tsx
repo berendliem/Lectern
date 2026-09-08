@@ -56,8 +56,8 @@ export function LibraryChat() {
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gradient">
-          <BrainCircuit className="h-6 w-6 text-brand" strokeWidth={2.2} />
+        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <BrainCircuit className="h-6 w-6 text-brand-ink" strokeWidth={2.2} />
           Ask all courses
         </h1>
         <p className="mt-0.5 text-[13px] text-muted">
@@ -68,7 +68,7 @@ export function LibraryChat() {
       <div className="flex min-h-[24rem] flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-4">
         {messages.length === 0 && (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
               <BrainCircuit className="h-5 w-5" strokeWidth={2} />
             </span>
             <p className="text-[13px] text-muted-2">Ask anything spanning your whole library.</p>
@@ -77,7 +77,7 @@ export function LibraryChat() {
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="rounded-full border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand"
+                  className="rounded-full border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand-ink"
                 >
                   {s}
                 </button>
@@ -102,7 +102,7 @@ export function LibraryChat() {
                   <Link
                     key={s.pageId}
                     href={`/pages/${s.pageId}`}
-                    className="flex items-center gap-1 rounded-full border border-brand-border bg-brand-soft/40 px-2.5 py-1 text-[11.5px] font-medium text-brand transition-colors hover:bg-brand-soft"
+                    className="flex items-center gap-1 rounded-full border border-brand-border bg-brand-soft/40 px-2.5 py-1 text-[11.5px] font-medium text-brand-ink transition-colors hover:bg-brand-soft"
                   >
                     <FileText className="h-3 w-3" strokeWidth={2.2} />
                     {s.title}
@@ -134,12 +134,12 @@ export function LibraryChat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask across all your lectures…"
-          className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+          className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
         />
         <button
           type="submit"
           disabled={sending || !input.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl grad-brand text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
           aria-label="Send"
         >
           <Send className="h-4 w-4" strokeWidth={2.2} />

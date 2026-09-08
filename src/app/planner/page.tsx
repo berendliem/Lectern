@@ -23,7 +23,7 @@ export default async function PlannerPage() {
   const maxCount = Math.max(1, ...schedule.map((d) => d.count));
 
   const stats = [
-    { label: "Due now", value: dueNow, icon: GraduationCap, tint: "bg-brand-soft text-brand", href: dueNow > 0 ? "/review" : null },
+    { label: "Due now", value: dueNow, icon: GraduationCap, tint: "bg-brand-soft text-brand-ink", href: dueNow > 0 ? "/review" : null },
     { label: "Reviewed today", value: reviewedToday, icon: CalendarDays, tint: "bg-moss-soft text-moss-ink", href: null },
     { label: "Total cards", value: totalCards, icon: Layers, tint: "bg-lavender-soft text-lavender-ink", href: null },
   ];
@@ -31,13 +31,13 @@ export default async function PlannerPage() {
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gradient">Study planner</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Study planner</h1>
         <p className="mt-0.5 text-[13px] text-muted">Keep your streak alive and see what&apos;s coming due.</p>
       </div>
 
       {/* Streak hero */}
-      <div className="flex items-center gap-4 rounded-2xl border border-brand-border grad-brand-soft p-5">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl grad-brand text-white shadow-brand">
+      <div className="flex items-center gap-4 rounded-2xl border border-brand-border bg-brand-soft p-5">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-brand">
           <Flame className="h-7 w-7" strokeWidth={2} />
         </span>
         <div>
@@ -88,13 +88,13 @@ export default async function PlannerPage() {
         <div className="flex flex-col gap-2.5">
           {schedule.map((d) => (
             <div key={d.key} className="flex items-center gap-3">
-              <span className={clsx("w-16 shrink-0 text-[13px]", d.isToday ? "font-semibold text-brand" : "text-muted")}>
+              <span className={clsx("w-16 shrink-0 text-[13px]", d.isToday ? "font-semibold text-brand-ink" : "text-muted")}>
                 {d.label}
               </span>
               <div className="h-5 flex-1 overflow-hidden rounded-md bg-surface-3">
                 {d.count > 0 && (
                   <div
-                    className="h-full rounded-md grad-brand"
+                    className="h-full rounded-md bg-brand"
                     style={{ width: `${Math.max(6, (d.count / maxCount) * 100)}%` }}
                   />
                 )}

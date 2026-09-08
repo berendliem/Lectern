@@ -108,7 +108,7 @@ export function PipelineStatusBanner({
                     isDone
                       ? "bg-moss-soft text-moss-ink"
                       : isRunning
-                        ? "bg-brand-soft text-brand"
+                        ? "bg-brand-soft text-brand-ink"
                         : "bg-surface-3 text-muted-2"
                   )}
                 >
@@ -126,7 +126,7 @@ export function PipelineStatusBanner({
           })}
         </ol>
         {running && runningInfo && (
-          <p className="text-xs text-brand">{runningInfo.runningLabel}</p>
+          <p className="text-xs text-brand-ink">{runningInfo.runningLabel}</p>
         )}
         {!running && message && <p className="text-xs font-medium text-red-700">{message}</p>}
         {!running && !message && allDone && (

@@ -89,9 +89,9 @@ export function ImportButton({ folderId }: { folderId?: string }) {
             className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-line-strong px-4 py-3 text-[13px] text-muted transition-colors hover:border-brand-border hover:bg-brand-soft/40"
           >
             {extracting ? (
-              <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />
+              <Loader2 className="h-4 w-4 animate-spin text-brand-ink" strokeWidth={2} />
             ) : (
-              <FileText className="h-4 w-4 text-brand" strokeWidth={2} />
+              <FileText className="h-4 w-4 text-brand-ink" strokeWidth={2} />
             )}
             {extracting ? "Extracting text…" : "Choose a PDF (text is extracted in your browser)"}
           </button>

@@ -155,7 +155,7 @@ export function NotesTab({
         className="flex flex-col gap-2 rounded-xl border border-line bg-surface-2/60 p-3"
       >
         <div className="flex items-center gap-2">
-          <Wand2 className="h-4 w-4 shrink-0 text-brand" strokeWidth={2.2} />
+          <Wand2 className="h-4 w-4 shrink-0 text-brand-ink" strokeWidth={2.2} />
           <input
             value={instruction}
             onChange={(e) => setInstruction(e.target.value)}

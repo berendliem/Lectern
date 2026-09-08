@@ -160,7 +160,7 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-2">
               Live transcript
-              {liveBusy && <Loader2 className="ml-1.5 inline h-3 w-3 animate-spin text-brand" strokeWidth={2.5} />}
+              {liveBusy && <Loader2 className="ml-1.5 inline h-3 w-3 animate-spin text-brand-ink" strokeWidth={2.5} />}
             </p>
             {inSession && (
               <Button
@@ -172,7 +172,7 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
                 {explaining ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.2} />
                 ) : (
-                  <Sparkles className="h-3.5 w-3.5 text-brand" strokeWidth={2.2} />
+                  <Sparkles className="h-3.5 w-3.5 text-brand-ink" strokeWidth={2.2} />
                 )}
                 Explain this
               </Button>
@@ -187,7 +187,7 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
           {explainError && <p className="text-xs text-red-600">{explainError}</p>}
           {explanation && (
             <div className="rounded-lg border border-brand-border bg-brand-soft/50 p-3">
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-brand">Assistant</p>
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-ink">Assistant</p>
               <p className="text-[13px] leading-6 text-ink-soft">{explanation}</p>
             </div>
           )}

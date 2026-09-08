@@ -153,8 +153,8 @@ export function FeynmanCoach({
   return (
     <div className="flex max-w-3xl flex-col gap-5">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gradient">
-          <Lightbulb className="h-6 w-6 text-brand" strokeWidth={2.2} />
+        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <Lightbulb className="h-6 w-6 text-brand-ink" strokeWidth={2.2} />
           Feynman coach
         </h1>
         <p className="mt-0.5 text-[13px] text-muted">
@@ -162,7 +162,7 @@ export function FeynmanCoach({
           or text — and get scored on clarity, gaps, and hidden jargon.
         </p>
         {contextLabel && (
-          <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-[12.5px] font-medium text-brand">
+          <p className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-[12.5px] font-medium text-brand-ink">
             <BookOpen className="h-3.5 w-3.5" strokeWidth={2.2} /> {contextLabel}
           </p>
         )}
@@ -176,7 +176,7 @@ export function FeynmanCoach({
             value={concept}
             onChange={(ev) => setConcept(ev.target.value)}
             placeholder="e.g. How does a neural network learn?"
-            className="w-full rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+            className="w-full rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
           />
         </label>
 
@@ -186,7 +186,7 @@ export function FeynmanCoach({
               <button
                 key={ex}
                 onClick={() => setConcept(ex)}
-                className="rounded-full border border-line bg-surface-2 px-3 py-1 text-xs text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand"
+                className="rounded-full border border-line bg-surface-2 px-3 py-1 text-xs text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand-ink"
               >
                 {ex}
               </button>
@@ -204,13 +204,13 @@ export function FeynmanCoach({
               onChange={(ev) => setReference(ev.target.value)}
               rows={4}
               placeholder="Paste your notes or the textbook passage so the coach can check your explanation for accuracy and completeness…"
-              className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+              className="w-full resize-y rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
             />
           </label>
         ) : (
           <button
             onClick={() => setShowReference(true)}
-            className="self-start text-[13px] font-medium text-brand hover:underline"
+            className="self-start text-[13px] font-medium text-brand-ink hover:underline"
           >
             + Add reference material to check accuracy
           </button>
@@ -231,8 +231,8 @@ export function FeynmanCoach({
       ))}
 
       {/* Explanation composer */}
-      <div className="flex flex-col gap-2.5 rounded-2xl border border-brand-border grad-brand-soft p-5">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-brand">
+      <div className="flex flex-col gap-2.5 rounded-2xl border border-brand-border bg-brand-soft p-5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-ink">
           {started ? "Refine your explanation" : "Explain it simply, as if to a curious 12-year-old"}
         </span>
         <textarea
@@ -240,7 +240,7 @@ export function FeynmanCoach({
           onChange={(ev) => setExplanation(ev.target.value)}
           rows={5}
           placeholder="Start explaining… use everyday words and an analogy if you can. Tap the mic to speak instead of type."
-          className="w-full resize-y rounded-xl border border-line-strong bg-surface px-3.5 py-3 text-sm leading-6 text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+          className="w-full resize-y rounded-xl border border-line-strong bg-surface px-3.5 py-3 text-sm leading-6 text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
         />
         <div className="flex items-center justify-between gap-3">
           <button
@@ -275,7 +275,7 @@ export function FeynmanCoach({
           <button
             onClick={submit}
             disabled={!canSubmit}
-            className="ml-auto flex items-center gap-1.5 rounded-lg grad-brand px-4 py-2 text-sm font-medium text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
+            className="ml-auto flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.2} /> : <Send className="h-4 w-4" strokeWidth={2.2} />}
             {started ? "Score again" : "Get feedback"}

@@ -71,13 +71,13 @@ export default async function FolderPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-gradient">{folder.name}</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold tracking-tight">{folder.name}</h1>
+        <div className="flex flex-wrap items-center gap-2">
           {dueCount > 0 && (
             <Link
               href={`/folders/${folder.id}/review`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-soft/40 px-3 py-2 text-sm font-medium text-brand transition-colors hover:bg-brand-soft"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-brand-border bg-brand-soft/40 px-3 py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-soft"
             >
               <CheckCheck className="h-4 w-4" strokeWidth={2} />
               Review {dueCount}
@@ -86,7 +86,7 @@ export default async function FolderPage({
           {quizCount > 0 && (
             <Link
               href={`/folders/${folder.id}/cram`}
-              className="inline-flex items-center gap-1.5 rounded-lg grad-brand px-3 py-2 text-sm font-medium text-white shadow-brand transition-opacity hover:opacity-95"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white shadow-brand transition-opacity hover:opacity-95"
             >
               <GraduationCap className="h-4 w-4" strokeWidth={2} />
               Exam cram

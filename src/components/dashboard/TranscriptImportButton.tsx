@@ -109,9 +109,9 @@ export function TranscriptImportButton({ folderId }: { folderId?: string }) {
             className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-line-strong px-4 py-3 text-[13px] text-muted transition-colors hover:border-brand-border hover:bg-brand-soft/40"
           >
             {busy ? (
-              <Loader2 className="h-4 w-4 animate-spin text-brand" strokeWidth={2} />
+              <Loader2 className="h-4 w-4 animate-spin text-brand-ink" strokeWidth={2} />
             ) : (
-              <FileAudio className="h-4 w-4 text-brand" strokeWidth={2} />
+              <FileAudio className="h-4 w-4 text-brand-ink" strokeWidth={2} />
             )}
             {busy ? "Reading…" : "Choose a .vtt, .srt, .docx or .txt transcript"}
           </button>

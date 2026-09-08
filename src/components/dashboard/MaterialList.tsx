@@ -84,7 +84,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
               key={material.id}
               className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-ink">
                 <Icon className="h-4 w-4" strokeWidth={2} />
               </span>
               <div className="min-w-0 flex-1">
@@ -99,7 +99,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
               <button
                 onClick={() => generate(material.id, "flashcards")}
                 disabled={generating !== null}
-                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand disabled:opacity-50"
+                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
               >
                 {generating === `${material.id}:flashcards`
                   ? "Generating…"
@@ -110,7 +110,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
               <button
                 onClick={() => generate(material.id, "quiz")}
                 disabled={generating !== null}
-                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand disabled:opacity-50"
+                className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
               >
                 {generating === `${material.id}:quiz`
                   ? "Generating…"
