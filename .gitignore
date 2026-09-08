@@ -64,3 +64,10 @@ whisper-service/__pycache__
 
 # swift build products (mac-speech is built by scripts/setup.sh)
 /mac-speech/.build
+
+# database snapshots from scripts/backup-db.sh — local data, never committed
+/prisma/backups
+# and any hand-made copy beside the database: a `git add -A` swept one of these
+# into a commit once, which is a semester of notes heading for a remote
+prisma/*.bak
+prisma/dev.db.backup-*

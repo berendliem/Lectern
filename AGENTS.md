@@ -16,6 +16,25 @@ git checkout main && git pull
 git checkout -b <type>/<description>
 ```
 
+## The user's data is not replaceable
+
+A lecture's transcript and notes exist in exactly one place: `prisma/dev.db`. There
+is no server copy and no export. Treat that file as the only copy of a semester's
+work, because it is.
+
+- **Snapshot before touching the schema or the data.** `npm run db:migrate` takes a
+  snapshot first, and `npm run db:backup` takes one on demand. Snapshots live in
+  `prisma/backups/` (git-ignored, newest 20 kept).
+- **Every destructive action says what it destroys, before it happens.** A delete
+  or a regenerate that cascades names the flashcards, questions, or review progress
+  that go with it. A count in a button label is not a warning.
+- **Prefer a new column to an overwrite.** Transcript cleanup writes `cleanText` and
+  leaves `rawText` alone; that is the pattern. An AI step that replaces the user's
+  own text needs an undo, and an undo that only lives in React state is gone on the
+  next refresh.
+- **`ReviewLog` never cascades.** Deleting a lecture must not erase the evidence that
+  the student once knew it — every relation on the ledger is `SetNull` on purpose.
+
 ## Branch names
 
 ```

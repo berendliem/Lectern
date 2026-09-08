@@ -29,7 +29,22 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  async function generate(id: string, kind: "flashcards" | "quiz") {
+  async function generate(id: string, kind: "flashcards" | "quiz", existing: number) {
+    // The generate routes delete what is already there before writing. For a
+    // material with cards that means the scheduling they carry — intervals,
+    // ease, the review history behind them — goes too, from a button labelled
+    // with the count, which reads as information rather than a warning.
+    if (
+      existing > 0 &&
+      !confirm(
+        kind === "flashcards"
+          ? `Regenerate flashcards for this material? Its ${existing} existing card${existing === 1 ? "" : "s"} will be replaced, and the review progress on them (intervals and ease) is lost.`
+          : `Regenerate the quiz for this material? Its ${existing} existing question${existing === 1 ? "" : "s"} will be replaced, along with your recorded attempts at them.`
+      )
+    ) {
+      return;
+    }
+
     setGenerating(`${id}:${kind}`);
     setError(null);
     try {
@@ -47,7 +62,18 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
     }
   }
 
-  async function remove(id: string) {
+  async function remove(id: string, title: string, cards: number, questions: number) {
+    // Cascade: the material's flashcards, quiz questions and search chunks go
+    // with it. Deleting a lecture or a course already says what it takes; this
+    // one used to take it silently.
+    const alsoGone = [
+      cards > 0 ? `${cards} flashcard${cards === 1 ? "" : "s"}` : null,
+      questions > 0 ? `${questions} quiz question${questions === 1 ? "" : "s"}` : null,
+    ].filter(Boolean);
+    const tail =
+      alsoGone.length > 0 ? ` This also permanently deletes its ${alsoGone.join(" and ")}.` : "";
+    if (!confirm(`Delete "${title}"?${tail}`)) return;
+
     setDeleting(id);
     setError(null);
     try {
@@ -97,7 +123,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                 </p>
               </div>
               <button
-                onClick={() => generate(material.id, "flashcards")}
+                onClick={() => generate(material.id, "flashcards", material.flashcardCount)}
                 disabled={generating !== null}
                 className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
               >
@@ -108,7 +134,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                     : "Flashcards"}
               </button>
               <button
-                onClick={() => generate(material.id, "quiz")}
+                onClick={() => generate(material.id, "quiz", material.quizCount)}
                 disabled={generating !== null}
                 className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
               >
@@ -119,7 +145,9 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                     : "Quiz"}
               </button>
               <button
-                onClick={() => remove(material.id)}
+                onClick={() =>
+                    remove(material.id, material.title, material.flashcardCount, material.quizCount)
+                  }
                 disabled={deleting === material.id}
                 aria-label={`Delete ${material.title}`}
                 className="rounded-md p-1.5 text-muted-2 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
