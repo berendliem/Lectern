@@ -31,7 +31,12 @@
   --brand-ink: #001b42;
 
   /* Gold is a fill or a rule, never text: it reads 2.2 : 1 on white. Bronze is
-     its text form at 5.2 : 1 on the parchment ground. */
+     its text form at 5.2 : 1 on the parchment ground, and the rule that carries
+     a gold fill when the fill alone would sit under 3 : 1.
+
+     Fields pair `focus:ring-gold` with `focus:border-brand`: the navy border is
+     what clears the 3 : 1 focus-indicator bar, and the gold ring is the part you
+     notice. Neither is load-bearing alone. */
   --gold: #d5a95c;
   --bronze: #8a6320;
 }

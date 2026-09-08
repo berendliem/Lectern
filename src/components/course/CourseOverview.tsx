@@ -143,7 +143,9 @@ export function CourseOverview({
                   title={`${topic.title} — ${topic.covered ? "covered" : "not covered yet"}`}
                   className={clsx(
                     "min-w-[3px] flex-1 first:rounded-l-full last:rounded-r-full",
-                    topic.covered ? "bg-brand" : "bg-gold"
+                    // Gold is only 2.2 : 1 against the parchment ground, so a gap
+                    // segment carries a bronze rule to give it a 5.2 : 1 edge.
+                    topic.covered ? "bg-brand" : "bg-gold ring-1 ring-inset ring-bronze"
                   )}
                 />
               ))}
@@ -156,7 +158,7 @@ export function CourseOverview({
       {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
 
       {!coverageAvailable && topics.length > 0 && (
-        <p className="rounded-xl border border-line bg-daisy-soft/50 px-4 py-3 text-[13px] text-ink-soft">
+        <p className="rounded-xl border border-line bg-daisy-soft/50 px-4 py-3 text-[13px] text-ink-soft dark:bg-surface-3">
           Coverage is unavailable: nothing in this course is indexed for semantic search yet, or
           embedding failed. Topics are listed without a coverage verdict — none of them is being
           called uncovered.

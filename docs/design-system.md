@@ -246,12 +246,16 @@ action onto the brand and removed the decoration that fought the content.
    gradient ground is now flat `surface-2`.
 4. **Coverage strip** (`CourseOverview.tsx`) — one segment per syllabus topic
    above the topic list, navy where a lecture stands behind the topic and gold
-   where nothing does, with the count as a sentence beneath it. It renders only
-   when a coverage verdict exists: with no verdict every segment would read as
-   uncovered, which is the accusation §6 forbids, so the summary line stands
-   alone instead.
+   where nothing does, with the count as a sentence beneath it. The gold gap
+   segments carry a bronze rule: gold is 2.2 : 1 against the parchment ground,
+   under the 3 : 1 WCAG 1.4.11 asks of a graphic that carries meaning, and this
+   strip's whole job is to be read at a glance. It renders only when a coverage
+   verdict exists: with no verdict every segment would read as uncovered, which
+   is the accusation §6 forbids, so the summary line stands alone instead.
 5. **Focus states** — every `ring-brand-soft` is now `ring-gold`, one ring for
-   the whole app.
+   the whole app. The ring is paired with a navy `focus:border-brand` on every
+   field, and that border is what clears the 3 : 1 focus-indicator bar; the gold
+   ring is the part you notice, not the part doing the work.
 6. **Sweep** — Courses, course Overview, Ask, Review, Planner, Focus timer and
    Feynman coach, at 375px and 1440px, in both themes.
 
@@ -268,9 +272,12 @@ pastel state families, and layout restructuring. The one composition change was
 this phase and would still be after it.
 
 **Known debt this phase leaves.** The pastel families are still light-mode
-values (§9, "still to check"), which is why the coverage-unavailable notice is a
-bright daisy block on a dark ground. Four literal `zinc` values survive in
-scrims and disabled states (`Modal`, `CommandPalette`, `AppShell`, `Button`).
+values (§9, "still to check"). The coverage-unavailable notice was the one place
+that failed outright — `bg-daisy-soft/50` over a near-black ground blends to a
+khaki that left its text at 2.6 : 1 — so it takes `dark:bg-surface-3` and the
+rest of the families keep waiting for a proper pass. Four literal `zinc` values
+survive in scrims and disabled states (`Modal`, `CommandPalette`, `AppShell`,
+`Button`).
 
 ---
 

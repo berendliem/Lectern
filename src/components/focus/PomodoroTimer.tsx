@@ -314,8 +314,10 @@ export function PomodoroTimer({
           <svg className="h-full w-full -rotate-90" viewBox="0 0 300 300">
             <defs>
               <linearGradient id={meta.grad} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={meta.stops[0]} />
-                <stop offset="100%" stopColor={meta.stops[1]} />
+                {/* style, not the stop-color attribute: var() in a presentation
+                    attribute is unevenly supported and fails silently to black. */}
+                <stop offset="0%" style={{ stopColor: meta.stops[0] }} />
+                <stop offset="100%" style={{ stopColor: meta.stops[1] }} />
               </linearGradient>
             </defs>
             {/* The unfilled part of the ring is a surface, not a colour: white here
