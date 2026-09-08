@@ -40,9 +40,18 @@ export async function callOllama(opts: {
   jsonMode?: boolean;
   /** Overrides ollamaModel() when set — used for the REASONING tier. */
   model?: string;
+  /** Raw base64, no `data:` prefix — Ollama's own image field, attached to the
+   *  last message. Needs a multimodal model; a text-only one ignores them
+   *  silently and answers from the prompt alone. */
+  images?: string[];
 }): Promise<string> {
   const url = `${ollamaBaseUrl()}/api/chat`;
   const model = opts.model || ollamaModel();
+  const images = opts.images ?? [];
+  const messages =
+    images.length > 0
+      ? opts.messages.map((m, i) => (i === opts.messages.length - 1 ? { ...m, images } : m))
+      : opts.messages;
 
   let res: Response;
   try {
@@ -52,7 +61,7 @@ export async function callOllama(opts: {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       body: JSON.stringify({
         model,
-        messages: opts.messages,
+        messages,
         stream: false,
         think: false,
         ...(opts.jsonMode ? { format: "json" } : {}),

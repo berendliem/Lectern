@@ -12,6 +12,7 @@ It also has a **live assistant** for use *during* a lecture: while you record, a
 - **Summarization, flashcards, quiz**: [OpenRouter](https://openrouter.ai) chat completions, using a free-tier model by default (configurable per pipeline stage).
 - **Export**: Markdown and PDF (`@react-pdf/renderer`).
 - **Reading uploads**: PDF, `.pptx` and `.docx` text is extracted in the browser, so the file itself never reaches the server. Pages with no text layer — a scanned reading, a photographed handout — are OCR'd on the page image with [tesseract.js](https://tesseract.projectnaptha.com/) (English by default; set `NEXT_PUBLIC_OCR_LANG` for another language). This is the one step that isn't offline: the OCR engine and its language data come from `cdn.jsdelivr.net` the first time you OCR anything in a given browser, and are cached from then on. The page image is not uploaded anywhere.
+- **Handwritten notes**: photograph or scan the pages and add them the same way — through **Add material**, or by dropping the images on the course. Tesseract is trained on print and turns handwriting into noise, so these go to a vision model instead — a free one by default (`OPENROUTER_MODEL_VISION`) — one page per call, joined into a single material you can edit before saving. This is the one upload that does not stay in your browser: the downscaled photo is sent to that model to be read. Nothing stores the picture — only the text it returns — so keep your originals. Set `LLM_PROVIDER_VISION="ollama"` and pull a multimodal model to run this step on your own machine instead: no rate limit, no cost per page, and the photo stays local.
 
 ## Quick start
 
@@ -107,7 +108,7 @@ Open http://localhost:3000.
 **Per course** (open a course from the sidebar):
 
 - **Overview** — the syllabus topic list with a coverage verdict per topic. Upload the syllabus as a material and hit **Parse syllabus**: a reasoning model extracts the topic outline into an editable list, and each topic is embedded and matched against everything the course has captured. Topics with no lecture behind them are called out; topics with cards show how far along you are. Coverage is a similarity heuristic and says so — a near-miss names the closest lecture rather than claiming the topic was never taught. Tune the bar with `COVERAGE_THRESHOLD` in `.env`, and add or delete topics by hand whenever the parse gets a messy syllabus wrong.
-- **Materials** — syllabus, slides, and readings, with flashcards and a quiz generated from any of them.
+- **Materials** — syllabus, slides, readings, and photographed handwritten notes, with flashcards and a quiz generated from any of them.
 - **Ask** — a question answered from that course's lectures *and* materials, with citations.
 - **Review**, **Exam cram**, **Feynman**, and **Interview** buttons, each pre-seeded with that course's content.
 

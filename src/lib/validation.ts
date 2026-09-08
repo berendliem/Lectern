@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_TEXT_CHARS } from "./limits";
+import { MAX_SCAN_IMAGE_CHARS, MAX_TEXT_CHARS } from "./limits";
 
 export const createFolderSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -49,6 +49,30 @@ export const createMaterialSchema = z.object({
   text: z.string().trim().min(1).max(MAX_TEXT_CHARS),
   sourceFileName: z.string().trim().max(300).optional(),
   slideCount: z.number().int().min(0).max(10_000).optional(),
+});
+
+/**
+ * One photographed page on its way to a vision model. The `data:` URL is
+ * pattern-matched, not just length-checked: it is pasted straight into an
+ * outbound request body, so a `data:text/html` or an `http://` URL here would
+ * turn this route into a fetcher for whatever a caller names.
+ */
+export const scanNotesSchema = z.object({
+  image: z
+    .string()
+    .max(MAX_SCAN_IMAGE_CHARS, "That page is too large even after downscaling.")
+    .regex(
+      /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/,
+      "A page must be a PNG, JPEG or WebP data URL."
+    ),
+  /** Context for the model ("page 2 of 8"), so a multi-page set reads as one
+   *  document. Shape-checked because it is interpolated into a prompt. */
+  pageLabel: z
+    .string()
+    .trim()
+    .max(40)
+    .regex(/^page \d{1,3} of \d{1,3}$/, "Unexpected page label.")
+    .optional(),
 });
 
 export const updatePageSchema = z.object({
