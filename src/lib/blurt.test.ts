@@ -33,7 +33,8 @@ test("a blurt's grade follows what it covered, not how much was written", () => 
       kind: "BLURT",
       covered: marked.covered.length,
       missed: marked.missed.length,
+      wrong: marked.wrong.length,
     }),
-    4
+    3
   );
 });

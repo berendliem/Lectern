@@ -144,6 +144,8 @@ export default async function FolderPage({
                 coverageAvailable={coverageAvailable}
                 misconceptions={openMisconceptions.map((m) => ({
                   id: m.id,
+                  // The query filters `misconception: { not: null }`; Prisma
+                  // just cannot carry that through to the return type.
                   text: m.misconception as string,
                   source: m.page?.title ?? m.material?.title ?? null,
                 }))}

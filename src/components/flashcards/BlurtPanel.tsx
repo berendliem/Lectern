@@ -84,8 +84,10 @@ export function BlurtPanel({ pageId, className }: { pageId: string; className?: 
                     Missed
                   </p>
                   <ul className="flex flex-col gap-1 text-[13px] text-ink-soft">
-                    {feedback.missed.map((point) => (
-                      <li key={point}>· {point}</li>
+                    {/* Keyed by position: the model can repeat a phrase, and
+                        this list is never reordered. */}
+                    {feedback.missed.map((point, i) => (
+                      <li key={i}>· {point}</li>
                     ))}
                   </ul>
                 </div>
@@ -97,8 +99,8 @@ export function BlurtPanel({ pageId, className }: { pageId: string; className?: 
                     Worth correcting
                   </p>
                   <ul className="flex flex-col gap-1.5 text-[13px] text-ink-soft">
-                    {feedback.wrong.map((item) => (
-                      <li key={item.claim}>
+                    {feedback.wrong.map((item, i) => (
+                      <li key={i}>
                         <span className="text-muted-2">You said:</span> {item.claim}
                         <br />
                         {item.correction}

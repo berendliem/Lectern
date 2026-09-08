@@ -41,7 +41,7 @@ export type RecallRaw =
   | { kind: "QUIZ"; similarity: number }
   | { kind: "FEYNMAN"; score: number }
   | { kind: "INTERVIEW"; rating: number }
-  | { kind: "BLURT"; covered: number; missed: number }
+  | { kind: "BLURT"; covered: number; missed: number; wrong: number }
   | { kind: "PRETEST"; correct: boolean };
 
 function clamp(quality: number): number {
@@ -65,7 +65,11 @@ export function normalizeQuality(raw: RecallRaw): number {
     case "FEYNMAN":
       return clamp(raw.score / 20);
     case "BLURT": {
-      const asked = raw.covered + raw.missed;
+      // Wrong claims sit in the denominator beside what was missed. The spec
+      // scored covered/(covered+missed), which hands a perfect 5 to a dump that
+      // recalled everything and also asserted eight things the notes contradict
+      // — and a 5 closes every open misconception on that lecture.
+      const asked = raw.covered + raw.missed + raw.wrong;
       // Nothing to score against is not a failure; an empty blurt scores 0 on
       // its own because `covered` is 0.
       return asked === 0 ? 0 : clamp((raw.covered / asked) * 5);
@@ -148,6 +152,10 @@ export function calibration(events: CalibrationEvent[]): Calibration {
 /**
  * Weighted sampling without replacement. The RNG is injectable so the
  * distribution can be asserted in a test rather than hoped for.
+ *
+ * ponytail: O(n²) — it re-totals the pool per draw, and cram draws the whole
+ * course. Fine at a few hundred questions; a prefix-sum tree if a course ever
+ * carries thousands.
  *
  * Weights at or below zero are treated as unpickable; if every remaining item
  * is unpickable the sample stops early rather than looping.

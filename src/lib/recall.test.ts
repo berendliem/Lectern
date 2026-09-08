@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   BASE_CRAM_WEIGHT,
+  RESOLVE_QUALITY,
   applyCalibrationPenalty,
   calibration,
   cramWeight,
@@ -41,11 +42,24 @@ test("normalizeQuality treats interview ratings as already on the scale", () => 
 });
 
 test("normalizeQuality scores a blurt by what it covered", () => {
-  assert.equal(normalizeQuality({ kind: "BLURT", covered: 0, missed: 4 }), 0);
-  assert.equal(normalizeQuality({ kind: "BLURT", covered: 2, missed: 2 }), 3);
-  assert.equal(normalizeQuality({ kind: "BLURT", covered: 4, missed: 0 }), 5);
+  assert.equal(normalizeQuality({ kind: "BLURT", covered: 0, missed: 4, wrong: 0 }), 0);
+  assert.equal(normalizeQuality({ kind: "BLURT", covered: 2, missed: 2, wrong: 0 }), 3);
+  assert.equal(normalizeQuality({ kind: "BLURT", covered: 4, missed: 0, wrong: 0 }), 5);
   // A blurt the grader could not find anything to score is a 0, not a crash.
-  assert.equal(normalizeQuality({ kind: "BLURT", covered: 0, missed: 0 }), 0);
+  assert.equal(normalizeQuality({ kind: "BLURT", covered: 0, missed: 0, wrong: 0 }), 0);
+});
+
+test("wrong claims count against a blurt that missed nothing", () => {
+  // Recalled everything the notes ask for, and asserted four things they
+  // contradict. Scoring only covered/(covered+missed) would call that a 5 —
+  // and a 5 closes every open misconception on the lecture.
+  const confidentlyWrong = normalizeQuality({ kind: "BLURT", covered: 4, missed: 0, wrong: 4 });
+  assert.equal(confidentlyWrong, 3);
+  assert.ok(
+    confidentlyWrong < RESOLVE_QUALITY,
+    "a blurt full of false claims must not resolve misconceptions"
+  );
+  assert.equal(normalizeQuality({ kind: "BLURT", covered: 1, missed: 0, wrong: 7 }), 1);
 });
 
 test("normalizeQuality clamps a grader that returns nonsense", () => {

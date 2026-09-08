@@ -7,6 +7,7 @@ import { callLLMJSON, reasoningModel } from "@/lib/llm";
 import { BLURT_SYSTEM_PROMPT, buildBlurtUserPrompt } from "@/lib/prompts/blurt";
 import { blurtResponseSchema, blurtSubmitSchema } from "@/lib/validation";
 import { recallRow, settleMisconceptions, type RecallEvent } from "@/lib/recall-log";
+import { normalizeQuality } from "@/lib/recall";
 
 /** Marks a card as born from a blurt, so a deck shows where it came from. */
 const BLURT_SOURCE_TERM = "From a blurt";
@@ -48,7 +49,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const event: RecallEvent = {
-    raw: { kind: "BLURT", covered: parsed.covered.length, missed: parsed.missed.length },
+    raw: {
+      kind: "BLURT",
+      covered: parsed.covered.length,
+      missed: parsed.missed.length,
+      wrong: parsed.wrong.length,
+    },
     pageId: id,
     misconception: parsed.wrong[0]?.correction ?? parsed.missed[0] ?? null,
     detail: {
@@ -88,9 +94,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     db.reviewLog.create({ data: recallRow(event) }),
   ]);
 
-  // Outside the transaction: closing an older misconception is bookkeeping, and
-  // failing at it must not cost the student the cards they just earned.
-  const { quality } = await settleMisconceptions(event);
+  // Outside the transaction, and caught: the cards and the event are already
+  // committed by this point, so a failure here must not turn a marked blurt
+  // into a 500 that tells the student nothing was saved.
+  const quality = normalizeQuality(event.raw);
+  try {
+    await settleMisconceptions(event);
+  } catch (e) {
+    console.error(`[recall] settling misconceptions after a blurt on page ${id} failed:`, e);
+  }
 
   return NextResponse.json({ feedback: parsed, quality, cardsCreated: cards.length });
 }

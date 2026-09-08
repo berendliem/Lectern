@@ -167,28 +167,34 @@ async function maybeCardFromMisconception(event: RecallEvent, scope: Scope): Pro
   // event with neither still logs its misconception; it just cannot buy a card.
   if (!parent) return;
 
+  const correction = oneLine(event.misconception);
+  if (!correction) return;
+
+  // Strikes on *this* diagnosis, not on the lecture. Counting every failure on
+  // the page would build the card from whichever mistake happened to be third,
+  // and call it a thing the student missed three times when they missed three
+  // different things once each.
   const strikes = await db.reviewLog.count({
     where: {
       ...scope,
       resolvedAt: null,
-      misconception: { not: null },
+      misconception: correction,
       quality: { lt: PASS_QUALITY },
       reviewedAt: { gte: RECALL_LEDGER_SINCE },
     },
   });
   if (strikes < STRIKES_FOR_CARD) return;
 
-  const sourceTerm = `Missed ${strikes}×`;
-  const correction = oneLine(event.misconception);
-  if (!correction) return;
-
-  // "Once" is enforced by the card's own text: the same correction on the same
-  // parent does not earn a second card on the fourth and fifth failure.
+  // Dedupe on the explanation alone: a blurt already writes its corrections as
+  // cards under its own sourceTerm, and a second card carrying the same text
+  // under a different label is still a duplicate.
   const existing = await db.flashcard.findFirst({
-    where: { ...parent, idealExplanation: correction, sourceTerm: { startsWith: "Missed " } },
+    where: { ...parent, idealExplanation: correction },
     select: { id: true },
   });
   if (existing) return;
+
+  const sourceTerm = `Missed ${strikes}×`;
 
   await db.flashcard.create({
     data: {
