@@ -93,6 +93,25 @@ export const chatRequestSchema = z.object({
     .max(30),
 });
 
+export const blurtSubmitSchema = z.object({
+  dump: z.string().trim().min(1).max(8000),
+});
+
+/** What the reasoning tier returns when it marks a blurt. */
+export const blurtResponseSchema = z.object({
+  covered: z.array(z.string().trim().min(1)).max(40).default([]),
+  missed: z.array(z.string().trim().min(1)).max(8).default([]),
+  wrong: z
+    .array(
+      z.object({
+        claim: z.string().trim().min(1),
+        correction: z.string().trim().min(1),
+      })
+    )
+    .max(8)
+    .default([]),
+});
+
 export const feynmanEvaluateSchema = z.object({
   concept: z.string().trim().min(1).max(300),
   /** The lecture the coach was launched from, so the attempt reaches the

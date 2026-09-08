@@ -62,36 +62,54 @@ function targetFilter(event: RecallTarget) {
   return clauses.length > 0 ? { OR: clauses } : null;
 }
 
-export async function writeRecall(event: RecallEvent): Promise<RecallResult> {
+/**
+ * The row itself, so a caller that must write inside its own transaction (the
+ * blurt route writes its cards and its event together) still gets the columns
+ * filled by this module rather than by hand.
+ */
+export function recallRow(event: RecallEvent) {
+  const quality = normalizeQuality(event.raw);
+  return {
+    kind: event.raw.kind,
+    quality,
+    confidence: event.confidence ?? null,
+    flashcardId: event.flashcardId ?? null,
+    pageId: event.pageId ?? null,
+    materialId: event.materialId ?? null,
+    topicId: event.topicId ?? null,
+    // A diagnosis only means something against a failed attempt; storing one
+    // on a pass would leave the misconception list arguing with the grade.
+    misconception: quality < PASS_QUALITY ? (event.misconception ?? null) : null,
+    detail: event.detail === undefined ? null : JSON.stringify(event.detail),
+  };
+}
+
+/**
+ * The pass that runs after the row lands: a good recall closes what earlier
+ * failures opened, a failed one counts toward a card. Exported for the same
+ * reason as `recallRow` — a caller that wrote the row in its own transaction
+ * still owes the ledger this.
+ */
+export async function settleMisconceptions(event: RecallEvent): Promise<RecallResult> {
   const quality = normalizeQuality(event.raw);
   const schedulable = isSchedulable(event.raw.kind);
-  const failed = quality < PASS_QUALITY;
-
-  await db.reviewLog.create({
-    data: {
-      kind: event.raw.kind,
-      quality,
-      confidence: event.confidence ?? null,
-      flashcardId: event.flashcardId ?? null,
-      pageId: event.pageId ?? null,
-      materialId: event.materialId ?? null,
-      topicId: event.topicId ?? null,
-      // A diagnosis only means something against a failed attempt; storing one
-      // on a pass would leave the misconception list arguing with the grade.
-      misconception: failed ? (event.misconception ?? null) : null,
-      detail: event.detail === undefined ? null : JSON.stringify(event.detail),
-    },
-  });
-
   const scope = targetFilter(event);
+
   // A pretest is a guess about unseen material. Neither closing nor opening a
   // misconception on it says anything true about what the student knows.
   if (scope && schedulable) {
     if (quality >= RESOLVE_QUALITY) await closeMisconceptions(scope);
-    else if (failed && event.misconception) await maybeCardFromMisconception(event, scope);
+    else if (quality < PASS_QUALITY && event.misconception) {
+      await maybeCardFromMisconception(event, scope);
+    }
   }
 
   return { quality, schedulable };
+}
+
+export async function writeRecall(event: RecallEvent): Promise<RecallResult> {
+  await db.reviewLog.create({ data: recallRow(event) });
+  return settleMisconceptions(event);
 }
 
 /**
