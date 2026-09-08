@@ -185,6 +185,22 @@ export function weightedSample<T>(
   return out;
 }
 
+/**
+ * A typed free-recall attempt, scored against the card's own explanation, maps
+ * onto the four buttons. Nothing here submits a grade — the student sees the
+ * suggestion pre-highlighted and overrides it whenever it is wrong.
+ *
+ * ponytail: four hand-picked thresholds, calibrated against cosine similarity
+ * on MiniLM; env knobs the first time a real deck argues with them.
+ */
+export function suggestQuality(similarity: number): number {
+  if (!Number.isFinite(similarity)) return 0;
+  if (similarity >= 0.8) return 5;
+  if (similarity >= 0.55) return 4;
+  if (similarity >= 0.35) return 3;
+  return 0;
+}
+
 export type CramStats = {
   /** Most recent normalized quality for this question, or null if never seen. */
   recentQuality: number | null;

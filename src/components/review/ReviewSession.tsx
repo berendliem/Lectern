@@ -20,6 +20,9 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [confidence, setConfidence] = useState<number | null>(null);
+  const [suggested, setSuggested] = useState<number | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -34,16 +37,48 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
     };
   }, [folderId]);
 
+  /**
+   * Reveal, and — only if something was typed — ask what that attempt was worth.
+   * The reveal never waits on the answer: the reference explanation appears
+   * immediately and the suggestion catches up when it arrives.
+   */
+  async function handleFlip() {
+    const next = !flipped;
+    setFlipped(next);
+    const card = cards?.[index];
+    if (!next || !card || typed.trim().length === 0) return;
+
+    try {
+      const res = await fetch(`/api/review/${card.id}/suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ typed }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setSuggested(typeof data.quality === "number" ? data.quality : null);
+    } catch {
+      // A suggestion is a convenience; grading works exactly as before without it.
+    }
+  }
+
   async function handleGrade(quality: number) {
     const card = cards?.[index];
     if (!card) return;
     await fetch(`/api/review/${card.id}/grade`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quality }),
+      body: JSON.stringify({
+        quality,
+        typed: typed.trim() || undefined,
+        confidence: confidence ?? undefined,
+      }),
     });
     setReviewedCount((c) => c + 1);
     setFlipped(false);
+    setTyped("");
+    setConfidence(null);
+    setSuggested(null);
     setIndex((i) => i + 1);
   }
 
@@ -119,9 +154,13 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
         prompt={card.prompt}
         idealExplanation={card.idealExplanation}
         flipped={flipped}
-        onFlip={() => setFlipped((f) => !f)}
+        onFlip={handleFlip}
+        typed={typed}
+        onTyped={setTyped}
+        confidence={confidence}
+        onConfidence={setConfidence}
       />
-      {flipped && <ReviewGradeButtons onGrade={handleGrade} />}
+      {flipped && <ReviewGradeButtons onGrade={handleGrade} suggested={suggested} />}
     </div>
   );
 }

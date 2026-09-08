@@ -69,6 +69,10 @@ export const reviewGradeSchema = z.object({
   confidence: z.number().int().min(1).max(3).optional(),
 });
 
+export const reviewSuggestSchema = z.object({
+  typed: z.string().trim().min(1).max(4000),
+});
+
 export const quizAnswerSchema = z.object({
   answer: z.string().trim().min(0).max(2000),
 });
