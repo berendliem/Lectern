@@ -8,6 +8,8 @@ import {
   submitAnswerSchema,
   interviewFeedbackResponseSchema,
   interviewQuestionResponseSchema,
+  rubricFor,
+  recallRawFor,
   type InterviewContext,
   type QAPair,
 } from "@/lib/interview";
@@ -17,6 +19,9 @@ import {
   INTERVIEW_QUESTION_SYSTEM_PROMPT,
   buildNextQuestionUserPrompt,
 } from "@/lib/prompts/interview";
+import { FEYNMAN_SYSTEM_PROMPT, buildFeynmanUserPrompt } from "@/lib/prompts/feynman";
+import { PROTEGE_QUESTION_SYSTEM_PROMPT, buildProtegeNextQuestionUserPrompt } from "@/lib/prompts/protege";
+import { feynmanFeedbackSchema } from "@/lib/validation";
 import { writeRecallSafely } from "@/lib/recall-log";
 
 const MODEL =
@@ -34,6 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     include: {
       turns: { orderBy: { order: "asc" } },
       page: { include: { notes: true, transcript: true } },
+      topic: { select: { id: true, title: true } },
     },
   });
   if (!session) return jsonError("Interview session not found", 404);
@@ -47,17 +53,43 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     source: session.source,
     notesMarkdown: session.page?.notes?.markdown ?? null,
     transcriptText: session.page?.transcript?.rawText ?? null,
-    topicText: session.topicText,
+    topicText: session.topicText ?? session.topic?.title ?? null,
   };
 
-  let feedback;
+  const rubric = rubricFor(session.mode);
+
+  let feedback: unknown;
+  let score: number;
+  let firstImprovement: string | null;
   try {
-    const raw = await callLLMJSON({
-      model: MODEL,
-      systemPrompt: INTERVIEW_FEEDBACK_SYSTEM_PROMPT,
-      userPrompt: buildFeedbackUserPrompt(context, turn.question, answer),
-    });
-    feedback = await interviewFeedbackResponseSchema.parseAsync(raw);
+    if (rubric === "FEYNMAN") {
+      const raw = await callLLMJSON({
+        model: MODEL,
+        systemPrompt: FEYNMAN_SYSTEM_PROMPT,
+        userPrompt: buildFeynmanUserPrompt({
+          concept: turn.question,
+          reference: context.notesMarkdown ?? context.transcriptText ?? context.topicText ?? undefined,
+          explanation: answer,
+          priorExplanations: session.turns
+            .filter((t) => t.answer !== null && t.id !== turn.id)
+            .map((t) => t.answer as string),
+        }),
+      });
+      const parsed = await feynmanFeedbackSchema.parseAsync(raw);
+      feedback = parsed;
+      score = parsed.score;
+      firstImprovement = parsed.gaps[0] ?? null;
+    } else {
+      const raw = await callLLMJSON({
+        model: MODEL,
+        systemPrompt: INTERVIEW_FEEDBACK_SYSTEM_PROMPT,
+        userPrompt: buildFeedbackUserPrompt(context, turn.question, answer),
+      });
+      const parsed = await interviewFeedbackResponseSchema.parseAsync(raw);
+      feedback = parsed;
+      score = parsed.score;
+      firstImprovement = parsed.improvements[0] ?? null;
+    }
   } catch (e) {
     const message =
       e instanceof ZodError
@@ -76,10 +108,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // A topic-sourced session has no page, so the event lands parentless rather
   // than being dropped — the scale is the point, the parent is a bonus.
   await writeRecallSafely({
-    raw: { kind: "INTERVIEW", rating: feedback.score },
+    raw: recallRawFor(session.mode, { score }),
     pageId: session.pageId,
-    misconception: feedback.improvements[0] ?? null,
-    detail: { question: turn.question, score: feedback.score },
+    topicId: session.courseTopicId,
+    misconception: firstImprovement,
+    detail: { question: turn.question, score, mode: session.mode },
   });
 
   const answeredCount = session.turns.filter((t) => t.answer !== null).length + 1;
@@ -97,10 +130,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   ];
 
   try {
+    const usingProtege = session.mode === "PROTEGE";
     const raw = await callLLMJSON({
       model: MODEL,
-      systemPrompt: INTERVIEW_QUESTION_SYSTEM_PROMPT,
-      userPrompt: buildNextQuestionUserPrompt(context, history),
+      systemPrompt: usingProtege ? PROTEGE_QUESTION_SYSTEM_PROMPT : INTERVIEW_QUESTION_SYSTEM_PROMPT,
+      userPrompt: usingProtege
+        ? buildProtegeNextQuestionUserPrompt(context, history)
+        : buildNextQuestionUserPrompt(context, history),
     });
     const parsed = await interviewQuestionResponseSchema.parseAsync(raw);
     const nextOrder = session.turns.reduce((max, t) => Math.max(max, t.order), turn.order) + 1;
