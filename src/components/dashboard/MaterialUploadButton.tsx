@@ -8,6 +8,8 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { extractPdfText, type OcrProgress } from "@/lib/pdf-extract";
 import { extractDocxText, extractPptxText } from "@/lib/office-extract";
+import { SCAN_IMAGE_RE, titleFromPath } from "@/lib/drop-intake";
+import { scanPagesToMarkdown, type ScanProgress } from "@/lib/scan-notes";
 
 const KINDS = [
   { value: "SYLLABUS", label: "Syllabus" },
@@ -27,6 +29,10 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
   const [slideCount, setSlideCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [ocr, setOcr] = useState<OcrProgress | null>(null);
+  const [scan, setScan] = useState<ScanProgress | null>(null);
+  // Set once the text came from photographed pages, which is the one path
+  // where a file leaves the machine — the modal has to say so.
+  const [scanned, setScanned] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,6 +45,8 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
   function reset() {
     setKind("SLIDES");
     setOcr(null);
+    setScan(null);
+    setScanned(false);
     setTitle("");
     setText("");
     setSourceFileName(null);
@@ -53,7 +61,9 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
     reset();
   }
 
-  async function handleFile(file: File) {
+  async function handleFiles(files: File[]) {
+    const file = files[0];
+    if (!file) return;
     abortRef.current?.abort();
     const abort = new AbortController();
     abortRef.current = abort;
@@ -62,8 +72,37 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
     setSourceFileName(null);
     setSlideCount(null);
     setOcr(null);
+    setScan(null);
+    setScanned(false);
     setBusy(true);
     try {
+      // Photos are the one multi-file case: a set of pages is one set of
+      // notes, so they are read in order and saved as a single material.
+      const photos = files.filter((f) => SCAN_IMAGE_RE.test(f.name));
+      if (photos.length > 0) {
+        if (photos.length !== files.length) {
+          setError("Pick either photos of your notes or one document — not both at once.");
+          return;
+        }
+        const markdown = await scanPagesToMarkdown(photos, {
+          signal: abort.signal,
+          onProgress: setScan,
+        });
+        setText(markdown);
+        setScanned(true);
+        setSourceFileName(
+          photos.length === 1 ? photos[0].name : `${photos.length} photos, from ${photos[0].name}`
+        );
+        if (!title.trim()) setTitle(titleFromPath(photos[0].name));
+        setKind("OTHER");
+        return;
+      }
+
+      if (/\.heic$/i.test(file.name)) {
+        setError("HEIC photos can't be read here — export the page as JPEG and try again.");
+        return;
+      }
+
       // `accept` is only a hint — a file picked through "All Files" still
       // arrives here, so route on the extension rather than assuming PDF.
       const kindOfFile = /\.pptx$/i.test(file.name)
@@ -75,7 +114,9 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
             : null;
 
       if (!kindOfFile) {
-        setError("Only PDF, PowerPoint (.pptx) and Word (.docx) files can be read.");
+        setError(
+          "Only PDF, PowerPoint (.pptx), Word (.docx) and photos (JPEG, PNG, WebP) can be read."
+        );
         return;
       }
 
@@ -116,6 +157,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
     } finally {
       if (!abort.signal.aborted) {
         setOcr(null);
+        setScan(null);
         setBusy(false);
       }
     }
@@ -197,20 +239,25 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
             )}
             <span role="status" aria-live="polite">
               {!busy
-                ? "Choose a PDF, PowerPoint or Word file"
-                : ocr
-                  ? `Reading scanned page ${ocr.page} of ${ocr.pages}…`
-                  : "Extracting text…"}
+                ? "Choose a PDF, PowerPoint or Word file — or photos of written notes"
+                : scan
+                  ? `Reading page ${scan.page} of ${scan.pages} with the AI model…`
+                  : ocr
+                    ? `Reading scanned page ${ocr.page} of ${ocr.pages}…`
+                    : "Extracting text…"}
             </span>
           </button>
           <input
             ref={inputRef}
             type="file"
-            accept=".pdf,.pptx,.docx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            // Multiple is for photos: several pages of one set of notes become
+            // one material. A document is still taken one at a time.
+            multiple
+            accept=".pdf,.pptx,.docx,.png,.jpg,.jpeg,.webp,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/webp"
             className="hidden"
             onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFile(file);
+              const files = Array.from(e.target.files ?? []);
+              if (files.length > 0) handleFiles(files);
               e.target.value = "";
             }}
           />
@@ -218,9 +265,21 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
           {text && (
             <p className="text-[12.5px] text-muted">
               {slideCount !== null ? `${slideCount} slides · ` : ""}
-              {text.length.toLocaleString()} characters extracted in your browser. The file itself is
-              never uploaded.
+              {text.length.toLocaleString()} characters
+              {scanned
+                ? " transcribed by the AI model. The photos were sent to it to be read and are not saved — keep your originals. Check the text below before saving."
+                : " extracted in your browser. The file itself is never uploaded."}
             </p>
+          )}
+
+          {scanned && (
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={10}
+              aria-label="Transcribed notes"
+              className="rounded-lg border border-line bg-surface px-2.5 py-2 font-mono text-[12px] leading-relaxed text-ink"
+            />
           )}
 
           {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}

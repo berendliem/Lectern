@@ -70,6 +70,25 @@ test("archive junk and unreadable files are skipped with a reason", () => {
   assert.equal(routeDropFile("README").dest, "skip");
 });
 
+test("photographed pages become materials a vision model reads", () => {
+  assert.deepEqual(routeDropFile("Week 3/IMG_2831.JPG"), {
+    dest: "material",
+    extract: "image",
+    kind: "OTHER",
+  });
+  for (const path of ["page1.png", "page1.jpeg", "page1.webp"]) {
+    assert.equal(routeDropFile(path).dest, "material", path);
+  }
+  // An iPhone shoots HEIC by default and no canvas will decode it, so the
+  // reason names the one-step fix instead of calling the file unreadable.
+  const heic = routeDropFile("IMG_2831.heic");
+  assert.equal(heic.dest, "skip");
+  assert.match(heic.dest === "skip" ? heic.reason : "", /JPEG/);
+  // A dot-file image is still archive junk; the image branch must not jump
+  // ahead of that check.
+  assert.equal(routeDropFile("__MACOSX/._IMG_2831.jpg").dest, "skip");
+});
+
 test("titles drop the folders and the extension, and never come back empty", () => {
   assert.equal(titleFromPath("Fall 2026/Week 3/deck.pptx"), "deck");
   assert.equal(titleFromPath("chapter1.pdf"), "chapter1");

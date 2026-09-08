@@ -5,7 +5,7 @@
 export type MaterialKind = "SYLLABUS" | "SLIDES" | "READING" | "OTHER";
 
 export type DropRoute =
-  | { dest: "material"; extract: "pdf" | "pptx" | "docx" | "txt"; kind: MaterialKind }
+  | { dest: "material"; extract: "pdf" | "pptx" | "docx" | "txt" | "image"; kind: MaterialKind }
   | { dest: "lecture" }
   | { dest: "skip"; reason: string };
 
@@ -18,6 +18,10 @@ const JUNK = /(^|\/)(__MACOSX\/|\.)/i;
 
 /** Reads as a syllabus rather than a reading, whatever the extension is. */
 const SYLLABUS_NAME = /syllabus|outline/i;
+
+/** Image formats a browser canvas can decode, which is what scanning a page
+ *  needs. HEIC is deliberately absent — see the skip below. */
+export const SCAN_IMAGE_RE = /\.(png|jpe?g|webp)$/i;
 
 export function routeDropFile(path: string): DropRoute {
   if (path.endsWith("/")) return { dest: "skip", reason: "folder" };
@@ -35,6 +39,16 @@ export function routeDropFile(path: string): DropRoute {
   // A zip inside a zip is rare and expanding it recursively invites a zip bomb
   // for no real gain, so it is named as skipped rather than silently dropped.
   if (/\.zip$/i.test(path)) return { dest: "skip", reason: "zip inside a zip" };
+
+  // A photographed page: read by a vision model, not by OCR. Kind OTHER
+  // because a photo of a page says nothing about what is on it.
+  if (SCAN_IMAGE_RE.test(path)) return { dest: "material", extract: "image", kind: "OTHER" };
+  // HEIC is what an iPhone shoots by default, so it lands here often enough to
+  // deserve the fix rather than "not a readable document" — Chrome cannot
+  // decode it into a canvas, and Preview exports JPEG in one step.
+  if (/\.heic$/i.test(path)) {
+    return { dest: "skip", reason: "HEIC photo — export it as JPEG first" };
+  }
 
   const extract = /\.pptx$/i.test(path)
     ? "pptx"

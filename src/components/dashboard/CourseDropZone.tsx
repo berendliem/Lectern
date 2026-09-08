@@ -2,16 +2,17 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileAudio, FileText, Loader2, UploadCloud } from "lucide-react";
+import { FileAudio, FileImage, FileText, Loader2, UploadCloud } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { collectDropFiles, expandZips, MAX_DROPPED_FILES } from "@/lib/drop-files";
-import { MAX_TEXT_CHARS } from "@/lib/limits";
+import { MAX_SCAN_PAGES, MAX_TEXT_CHARS } from "@/lib/limits";
 import { routeDropFile, titleFromPath, type MaterialKind } from "@/lib/drop-intake";
 import { extractPdfText, type OcrProgress } from "@/lib/pdf-extract";
 import { extractDocxText, extractPptxText } from "@/lib/office-extract";
 import { parseExternalTranscript, segmentsToRawText } from "@/lib/transcript-import";
+import { scanPagesToMarkdown } from "@/lib/scan-notes";
 
 const KINDS: MaterialKind[] = ["SYLLABUS", "SLIDES", "READING", "OTHER"];
 const KIND_LABEL: Record<MaterialKind, string> = {
@@ -29,7 +30,7 @@ type Row = {
   file: File;
   /** Materials only; a transcript row carries no kind. */
   kind: MaterialKind | null;
-  extract: "pdf" | "pptx" | "docx" | "txt" | null;
+  extract: "pdf" | "pptx" | "docx" | "txt" | "image" | null;
   dest: "material" | "lecture" | "skip";
   status: RowStatus;
   note: string | null;
@@ -113,7 +114,23 @@ export function CourseDropZone({
       }
       setIgnored(skippedByZip);
       setOverflowed(Math.max(0, files.length - MAX_DROPPED_FILES));
-      setRows(files.slice(0, MAX_DROPPED_FILES).map(({ path, file }) => toRow(path, file)));
+      // Every photo is a paid model call, so a dropped folder of them is
+      // capped where a dropped folder of PDFs is not.
+      let photoBudget = MAX_SCAN_PAGES;
+      setRows(
+        files.slice(0, MAX_DROPPED_FILES).map(({ path, file }) => {
+          const row = toRow(path, file);
+          if (row.extract !== "image" || photoBudget-- > 0) return row;
+          return {
+            ...row,
+            kind: null,
+            extract: null,
+            dest: "skip",
+            status: "skip",
+            note: `over the ${MAX_SCAN_PAGES}-photo limit for one drop`,
+          };
+        })
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not read what you dropped.");
     } finally {
@@ -158,7 +175,9 @@ export function CourseDropZone({
                 ? await row.file.text()
                 : row.extract === "docx"
                   ? await extractDocxText(row.file)
-                  : await extractPdfText(row.file, { onOcrProgress: onOcr, signal }),
+                  : row.extract === "image"
+                    ? await scanPagesToMarkdown([row.file], { signal })
+                    : await extractPdfText(row.file, { onOcrProgress: onOcr, signal }),
             slideCount: null,
           };
 
@@ -208,7 +227,13 @@ export function CourseDropZone({
         if (abort.signal.aborted) return;
         done += 1;
         const at = (label: string) => setProgress(`${done} of ${queue.length} · ${label}`);
-        at(`reading ${row.file.name}`);
+        // A photo waits on a model call, not on this tab, and the wait is long
+        // enough that "reading" alone looks like the app has hung.
+        const reading =
+          row.extract === "image"
+            ? `reading ${row.file.name} with the AI model`
+            : `reading ${row.file.name}`;
+        at(reading);
         mark(index, { status: "working" });
 
         // One at a time on purpose: extraction runs in this tab, and a scanned
@@ -218,11 +243,7 @@ export function CourseDropZone({
         let note: string | null = null;
         try {
           await saveRow(row, abort.signal, (ocr) =>
-            at(
-              ocr
-                ? `OCR-ing page ${ocr.page} of ${ocr.pages} of ${row.file.name}`
-                : `reading ${row.file.name}`
-            )
+            at(ocr ? `OCR-ing page ${ocr.page} of ${ocr.pages} of ${row.file.name}` : reading)
           );
           savedAny = true;
         } catch (err) {
@@ -248,6 +269,9 @@ export function CourseDropZone({
   const ready = rows?.filter((r) => r.status === "ready").length ?? 0;
   const saved = rows?.filter((r) => r.status === "saved").length ?? 0;
   const failed = rows?.filter((r) => r.status === "failed").length ?? 0;
+  // Photos are the one kind of row that leaves the machine, so the modal has
+  // to say so before the user presses Add.
+  const photos = rows?.filter((r) => r.extract === "image" && r.status === "ready").length ?? 0;
   const finished = rows !== null && ready === 0 && (saved > 0 || failed > 0);
 
   return (
@@ -300,7 +324,11 @@ export function CourseDropZone({
           <p className="text-[13px] text-muted">
             {finished
               ? `${saved} added${failed > 0 ? `, ${failed} failed` : ""}.`
-              : `${ready} of ${rows?.length ?? 0} files can be added. Text is extracted in your browser — the files themselves are never uploaded.`}
+              : `${ready} of ${rows?.length ?? 0} files can be added. Text is extracted in your browser — the files themselves are never uploaded.${
+                  photos > 0
+                    ? ` The ${photos === 1 ? "photo" : `${photos} photos`} are the exception: a photo is sent to the AI model to be read, and only the text it returns is saved.`
+                    : ""
+                }`}
             {overflowed > 0 &&
               ` ${overflowed} more were ignored (${MAX_DROPPED_FILES}-file limit).`}
             {ignored > 0 && ` ${ignored} were left inside their archive (too large).`}
@@ -327,6 +355,8 @@ export function CourseDropZone({
               >
                 {row.dest === "lecture" ? (
                   <FileAudio className="h-3.5 w-3.5 shrink-0 text-brand-ink" strokeWidth={2} />
+                ) : row.extract === "image" ? (
+                  <FileImage className="h-3.5 w-3.5 shrink-0 text-brand-ink" strokeWidth={2} />
                 ) : (
                   <FileText className="h-3.5 w-3.5 shrink-0 text-brand-ink" strokeWidth={2} />
                 )}
@@ -346,7 +376,9 @@ export function CourseDropZone({
                           ? "working…"
                           : row.dest === "lecture"
                             ? "new lecture"
-                            : "material"}
+                            : row.extract === "image"
+                              ? "photo · read by AI"
+                              : "material"}
                   </span>
                 </span>
                 {row.dest === "material" && row.status !== "saved" && (
