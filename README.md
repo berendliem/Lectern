@@ -39,7 +39,7 @@ Two things it can't do for you:
    cp .env.example .env
    ```
 
-   Edit `.env` and set `OPENROUTER_API_KEY` to your key from [openrouter.ai/keys](https://openrouter.ai/keys). The default models (`OPENROUTER_MODEL_SUMMARY`, `OPENROUTER_MODEL_FLASHCARDS`, `OPENROUTER_MODEL_QUIZ`, `OPENROUTER_MODEL_CHAT`) point at a free Llama model — OpenRouter's free-tier roster changes over time, so double-check `https://openrouter.ai/models?order=top-weekly` filtered to `:free` and swap in whatever's current if the default stops working.
+   Edit `.env` and set `OPENROUTER_API_KEY` to your key from [openrouter.ai/keys](https://openrouter.ai/keys). The default models (`OPENROUTER_MODEL_SUMMARY`, `OPENROUTER_MODEL_FLASHCARDS`, `OPENROUTER_MODEL_QUIZ`, `OPENROUTER_MODEL_CHAT`) are all `openrouter/free`, which lets OpenRouter pick a current free model rather than pinning one that may be retired. Name a specific model in `.env` if you want a consistent one; `https://openrouter.ai/models?order=top-weekly` filtered to `:free` shows what's available.
 
 2. **Initialize the database**
 

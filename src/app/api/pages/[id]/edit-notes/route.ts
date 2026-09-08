@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!page) return jsonError("Page not found", 404);
   if (!page.notes) return jsonError("This page has no notes to edit yet", 422);
 
-  const model = process.env.OPENROUTER_MODEL_SUMMARY ?? "meta-llama/llama-3.3-70b-instruct:free";
+  const model = process.env.OPENROUTER_MODEL_SUMMARY ?? "openrouter/free";
 
   try {
     const revised = await callLLMText({

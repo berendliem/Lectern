@@ -22,7 +22,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const model =
     process.env.OPENROUTER_MODEL_CONCEPT_MAP ??
     process.env.OPENROUTER_MODEL_SUMMARY ??
-    "meta-llama/llama-3.3-70b-instruct:free";
+    "openrouter/free";
 
   try {
     const raw = await callLLMJSON({

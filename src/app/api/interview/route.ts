@@ -7,7 +7,7 @@ import { createInterviewSessionSchema, interviewQuestionResponseSchema, type Int
 import { INTERVIEW_QUESTION_SYSTEM_PROMPT, buildFirstQuestionUserPrompt } from "@/lib/prompts/interview";
 
 const MODEL =
-  process.env.OPENROUTER_MODEL_INTERVIEW ?? process.env.OPENROUTER_MODEL_QUIZ ?? "meta-llama/llama-3.3-70b-instruct:free";
+  process.env.OPENROUTER_MODEL_INTERVIEW ?? process.env.OPENROUTER_MODEL_QUIZ ?? "openrouter/free";
 
 export async function GET() {
   const sessions = await db.interviewSession.findMany({
