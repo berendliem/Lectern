@@ -1,7 +1,7 @@
 # Lectern — design direction
 
 Date: 2026-09-04
-Status: Direction proposed; §7 is the phase that would land it
+Status: Direction shipped — §7 landed on 2026-09-08
 
 The logo arrived after the interface did, and they disagree. This document reads
 the direction out of the mark, measures what the app currently ships, names the
@@ -105,7 +105,7 @@ multi-dimensional palette for status is correct. They keep their roles.
 
 ### 2.3 The proposed system
 
-Action and ink separate, which is what the current system conflates:
+Shipped in §7. Action and ink separate, which is what the violet system conflated:
 
 | Role | Now | Proposed |
 |---|---|---|
@@ -131,7 +131,7 @@ institutional voice; the UI does not need a second display face.
 
 | Use | Current class | Change |
 |---|---|---|
-| Page title | `text-2xl font-bold tracking-tight text-gradient` | Drop `text-gradient` → navy. A gradient headline is decoration pretending to be hierarchy |
+| Page title | `text-2xl font-bold tracking-tight` | Inherits `--ink`; §7 dropped the gradient fill. A gradient headline is decoration pretending to be hierarchy |
 | Section heading | `text-[15px] font-semibold` | Keep |
 | Body / row | `text-sm` | Keep |
 | Secondary line | `text-[13px]` / `text-[12.5px]`, `text-muted` / `text-muted-2` | Keep |
@@ -150,15 +150,16 @@ already sit inside `max-w-4xl`/`max-w-3xl`; keep new reading surfaces there.
 | List row | `rounded-xl border border-line bg-surface px-4 py-3` |
 | Panel | `rounded-2xl border border-line/80 bg-surface p-5` |
 | Empty state | `rounded-2xl border border-dashed border-line-strong py-14 text-center text-sm text-muted-2` |
-| Primary button | `rounded-lg grad-brand px-3 py-2 text-sm font-medium text-white shadow-brand` → becomes solid navy |
+| Primary button | `rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white shadow-brand` |
 | Secondary button | `rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink-soft` |
+| Field | `rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-gold` |
+| Brand as text | `text-brand-ink` — never `text-brand`, which is a fill value and fails contrast on a dark surface |
 
 These are the semantic tokens from §9 — a literal `bg-white` or `text-zinc-500`
 in new code is a bug, because it will not follow the theme.
 
 Radii: `lg` for controls, `xl` for rows, `2xl` for panels, `full` for pills. One
-shadow, on primary actions only — under the new palette, `.shadow-brand`'s violet
-glow becomes a navy one.
+shadow, on primary actions only — `.shadow-brand` is a navy glow.
 
 Structure should encode information, not decorate it. Two things earn a border in
 this product: a row that is a discrete object (a lecture, a material, a topic),
@@ -222,54 +223,54 @@ explicit:
 
 ---
 
-## 7. Phase 7 — visual identity alignment
+## 7. Phase 7 — visual identity alignment (shipped)
 
-Written in the shape the spec's other phases use, so it can drop into
-`docs/superpowers/specs/2026-08-28-lectern-course-library-design.md` §13.
+Landed 2026-09-08. **Goal:** one product, one identity. The interface shipped a
+generic violet gradient while the mark is navy and gold; this phase moved ink and
+action onto the brand and removed the decoration that fought the content.
 
-**Goal:** one product, one identity. The interface currently ships a generic
-violet gradient while the mark is navy and gold; this phase moves ink and action
-onto the brand and removes the decoration that fights the content.
+**What landed**
 
-**Contents**
+1. **Tokens** (`src/app/globals.css`) — the whole `--brand*` family is the navy
+   ramp; `--gold` and `--bronze` are new; `--foreground` and `--ink` are
+   `#001B42`, `--background` is `#FBFAF7`; the three radial washes on `body` are
+   gone; `.shadow-brand` is a navy glow.
+2. **The gradient classes are deleted.** `.grad-brand`, `.grad-brand-soft` and
+   `.text-gradient` no longer exist. Because the brand is now one flat colour,
+   the migration was a rename to the utilities Tailwind already generates from
+   the tokens — `bg-brand`, `bg-brand-soft` — rather than the codemod the plan
+   expected. Page titles lost `text-gradient` and inherit `--ink`.
+3. **Active nav** (`FolderSidebar.tsx`) — navy fill with a gold left rule. The
+   rule is an inset shadow, not a border: a 2px border is clipped away by the
+   pill's own radius and reads as a sliver. The sidebar's violet-to-white
+   gradient ground is now flat `surface-2`.
+4. **Coverage strip** (`CourseOverview.tsx`) — one segment per syllabus topic
+   above the topic list, navy where a lecture stands behind the topic and gold
+   where nothing does, with the count as a sentence beneath it. It renders only
+   when a coverage verdict exists: with no verdict every segment would read as
+   uncovered, which is the accusation §6 forbids, so the summary line stands
+   alone instead.
+5. **Focus states** — every `ring-brand-soft` is now `ring-gold`, one ring for
+   the whole app.
+6. **Sweep** — Courses, course Overview, Ask, Review, Planner, Focus timer and
+   Feynman coach, at 375px and 1440px, in both themes.
 
-1. **Tokens** (`src/app/globals.css`) — repoint `--brand-from/mid/to` and
-   `--color-brand*` to the navy ramp; add `--color-gold`, `--color-bronze`;
-   change `--foreground` to `#001B42` and `--background` to `#FBFAF7`; delete the
-   three radial washes on `body`; recolour `.shadow-brand` to a navy glow.
-2. **`.grad-brand` and `.text-gradient`** — replace the gradient CTA with solid
-   navy and remove `text-gradient` from page titles. These two classes have ~30
-   call sites; a codemod plus a screen-by-screen pass, not a find-and-replace.
-3. **Active nav** — navy fill with a 2px gold left rule, replacing the gradient
-   pill (`FolderSidebar.tsx`).
-4. **Coverage strip** — build the signature element on the course Overview above
-   the existing topic list, with its text summary (`CourseOverview.tsx`).
-5. **Focus states** — a single gold focus ring token, applied wherever
-   `ring-brand-soft` appears.
-6. **Sweep** — every screen at 375px and 1440px, in **both** themes.
+**The one thing the plan got wrong.** It assumed a single `--brand` could serve
+both roles. It cannot in dark mode: the fill needs to be dark enough to carry
+white button text, and brand-as-text needs to be light enough to read on a dark
+surface — 7.1 : 1 and 8.9 : 1 respectively, from opposite ends of the ramp. So
+`--brand-ink` joined the family and the 76 `text-brand` call sites became
+`text-brand-ink`. In light mode both values are the same navy.
 
-**Explicitly not in scope:** a new typeface, an icon-set change, touching the
-six pastel state families, and any layout restructuring. This phase changes
-colour, not composition.
+**Out of scope, and still out:** a new typeface, an icon-set change, the six
+pastel state families, and layout restructuring. The one composition change was
+`flex-wrap` on the course header, whose action row was clipped at 375px before
+this phase and would still be after it.
 
-Dark mode is **already shipped** (§9) and is what makes this phase cheaper than
-it looks: every surface now reads its colour from a semantic token, so the
-navy/gold migration is a change to token values plus the gradient call sites,
-not a sweep through 183 hardcoded utility classes.
-
-**Risks**
-
-- `.grad-brand` and `.text-gradient` are load-bearing across the app; a partial
-  migration looks worse than either endpoint. Land it in one PR.
-- Gold fails contrast as text (2.2 : 1). Every gold usage must be a fill or a
-  rule, with bronze as its text form — this is the mistake most likely to ship.
-- The pastel families were chosen against a violet brand; on parchment they need
-  a second look, not a redefinition.
-
-**Done when:** the sidebar's active item, the primary buttons, and the page
-titles all belong to the same family as the logo above them; no gradient text
-remains; the course Overview leads with the coverage strip; and every screen has
-been checked at both widths.
+**Known debt this phase leaves.** The pastel families are still light-mode
+values (§9, "still to check"), which is why the coverage-unavailable notice is a
+bright daisy block on a dark ground. Four literal `zinc` values survive in
+scrims and disabled states (`Modal`, `CommandPalette`, `AppShell`, `Button`).
 
 ---
 
@@ -306,16 +307,18 @@ line, and text tone comes from a token that has a value in each theme:
 
 | Token | Light | Dark | Used for |
 |---|---|---|---|
-| `--surface` | `#ffffff` | `#161922` | Cards, rows, panels, inputs |
-| `--surface-2` | `#fafafa` | `#1c202b` | Hover fills, quiet blocks |
-| `--surface-3` | `#f4f4f5` | `#232834` | Chips, assistant bubbles |
-| `--line` | `#e4e4e7` | `#2b3140` | Borders, dividers |
-| `--line-strong` | `#d4d4d8` | `#3a4152` | Hover borders, inputs |
-| `--ink` | `#18181b` | `#f2f3f7` | Primary text |
-| `--ink-soft` | `#3f3f46` | `#d3d6de` | Secondary text |
-| `--muted` / `--muted-2` | `#71717a` / `#a1a1aa` | `#9ba2b0` / `#7b8290` | Labels, metadata |
-| `--background` | `#fbfaff` | `#0d0f16` | Page ground |
-| brand ramp | violet → magenta | lifted violet → magenta | CTAs, active nav |
+| `--surface` | `#ffffff` | `#141c2c` | Cards, rows, panels, inputs |
+| `--surface-2` | `#f7f5f0` | `#1a2436` | Hover fills, quiet blocks, sidebar |
+| `--surface-3` | `#efebe2` | `#212c41` | Chips, assistant bubbles |
+| `--line` | `#e3dfd5` | `#26314a` | Borders, dividers |
+| `--line-strong` | `#cfc9bb` | `#35425e` | Hover borders, inputs |
+| `--ink` | `#001b42` | `#edf1f8` | Primary text |
+| `--ink-soft` | `#2e4568` | `#c7d0e0` | Secondary text |
+| `--muted` / `--muted-2` | `#5c6b85` / `#8593a8` | `#93a0b5` / `#74819a` | Labels, metadata |
+| `--background` | `#fbfaf7` | `#0b1220` | Page ground |
+| `--brand` | `#001b42` | `#2f5896` | Button and active-nav fills |
+| `--brand-ink` | `#001b42` | `#9dbdf0` | Brand as text: links, icons |
+| `--gold` / `--bronze` | `#d5a95c` / `#8a6320` | `#d5a95c` / `#e5c489` | Rules and focus rings / their text form |
 
 Three rules fell out of building it, and they are the ones to keep:
 
@@ -330,8 +333,9 @@ Three rules fell out of building it, and they are the ones to keep:
    `lectern-lockup-dark.png` recolours only the navy family; the sidebar swaps the
    two with `dark:hidden` / `hidden dark:block`.
 
-The violet radial washes on `body` are light-mode only — on a near-black ground
-they turn to smears, so dark mode gets a flat field.
+Both themes now get a flat field. The violet radial washes were light-mode only
+(on a near-black ground they turned to smears); §7 removed them from light mode
+too, as decoration that fought the content.
 
 **Still to check** when content exists on screen: the six pastel state families
 were picked against white and are bright on dark. They stay legible (dark ink on
