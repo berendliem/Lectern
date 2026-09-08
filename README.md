@@ -8,7 +8,7 @@ It also has a **live assistant** for use *during* a lecture: while you record, a
 
 - **Web app**: Next.js (App Router, TypeScript) + Tailwind CSS, at the repo root.
 - **Database**: SQLite via Prisma (`@prisma/adapter-better-sqlite3`), with a hand-added FTS5 virtual table for full-text search across transcripts/notes/flashcards.
-- **Transcription**: a separate local Python service (`whisper-service/`, FastAPI + [faster-whisper](https://github.com/SYSTRAN/faster-whisper)) that the web app calls over `localhost`. Runs fully offline once the model is downloaded.
+- **Transcription**: two providers, chosen with `TRANSCRIBE_PROVIDER`. The default `whisper` is a separate local Python service (`whisper-service/`, FastAPI + [faster-whisper](https://github.com/SYSTRAN/faster-whisper)) that the web app calls over `localhost`, and runs on any platform. `apple` is on-device and macOS 26+ only: a small Swift CLI (`mac-speech/`) that takes its text and word timings from Apple's Speech framework and its speaker labels from [FluidAudio](https://github.com/FluidInference/FluidAudio), so a recorded lecture comes back with **Speaker 1 / Speaker 2** attribution. Either way transcription is offline once the models are downloaded.
 - **Summarization, flashcards, quiz**: [OpenRouter](https://openrouter.ai) chat completions, using a free-tier model by default (configurable per pipeline stage).
 - **Export**: Markdown and PDF (`@react-pdf/renderer`).
 - **Reading uploads**: PDF, `.pptx` and `.docx` text is extracted in the browser, so the file itself never reaches the server. Pages with no text layer — a scanned reading, a photographed handout — are OCR'd on the page image with [tesseract.js](https://tesseract.projectnaptha.com/) (English by default; set `NEXT_PUBLIC_OCR_LANG` for another language). This is the one step that isn't offline: the OCR engine and its language data come from `cdn.jsdelivr.net` the first time you OCR anything in a given browser, and are cached from then on. The page image is not uploaded anywhere.
@@ -65,6 +65,17 @@ Two things it can't do for you:
    ```
 
    The model (`small` by default, ~465MB) downloads automatically from Hugging Face the first time you transcribe something, and is cached afterward. If you're on a low-resource machine, set `WHISPER_MODEL_SIZE=base` (faster, smaller, somewhat less accurate) in `whisper-service/.env`. If you have a GPU, set `WHISPER_DEVICE=cuda`.
+
+4. **Optional: on-device transcription with speakers (macOS 26+)**
+
+   Set `TRANSCRIBE_PROVIDER="apple"` in `.env` and re-run `npm run setup`. It builds `mac-speech` and downloads both model
+   sets — Apple's speech asset for your locale and FluidAudio's diarizer (~600MB) — while you watch, rather than during your
+   first recording. Speaker labels only appear on saved recordings; the live transcript needs the whole file to tell voices
+   apart, so it stays unlabelled.
+
+   Anything missing falls back to whisper without failing the transcription: no binary, no Swift toolchain, an older macOS,
+   or no `ffmpeg` for the webm that Chrome records (Safari records mp4, which needs no conversion). `Transcript.modelUsed`
+   records which provider actually ran.
 
 To run the two processes by hand instead of via `npm run dev:all`:
 

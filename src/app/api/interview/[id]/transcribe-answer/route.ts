@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
 import { saveAudioFile, extensionForMimeType } from "@/lib/audio-storage";
-import { transcribeAudio } from "@/lib/whisper-client";
+import { transcribeAudio } from "@/lib/transcribe";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

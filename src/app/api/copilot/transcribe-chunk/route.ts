@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { transcribeAudio } from "@/lib/whisper-client";
+import { transcribeAudio } from "@/lib/transcribe";
 import { extensionForMimeType } from "@/lib/audio-storage";
 
 // Transcribes one complete, standalone rolling-recorder clip. Clips that are
