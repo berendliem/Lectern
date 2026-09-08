@@ -55,6 +55,8 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const router = useRouter();
   const previewUrl = useMemo(() => (audioBlob ? URL.createObjectURL(audioBlob) : null), [audioBlob]);
+  // "audio/webm;codecs=opus" -> "webm". Good enough for a filename.
+  const downloadName = `recording.${audioBlob?.type.split(";")[0].split("/")[1] ?? "webm"}`;
   const busy = saveState !== "idle";
 
   async function handleExplain() {
@@ -152,7 +154,19 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
+        {uploadError && (
+          <div className="flex flex-col items-center gap-1 text-sm text-red-600">
+            <p>{uploadError}</p>
+            {/* The recording exists only in this tab until it uploads. If the save
+                failed, hand it to the user as a file before the tab takes it away —
+                they can re-upload it from the course page. */}
+            {previewUrl && (
+              <a href={previewUrl} download={downloadName} className="font-medium underline">
+                Download the recording
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {(inSession || (status === "stopped" && liveTranscript)) && (
