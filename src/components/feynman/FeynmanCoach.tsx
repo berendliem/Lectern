@@ -42,6 +42,7 @@ export function FeynmanCoach({
   suggestions = EXAMPLES,
   initialReference = "",
   contextLabel,
+  pageId,
 }: {
   /** Concepts to offer as one-click starters — a lecture's key terms or a course's syllabus topics. */
   suggestions?: string[];
@@ -49,6 +50,9 @@ export function FeynmanCoach({
   initialReference?: string;
   /** "Lecture 4 — Recursion", shown so it's obvious what the coach is grading against. */
   contextLabel?: string;
+  /** The lecture this was launched from; it hangs the graded attempt off that
+   * lecture in the recall ledger. Absent when the coach was opened on its own. */
+  pageId?: string;
 }) {
   const [concept, setConcept] = useState("");
   const [reference, setReference] = useState(initialReference);
@@ -129,6 +133,7 @@ export function FeynmanCoach({
           reference: reference.trim() || undefined,
           explanation: e,
           priorExplanations: rounds.map((r) => r.explanation),
+          pageId,
         }),
       });
       if (res.ok) {

@@ -73,3 +73,15 @@ export const ChunkSource = {
 } as const
 
 export type ChunkSource = (typeof ChunkSource)[keyof typeof ChunkSource]
+
+
+export const RecallKind = {
+  FLASHCARD: 'FLASHCARD',
+  QUIZ: 'QUIZ',
+  FEYNMAN: 'FEYNMAN',
+  INTERVIEW: 'INTERVIEW',
+  BLURT: 'BLURT',
+  PRETEST: 'PRETEST'
+} as const
+
+export type RecallKind = (typeof RecallKind)[keyof typeof RecallKind]

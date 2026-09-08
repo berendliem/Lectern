@@ -25,17 +25,31 @@ const GRADES: { label: string; sublabel: string; quality: number; classes: strin
   },
 ];
 
-export function ReviewGradeButtons({ onGrade }: { onGrade: (quality: number) => void }) {
+/**
+ * `suggested` only draws a ring. It never submits: a nudge on the wrong side of
+ * a threshold is a scheduling error the student would never notice, so the
+ * grade stays theirs to press.
+ */
+export function ReviewGradeButtons({
+  onGrade,
+  suggested = null,
+}: {
+  onGrade: (quality: number) => void;
+  suggested?: number | null;
+}) {
   return (
     <div className="grid w-full max-w-md grid-cols-4 gap-2">
       {GRADES.map((g) => (
         <button
           key={g.label}
           onClick={() => onGrade(g.quality)}
-          className={`flex flex-col items-center rounded-xl border px-2 py-2.5 transition-colors ${g.classes}`}
+          className={`flex flex-col items-center rounded-xl border px-2 py-2.5 transition-colors ${g.classes} ${
+            suggested === g.quality ? "ring-2 ring-brand ring-offset-1 ring-offset-surface" : ""
+          }`}
         >
           <span className="text-sm font-semibold">{g.label}</span>
           <span className="text-[11px] opacity-70">{g.sublabel}</span>
+          {suggested === g.quality && <span className="text-[10px] opacity-70">suggested</span>}
         </button>
       ))}
     </div>

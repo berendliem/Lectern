@@ -63,6 +63,14 @@ export const tagOnPageSchema = z.object({
 
 export const reviewGradeSchema = z.object({
   quality: z.number().int().min(0).max(5),
+  /** What the student typed before revealing, when they typed anything. */
+  typed: z.string().trim().max(4000).optional(),
+  /** Guessing / Fairly sure / Certain. Absent when they skipped the control. */
+  confidence: z.number().int().min(1).max(3).optional(),
+});
+
+export const reviewSuggestSchema = z.object({
+  typed: z.string().trim().min(1).max(4000),
 });
 
 export const quizAnswerSchema = z.object({
@@ -85,8 +93,34 @@ export const chatRequestSchema = z.object({
     .max(30),
 });
 
+export const blurtSubmitSchema = z.object({
+  dump: z.string().trim().min(1).max(8000),
+});
+
+/**
+ * What the reasoning tier returns when it marks a blurt. Every string is
+ * capped, not just every array: these become flashcard text and ledger rows,
+ * and the model wrote them after reading notes it does not control.
+ */
+export const blurtResponseSchema = z.object({
+  covered: z.array(z.string().trim().min(1).max(500)).max(40).default([]),
+  missed: z.array(z.string().trim().min(1).max(500)).max(8).default([]),
+  wrong: z
+    .array(
+      z.object({
+        claim: z.string().trim().min(1).max(500),
+        correction: z.string().trim().min(1).max(1000),
+      })
+    )
+    .max(8)
+    .default([]),
+});
+
 export const feynmanEvaluateSchema = z.object({
   concept: z.string().trim().min(1).max(300),
+  /** The lecture the coach was launched from, so the attempt reaches the
+   * ledger with a parent. Absent when the coach was opened on its own. */
+  pageId: z.string().trim().min(1).max(64).optional(),
   reference: z.string().trim().max(20_000).optional(),
   explanation: z.string().trim().min(1).max(8000),
   priorExplanations: z.array(z.string().trim().min(1).max(8000)).max(10).optional(),

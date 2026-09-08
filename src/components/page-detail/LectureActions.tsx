@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, CalendarPlus, Lightbulb, Loader2, Timer } from "lucide-react";
+import { BlurtPanel } from "@/components/flashcards/BlurtPanel";
 
 const LINK_CLASSES =
   "inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/40 hover:text-brand-ink";
@@ -40,6 +41,7 @@ export function LectureActions({ pageId }: { pageId: string }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
+        <BlurtPanel pageId={pageId} className={LINK_CLASSES} />
         <Link href={`/feynman?pageId=${pageId}`} className={LINK_CLASSES}>
           <Lightbulb className="h-3.5 w-3.5" strokeWidth={2.2} /> Feynman coach
         </Link>
