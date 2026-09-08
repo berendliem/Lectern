@@ -78,7 +78,10 @@ export type Notes = Prisma.NotesModel
 export type Flashcard = Prisma.FlashcardModel
 /**
  * Model ReviewLog
- * 
+ * The recall ledger: one row per attempt at recalling something, whatever
+ * asked for it. Every relation is SetNull on purpose — deleting a lecture
+ * must not erase the evidence that the student once knew it, and a ledger
+ * that cascades is a ledger that lies about the streak.
  */
 export type ReviewLog = Prisma.ReviewLogModel
 /**

@@ -14,52 +14,131 @@ import type * as Prisma from "../internal/prismaNamespace.ts"
 
 /**
  * Model ReviewLog
- * 
+ * The recall ledger: one row per attempt at recalling something, whatever
+ * asked for it. Every relation is SetNull on purpose — deleting a lecture
+ * must not erase the evidence that the student once knew it, and a ledger
+ * that cascades is a ledger that lies about the streak.
  */
 export type ReviewLogModel = runtime.Types.Result.DefaultSelection<Prisma.$ReviewLogPayload>
 
 export type AggregateReviewLog = {
   _count: ReviewLogCountAggregateOutputType | null
+  _avg: ReviewLogAvgAggregateOutputType | null
+  _sum: ReviewLogSumAggregateOutputType | null
   _min: ReviewLogMinAggregateOutputType | null
   _max: ReviewLogMaxAggregateOutputType | null
+}
+
+export type ReviewLogAvgAggregateOutputType = {
+  quality: number | null
+  confidence: number | null
+}
+
+export type ReviewLogSumAggregateOutputType = {
+  quality: number | null
+  confidence: number | null
 }
 
 export type ReviewLogMinAggregateOutputType = {
   id: string | null
   flashcardId: string | null
   reviewedAt: Date | null
+  kind: $Enums.RecallKind | null
+  quality: number | null
+  confidence: number | null
+  topicId: string | null
+  pageId: string | null
+  materialId: string | null
+  misconception: string | null
+  resolvedAt: Date | null
+  detail: string | null
 }
 
 export type ReviewLogMaxAggregateOutputType = {
   id: string | null
   flashcardId: string | null
   reviewedAt: Date | null
+  kind: $Enums.RecallKind | null
+  quality: number | null
+  confidence: number | null
+  topicId: string | null
+  pageId: string | null
+  materialId: string | null
+  misconception: string | null
+  resolvedAt: Date | null
+  detail: string | null
 }
 
 export type ReviewLogCountAggregateOutputType = {
   id: number
   flashcardId: number
   reviewedAt: number
+  kind: number
+  quality: number
+  confidence: number
+  topicId: number
+  pageId: number
+  materialId: number
+  misconception: number
+  resolvedAt: number
+  detail: number
   _all: number
 }
 
+
+export type ReviewLogAvgAggregateInputType = {
+  quality?: true
+  confidence?: true
+}
+
+export type ReviewLogSumAggregateInputType = {
+  quality?: true
+  confidence?: true
+}
 
 export type ReviewLogMinAggregateInputType = {
   id?: true
   flashcardId?: true
   reviewedAt?: true
+  kind?: true
+  quality?: true
+  confidence?: true
+  topicId?: true
+  pageId?: true
+  materialId?: true
+  misconception?: true
+  resolvedAt?: true
+  detail?: true
 }
 
 export type ReviewLogMaxAggregateInputType = {
   id?: true
   flashcardId?: true
   reviewedAt?: true
+  kind?: true
+  quality?: true
+  confidence?: true
+  topicId?: true
+  pageId?: true
+  materialId?: true
+  misconception?: true
+  resolvedAt?: true
+  detail?: true
 }
 
 export type ReviewLogCountAggregateInputType = {
   id?: true
   flashcardId?: true
   reviewedAt?: true
+  kind?: true
+  quality?: true
+  confidence?: true
+  topicId?: true
+  pageId?: true
+  materialId?: true
+  misconception?: true
+  resolvedAt?: true
+  detail?: true
   _all?: true
 }
 
@@ -101,6 +180,18 @@ export type ReviewLogAggregateArgs<ExtArgs extends runtime.Types.Extensions.Inte
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: ReviewLogAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: ReviewLogSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: ReviewLogMinAggregateInputType
@@ -131,6 +222,8 @@ export type ReviewLogGroupByArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   _count?: ReviewLogCountAggregateInputType | true
+  _avg?: ReviewLogAvgAggregateInputType
+  _sum?: ReviewLogSumAggregateInputType
   _min?: ReviewLogMinAggregateInputType
   _max?: ReviewLogMaxAggregateInputType
 }
@@ -139,7 +232,18 @@ export type ReviewLogGroupByOutputType = {
   id: string
   flashcardId: string | null
   reviewedAt: Date
+  kind: $Enums.RecallKind
+  quality: number
+  confidence: number | null
+  topicId: string | null
+  pageId: string | null
+  materialId: string | null
+  misconception: string | null
+  resolvedAt: Date | null
+  detail: string | null
   _count: ReviewLogCountAggregateOutputType | null
+  _avg: ReviewLogAvgAggregateOutputType | null
+  _sum: ReviewLogSumAggregateOutputType | null
   _min: ReviewLogMinAggregateOutputType | null
   _max: ReviewLogMaxAggregateOutputType | null
 }
@@ -166,14 +270,38 @@ export type ReviewLogWhereInput = {
   id?: Prisma.StringFilter<"ReviewLog"> | string
   flashcardId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
   reviewedAt?: Prisma.DateTimeFilter<"ReviewLog"> | Date | string
+  kind?: Prisma.EnumRecallKindFilter<"ReviewLog"> | $Enums.RecallKind
+  quality?: Prisma.IntFilter<"ReviewLog"> | number
+  confidence?: Prisma.IntNullableFilter<"ReviewLog"> | number | null
+  topicId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  pageId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  materialId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  misconception?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  resolvedAt?: Prisma.DateTimeNullableFilter<"ReviewLog"> | Date | string | null
+  detail?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
   flashcard?: Prisma.XOR<Prisma.FlashcardNullableScalarRelationFilter, Prisma.FlashcardWhereInput> | null
+  topic?: Prisma.XOR<Prisma.CourseTopicNullableScalarRelationFilter, Prisma.CourseTopicWhereInput> | null
+  page?: Prisma.XOR<Prisma.PageNullableScalarRelationFilter, Prisma.PageWhereInput> | null
+  material?: Prisma.XOR<Prisma.MaterialNullableScalarRelationFilter, Prisma.MaterialWhereInput> | null
 }
 
 export type ReviewLogOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   flashcardId?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  quality?: Prisma.SortOrder
+  confidence?: Prisma.SortOrderInput | Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  pageId?: Prisma.SortOrderInput | Prisma.SortOrder
+  materialId?: Prisma.SortOrderInput | Prisma.SortOrder
+  misconception?: Prisma.SortOrderInput | Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  detail?: Prisma.SortOrderInput | Prisma.SortOrder
   flashcard?: Prisma.FlashcardOrderByWithRelationInput
+  topic?: Prisma.CourseTopicOrderByWithRelationInput
+  page?: Prisma.PageOrderByWithRelationInput
+  material?: Prisma.MaterialOrderByWithRelationInput
 }
 
 export type ReviewLogWhereUniqueInput = Prisma.AtLeast<{
@@ -183,16 +311,39 @@ export type ReviewLogWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ReviewLogWhereInput | Prisma.ReviewLogWhereInput[]
   flashcardId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
   reviewedAt?: Prisma.DateTimeFilter<"ReviewLog"> | Date | string
+  kind?: Prisma.EnumRecallKindFilter<"ReviewLog"> | $Enums.RecallKind
+  quality?: Prisma.IntFilter<"ReviewLog"> | number
+  confidence?: Prisma.IntNullableFilter<"ReviewLog"> | number | null
+  topicId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  pageId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  materialId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  misconception?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  resolvedAt?: Prisma.DateTimeNullableFilter<"ReviewLog"> | Date | string | null
+  detail?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
   flashcard?: Prisma.XOR<Prisma.FlashcardNullableScalarRelationFilter, Prisma.FlashcardWhereInput> | null
+  topic?: Prisma.XOR<Prisma.CourseTopicNullableScalarRelationFilter, Prisma.CourseTopicWhereInput> | null
+  page?: Prisma.XOR<Prisma.PageNullableScalarRelationFilter, Prisma.PageWhereInput> | null
+  material?: Prisma.XOR<Prisma.MaterialNullableScalarRelationFilter, Prisma.MaterialWhereInput> | null
 }, "id">
 
 export type ReviewLogOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   flashcardId?: Prisma.SortOrderInput | Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  quality?: Prisma.SortOrder
+  confidence?: Prisma.SortOrderInput | Prisma.SortOrder
+  topicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  pageId?: Prisma.SortOrderInput | Prisma.SortOrder
+  materialId?: Prisma.SortOrderInput | Prisma.SortOrder
+  misconception?: Prisma.SortOrderInput | Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  detail?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ReviewLogCountOrderByAggregateInput
+  _avg?: Prisma.ReviewLogAvgOrderByAggregateInput
   _max?: Prisma.ReviewLogMaxOrderByAggregateInput
   _min?: Prisma.ReviewLogMinOrderByAggregateInput
+  _sum?: Prisma.ReviewLogSumOrderByAggregateInput
 }
 
 export type ReviewLogScalarWhereWithAggregatesInput = {
@@ -202,47 +353,116 @@ export type ReviewLogScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"ReviewLog"> | string
   flashcardId?: Prisma.StringNullableWithAggregatesFilter<"ReviewLog"> | string | null
   reviewedAt?: Prisma.DateTimeWithAggregatesFilter<"ReviewLog"> | Date | string
+  kind?: Prisma.EnumRecallKindWithAggregatesFilter<"ReviewLog"> | $Enums.RecallKind
+  quality?: Prisma.IntWithAggregatesFilter<"ReviewLog"> | number
+  confidence?: Prisma.IntNullableWithAggregatesFilter<"ReviewLog"> | number | null
+  topicId?: Prisma.StringNullableWithAggregatesFilter<"ReviewLog"> | string | null
+  pageId?: Prisma.StringNullableWithAggregatesFilter<"ReviewLog"> | string | null
+  materialId?: Prisma.StringNullableWithAggregatesFilter<"ReviewLog"> | string | null
+  misconception?: Prisma.StringNullableWithAggregatesFilter<"ReviewLog"> | string | null
+  resolvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ReviewLog"> | Date | string | null
+  detail?: Prisma.StringNullableWithAggregatesFilter<"ReviewLog"> | string | null
 }
 
 export type ReviewLogCreateInput = {
   id?: string
   reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
   flashcard?: Prisma.FlashcardCreateNestedOneWithoutReviewLogsInput
+  topic?: Prisma.CourseTopicCreateNestedOneWithoutReviewLogsInput
+  page?: Prisma.PageCreateNestedOneWithoutReviewLogsInput
+  material?: Prisma.MaterialCreateNestedOneWithoutReviewLogsInput
 }
 
 export type ReviewLogUncheckedCreateInput = {
   id?: string
   flashcardId?: string | null
   reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  topicId?: string | null
+  pageId?: string | null
+  materialId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
 }
 
 export type ReviewLogUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   flashcard?: Prisma.FlashcardUpdateOneWithoutReviewLogsNestedInput
+  topic?: Prisma.CourseTopicUpdateOneWithoutReviewLogsNestedInput
+  page?: Prisma.PageUpdateOneWithoutReviewLogsNestedInput
+  material?: Prisma.MaterialUpdateOneWithoutReviewLogsNestedInput
 }
 
 export type ReviewLogUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   flashcardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ReviewLogCreateManyInput = {
   id?: string
   flashcardId?: string | null
   reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  topicId?: string | null
+  pageId?: string | null
+  materialId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
 }
 
 export type ReviewLogUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ReviewLogUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   flashcardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ReviewLogListRelationFilter = {
@@ -259,18 +479,181 @@ export type ReviewLogCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   flashcardId?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  quality?: Prisma.SortOrder
+  confidence?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+  pageId?: Prisma.SortOrder
+  materialId?: Prisma.SortOrder
+  misconception?: Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrder
+  detail?: Prisma.SortOrder
+}
+
+export type ReviewLogAvgOrderByAggregateInput = {
+  quality?: Prisma.SortOrder
+  confidence?: Prisma.SortOrder
 }
 
 export type ReviewLogMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   flashcardId?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  quality?: Prisma.SortOrder
+  confidence?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+  pageId?: Prisma.SortOrder
+  materialId?: Prisma.SortOrder
+  misconception?: Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrder
+  detail?: Prisma.SortOrder
 }
 
 export type ReviewLogMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   flashcardId?: Prisma.SortOrder
   reviewedAt?: Prisma.SortOrder
+  kind?: Prisma.SortOrder
+  quality?: Prisma.SortOrder
+  confidence?: Prisma.SortOrder
+  topicId?: Prisma.SortOrder
+  pageId?: Prisma.SortOrder
+  materialId?: Prisma.SortOrder
+  misconception?: Prisma.SortOrder
+  resolvedAt?: Prisma.SortOrder
+  detail?: Prisma.SortOrder
+}
+
+export type ReviewLogSumOrderByAggregateInput = {
+  quality?: Prisma.SortOrder
+  confidence?: Prisma.SortOrder
+}
+
+export type ReviewLogCreateNestedManyWithoutMaterialInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutMaterialInput, Prisma.ReviewLogUncheckedCreateWithoutMaterialInput> | Prisma.ReviewLogCreateWithoutMaterialInput[] | Prisma.ReviewLogUncheckedCreateWithoutMaterialInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutMaterialInput | Prisma.ReviewLogCreateOrConnectWithoutMaterialInput[]
+  createMany?: Prisma.ReviewLogCreateManyMaterialInputEnvelope
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+}
+
+export type ReviewLogUncheckedCreateNestedManyWithoutMaterialInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutMaterialInput, Prisma.ReviewLogUncheckedCreateWithoutMaterialInput> | Prisma.ReviewLogCreateWithoutMaterialInput[] | Prisma.ReviewLogUncheckedCreateWithoutMaterialInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutMaterialInput | Prisma.ReviewLogCreateOrConnectWithoutMaterialInput[]
+  createMany?: Prisma.ReviewLogCreateManyMaterialInputEnvelope
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+}
+
+export type ReviewLogUpdateManyWithoutMaterialNestedInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutMaterialInput, Prisma.ReviewLogUncheckedCreateWithoutMaterialInput> | Prisma.ReviewLogCreateWithoutMaterialInput[] | Prisma.ReviewLogUncheckedCreateWithoutMaterialInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutMaterialInput | Prisma.ReviewLogCreateOrConnectWithoutMaterialInput[]
+  upsert?: Prisma.ReviewLogUpsertWithWhereUniqueWithoutMaterialInput | Prisma.ReviewLogUpsertWithWhereUniqueWithoutMaterialInput[]
+  createMany?: Prisma.ReviewLogCreateManyMaterialInputEnvelope
+  set?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  disconnect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  delete?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  update?: Prisma.ReviewLogUpdateWithWhereUniqueWithoutMaterialInput | Prisma.ReviewLogUpdateWithWhereUniqueWithoutMaterialInput[]
+  updateMany?: Prisma.ReviewLogUpdateManyWithWhereWithoutMaterialInput | Prisma.ReviewLogUpdateManyWithWhereWithoutMaterialInput[]
+  deleteMany?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
+}
+
+export type ReviewLogUncheckedUpdateManyWithoutMaterialNestedInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutMaterialInput, Prisma.ReviewLogUncheckedCreateWithoutMaterialInput> | Prisma.ReviewLogCreateWithoutMaterialInput[] | Prisma.ReviewLogUncheckedCreateWithoutMaterialInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutMaterialInput | Prisma.ReviewLogCreateOrConnectWithoutMaterialInput[]
+  upsert?: Prisma.ReviewLogUpsertWithWhereUniqueWithoutMaterialInput | Prisma.ReviewLogUpsertWithWhereUniqueWithoutMaterialInput[]
+  createMany?: Prisma.ReviewLogCreateManyMaterialInputEnvelope
+  set?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  disconnect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  delete?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  update?: Prisma.ReviewLogUpdateWithWhereUniqueWithoutMaterialInput | Prisma.ReviewLogUpdateWithWhereUniqueWithoutMaterialInput[]
+  updateMany?: Prisma.ReviewLogUpdateManyWithWhereWithoutMaterialInput | Prisma.ReviewLogUpdateManyWithWhereWithoutMaterialInput[]
+  deleteMany?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
+}
+
+export type ReviewLogCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutTopicInput, Prisma.ReviewLogUncheckedCreateWithoutTopicInput> | Prisma.ReviewLogCreateWithoutTopicInput[] | Prisma.ReviewLogUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutTopicInput | Prisma.ReviewLogCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.ReviewLogCreateManyTopicInputEnvelope
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+}
+
+export type ReviewLogUncheckedCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutTopicInput, Prisma.ReviewLogUncheckedCreateWithoutTopicInput> | Prisma.ReviewLogCreateWithoutTopicInput[] | Prisma.ReviewLogUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutTopicInput | Prisma.ReviewLogCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.ReviewLogCreateManyTopicInputEnvelope
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+}
+
+export type ReviewLogUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutTopicInput, Prisma.ReviewLogUncheckedCreateWithoutTopicInput> | Prisma.ReviewLogCreateWithoutTopicInput[] | Prisma.ReviewLogUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutTopicInput | Prisma.ReviewLogCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.ReviewLogUpsertWithWhereUniqueWithoutTopicInput | Prisma.ReviewLogUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.ReviewLogCreateManyTopicInputEnvelope
+  set?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  disconnect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  delete?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  update?: Prisma.ReviewLogUpdateWithWhereUniqueWithoutTopicInput | Prisma.ReviewLogUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.ReviewLogUpdateManyWithWhereWithoutTopicInput | Prisma.ReviewLogUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
+}
+
+export type ReviewLogUncheckedUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutTopicInput, Prisma.ReviewLogUncheckedCreateWithoutTopicInput> | Prisma.ReviewLogCreateWithoutTopicInput[] | Prisma.ReviewLogUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutTopicInput | Prisma.ReviewLogCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.ReviewLogUpsertWithWhereUniqueWithoutTopicInput | Prisma.ReviewLogUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.ReviewLogCreateManyTopicInputEnvelope
+  set?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  disconnect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  delete?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  update?: Prisma.ReviewLogUpdateWithWhereUniqueWithoutTopicInput | Prisma.ReviewLogUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.ReviewLogUpdateManyWithWhereWithoutTopicInput | Prisma.ReviewLogUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
+}
+
+export type ReviewLogCreateNestedManyWithoutPageInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutPageInput, Prisma.ReviewLogUncheckedCreateWithoutPageInput> | Prisma.ReviewLogCreateWithoutPageInput[] | Prisma.ReviewLogUncheckedCreateWithoutPageInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutPageInput | Prisma.ReviewLogCreateOrConnectWithoutPageInput[]
+  createMany?: Prisma.ReviewLogCreateManyPageInputEnvelope
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+}
+
+export type ReviewLogUncheckedCreateNestedManyWithoutPageInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutPageInput, Prisma.ReviewLogUncheckedCreateWithoutPageInput> | Prisma.ReviewLogCreateWithoutPageInput[] | Prisma.ReviewLogUncheckedCreateWithoutPageInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutPageInput | Prisma.ReviewLogCreateOrConnectWithoutPageInput[]
+  createMany?: Prisma.ReviewLogCreateManyPageInputEnvelope
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+}
+
+export type ReviewLogUpdateManyWithoutPageNestedInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutPageInput, Prisma.ReviewLogUncheckedCreateWithoutPageInput> | Prisma.ReviewLogCreateWithoutPageInput[] | Prisma.ReviewLogUncheckedCreateWithoutPageInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutPageInput | Prisma.ReviewLogCreateOrConnectWithoutPageInput[]
+  upsert?: Prisma.ReviewLogUpsertWithWhereUniqueWithoutPageInput | Prisma.ReviewLogUpsertWithWhereUniqueWithoutPageInput[]
+  createMany?: Prisma.ReviewLogCreateManyPageInputEnvelope
+  set?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  disconnect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  delete?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  update?: Prisma.ReviewLogUpdateWithWhereUniqueWithoutPageInput | Prisma.ReviewLogUpdateWithWhereUniqueWithoutPageInput[]
+  updateMany?: Prisma.ReviewLogUpdateManyWithWhereWithoutPageInput | Prisma.ReviewLogUpdateManyWithWhereWithoutPageInput[]
+  deleteMany?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
+}
+
+export type ReviewLogUncheckedUpdateManyWithoutPageNestedInput = {
+  create?: Prisma.XOR<Prisma.ReviewLogCreateWithoutPageInput, Prisma.ReviewLogUncheckedCreateWithoutPageInput> | Prisma.ReviewLogCreateWithoutPageInput[] | Prisma.ReviewLogUncheckedCreateWithoutPageInput[]
+  connectOrCreate?: Prisma.ReviewLogCreateOrConnectWithoutPageInput | Prisma.ReviewLogCreateOrConnectWithoutPageInput[]
+  upsert?: Prisma.ReviewLogUpsertWithWhereUniqueWithoutPageInput | Prisma.ReviewLogUpsertWithWhereUniqueWithoutPageInput[]
+  createMany?: Prisma.ReviewLogCreateManyPageInputEnvelope
+  set?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  disconnect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  delete?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  connect?: Prisma.ReviewLogWhereUniqueInput | Prisma.ReviewLogWhereUniqueInput[]
+  update?: Prisma.ReviewLogUpdateWithWhereUniqueWithoutPageInput | Prisma.ReviewLogUpdateWithWhereUniqueWithoutPageInput[]
+  updateMany?: Prisma.ReviewLogUpdateManyWithWhereWithoutPageInput | Prisma.ReviewLogUpdateManyWithWhereWithoutPageInput[]
+  deleteMany?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
 }
 
 export type ReviewLogCreateNestedManyWithoutFlashcardInput = {
@@ -315,14 +698,213 @@ export type ReviewLogUncheckedUpdateManyWithoutFlashcardNestedInput = {
   deleteMany?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
 }
 
+export type EnumRecallKindFieldUpdateOperationsInput = {
+  set?: $Enums.RecallKind
+}
+
+export type ReviewLogCreateWithoutMaterialInput = {
+  id?: string
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+  flashcard?: Prisma.FlashcardCreateNestedOneWithoutReviewLogsInput
+  topic?: Prisma.CourseTopicCreateNestedOneWithoutReviewLogsInput
+  page?: Prisma.PageCreateNestedOneWithoutReviewLogsInput
+}
+
+export type ReviewLogUncheckedCreateWithoutMaterialInput = {
+  id?: string
+  flashcardId?: string | null
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  topicId?: string | null
+  pageId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+}
+
+export type ReviewLogCreateOrConnectWithoutMaterialInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReviewLogCreateWithoutMaterialInput, Prisma.ReviewLogUncheckedCreateWithoutMaterialInput>
+}
+
+export type ReviewLogCreateManyMaterialInputEnvelope = {
+  data: Prisma.ReviewLogCreateManyMaterialInput | Prisma.ReviewLogCreateManyMaterialInput[]
+}
+
+export type ReviewLogUpsertWithWhereUniqueWithoutMaterialInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReviewLogUpdateWithoutMaterialInput, Prisma.ReviewLogUncheckedUpdateWithoutMaterialInput>
+  create: Prisma.XOR<Prisma.ReviewLogCreateWithoutMaterialInput, Prisma.ReviewLogUncheckedCreateWithoutMaterialInput>
+}
+
+export type ReviewLogUpdateWithWhereUniqueWithoutMaterialInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReviewLogUpdateWithoutMaterialInput, Prisma.ReviewLogUncheckedUpdateWithoutMaterialInput>
+}
+
+export type ReviewLogUpdateManyWithWhereWithoutMaterialInput = {
+  where: Prisma.ReviewLogScalarWhereInput
+  data: Prisma.XOR<Prisma.ReviewLogUpdateManyMutationInput, Prisma.ReviewLogUncheckedUpdateManyWithoutMaterialInput>
+}
+
+export type ReviewLogScalarWhereInput = {
+  AND?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
+  OR?: Prisma.ReviewLogScalarWhereInput[]
+  NOT?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
+  id?: Prisma.StringFilter<"ReviewLog"> | string
+  flashcardId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  reviewedAt?: Prisma.DateTimeFilter<"ReviewLog"> | Date | string
+  kind?: Prisma.EnumRecallKindFilter<"ReviewLog"> | $Enums.RecallKind
+  quality?: Prisma.IntFilter<"ReviewLog"> | number
+  confidence?: Prisma.IntNullableFilter<"ReviewLog"> | number | null
+  topicId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  pageId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  materialId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  misconception?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+  resolvedAt?: Prisma.DateTimeNullableFilter<"ReviewLog"> | Date | string | null
+  detail?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
+}
+
+export type ReviewLogCreateWithoutTopicInput = {
+  id?: string
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+  flashcard?: Prisma.FlashcardCreateNestedOneWithoutReviewLogsInput
+  page?: Prisma.PageCreateNestedOneWithoutReviewLogsInput
+  material?: Prisma.MaterialCreateNestedOneWithoutReviewLogsInput
+}
+
+export type ReviewLogUncheckedCreateWithoutTopicInput = {
+  id?: string
+  flashcardId?: string | null
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  pageId?: string | null
+  materialId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+}
+
+export type ReviewLogCreateOrConnectWithoutTopicInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReviewLogCreateWithoutTopicInput, Prisma.ReviewLogUncheckedCreateWithoutTopicInput>
+}
+
+export type ReviewLogCreateManyTopicInputEnvelope = {
+  data: Prisma.ReviewLogCreateManyTopicInput | Prisma.ReviewLogCreateManyTopicInput[]
+}
+
+export type ReviewLogUpsertWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReviewLogUpdateWithoutTopicInput, Prisma.ReviewLogUncheckedUpdateWithoutTopicInput>
+  create: Prisma.XOR<Prisma.ReviewLogCreateWithoutTopicInput, Prisma.ReviewLogUncheckedCreateWithoutTopicInput>
+}
+
+export type ReviewLogUpdateWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReviewLogUpdateWithoutTopicInput, Prisma.ReviewLogUncheckedUpdateWithoutTopicInput>
+}
+
+export type ReviewLogUpdateManyWithWhereWithoutTopicInput = {
+  where: Prisma.ReviewLogScalarWhereInput
+  data: Prisma.XOR<Prisma.ReviewLogUpdateManyMutationInput, Prisma.ReviewLogUncheckedUpdateManyWithoutTopicInput>
+}
+
+export type ReviewLogCreateWithoutPageInput = {
+  id?: string
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+  flashcard?: Prisma.FlashcardCreateNestedOneWithoutReviewLogsInput
+  topic?: Prisma.CourseTopicCreateNestedOneWithoutReviewLogsInput
+  material?: Prisma.MaterialCreateNestedOneWithoutReviewLogsInput
+}
+
+export type ReviewLogUncheckedCreateWithoutPageInput = {
+  id?: string
+  flashcardId?: string | null
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  topicId?: string | null
+  materialId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+}
+
+export type ReviewLogCreateOrConnectWithoutPageInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReviewLogCreateWithoutPageInput, Prisma.ReviewLogUncheckedCreateWithoutPageInput>
+}
+
+export type ReviewLogCreateManyPageInputEnvelope = {
+  data: Prisma.ReviewLogCreateManyPageInput | Prisma.ReviewLogCreateManyPageInput[]
+}
+
+export type ReviewLogUpsertWithWhereUniqueWithoutPageInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReviewLogUpdateWithoutPageInput, Prisma.ReviewLogUncheckedUpdateWithoutPageInput>
+  create: Prisma.XOR<Prisma.ReviewLogCreateWithoutPageInput, Prisma.ReviewLogUncheckedCreateWithoutPageInput>
+}
+
+export type ReviewLogUpdateWithWhereUniqueWithoutPageInput = {
+  where: Prisma.ReviewLogWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReviewLogUpdateWithoutPageInput, Prisma.ReviewLogUncheckedUpdateWithoutPageInput>
+}
+
+export type ReviewLogUpdateManyWithWhereWithoutPageInput = {
+  where: Prisma.ReviewLogScalarWhereInput
+  data: Prisma.XOR<Prisma.ReviewLogUpdateManyMutationInput, Prisma.ReviewLogUncheckedUpdateManyWithoutPageInput>
+}
+
 export type ReviewLogCreateWithoutFlashcardInput = {
   id?: string
   reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+  topic?: Prisma.CourseTopicCreateNestedOneWithoutReviewLogsInput
+  page?: Prisma.PageCreateNestedOneWithoutReviewLogsInput
+  material?: Prisma.MaterialCreateNestedOneWithoutReviewLogsInput
 }
 
 export type ReviewLogUncheckedCreateWithoutFlashcardInput = {
   id?: string
   reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  topicId?: string | null
+  pageId?: string | null
+  materialId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
 }
 
 export type ReviewLogCreateOrConnectWithoutFlashcardInput = {
@@ -350,33 +932,228 @@ export type ReviewLogUpdateManyWithWhereWithoutFlashcardInput = {
   data: Prisma.XOR<Prisma.ReviewLogUpdateManyMutationInput, Prisma.ReviewLogUncheckedUpdateManyWithoutFlashcardInput>
 }
 
-export type ReviewLogScalarWhereInput = {
-  AND?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
-  OR?: Prisma.ReviewLogScalarWhereInput[]
-  NOT?: Prisma.ReviewLogScalarWhereInput | Prisma.ReviewLogScalarWhereInput[]
-  id?: Prisma.StringFilter<"ReviewLog"> | string
-  flashcardId?: Prisma.StringNullableFilter<"ReviewLog"> | string | null
-  reviewedAt?: Prisma.DateTimeFilter<"ReviewLog"> | Date | string
+export type ReviewLogCreateManyMaterialInput = {
+  id?: string
+  flashcardId?: string | null
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  topicId?: string | null
+  pageId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+}
+
+export type ReviewLogUpdateWithoutMaterialInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flashcard?: Prisma.FlashcardUpdateOneWithoutReviewLogsNestedInput
+  topic?: Prisma.CourseTopicUpdateOneWithoutReviewLogsNestedInput
+  page?: Prisma.PageUpdateOneWithoutReviewLogsNestedInput
+}
+
+export type ReviewLogUncheckedUpdateWithoutMaterialInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  flashcardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type ReviewLogUncheckedUpdateManyWithoutMaterialInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  flashcardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type ReviewLogCreateManyTopicInput = {
+  id?: string
+  flashcardId?: string | null
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  pageId?: string | null
+  materialId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+}
+
+export type ReviewLogUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flashcard?: Prisma.FlashcardUpdateOneWithoutReviewLogsNestedInput
+  page?: Prisma.PageUpdateOneWithoutReviewLogsNestedInput
+  material?: Prisma.MaterialUpdateOneWithoutReviewLogsNestedInput
+}
+
+export type ReviewLogUncheckedUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  flashcardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type ReviewLogUncheckedUpdateManyWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  flashcardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type ReviewLogCreateManyPageInput = {
+  id?: string
+  flashcardId?: string | null
+  reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  topicId?: string | null
+  materialId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
+}
+
+export type ReviewLogUpdateWithoutPageInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  flashcard?: Prisma.FlashcardUpdateOneWithoutReviewLogsNestedInput
+  topic?: Prisma.CourseTopicUpdateOneWithoutReviewLogsNestedInput
+  material?: Prisma.MaterialUpdateOneWithoutReviewLogsNestedInput
+}
+
+export type ReviewLogUncheckedUpdateWithoutPageInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  flashcardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
+export type ReviewLogUncheckedUpdateManyWithoutPageInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  flashcardId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ReviewLogCreateManyFlashcardInput = {
   id?: string
   reviewedAt?: Date | string
+  kind?: $Enums.RecallKind
+  quality?: number
+  confidence?: number | null
+  topicId?: string | null
+  pageId?: string | null
+  materialId?: string | null
+  misconception?: string | null
+  resolvedAt?: Date | string | null
+  detail?: string | null
 }
 
 export type ReviewLogUpdateWithoutFlashcardInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topic?: Prisma.CourseTopicUpdateOneWithoutReviewLogsNestedInput
+  page?: Prisma.PageUpdateOneWithoutReviewLogsNestedInput
+  material?: Prisma.MaterialUpdateOneWithoutReviewLogsNestedInput
 }
 
 export type ReviewLogUncheckedUpdateWithoutFlashcardInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ReviewLogUncheckedUpdateManyWithoutFlashcardInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   reviewedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  kind?: Prisma.EnumRecallKindFieldUpdateOperationsInput | $Enums.RecallKind
+  quality?: Prisma.IntFieldUpdateOperationsInput | number
+  confidence?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  topicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  materialId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  misconception?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  detail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -385,49 +1162,132 @@ export type ReviewLogSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   id?: boolean
   flashcardId?: boolean
   reviewedAt?: boolean
+  kind?: boolean
+  quality?: boolean
+  confidence?: boolean
+  topicId?: boolean
+  pageId?: boolean
+  materialId?: boolean
+  misconception?: boolean
+  resolvedAt?: boolean
+  detail?: boolean
   flashcard?: boolean | Prisma.ReviewLog$flashcardArgs<ExtArgs>
+  topic?: boolean | Prisma.ReviewLog$topicArgs<ExtArgs>
+  page?: boolean | Prisma.ReviewLog$pageArgs<ExtArgs>
+  material?: boolean | Prisma.ReviewLog$materialArgs<ExtArgs>
 }, ExtArgs["result"]["reviewLog"]>
 
 export type ReviewLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   flashcardId?: boolean
   reviewedAt?: boolean
+  kind?: boolean
+  quality?: boolean
+  confidence?: boolean
+  topicId?: boolean
+  pageId?: boolean
+  materialId?: boolean
+  misconception?: boolean
+  resolvedAt?: boolean
+  detail?: boolean
   flashcard?: boolean | Prisma.ReviewLog$flashcardArgs<ExtArgs>
+  topic?: boolean | Prisma.ReviewLog$topicArgs<ExtArgs>
+  page?: boolean | Prisma.ReviewLog$pageArgs<ExtArgs>
+  material?: boolean | Prisma.ReviewLog$materialArgs<ExtArgs>
 }, ExtArgs["result"]["reviewLog"]>
 
 export type ReviewLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   flashcardId?: boolean
   reviewedAt?: boolean
+  kind?: boolean
+  quality?: boolean
+  confidence?: boolean
+  topicId?: boolean
+  pageId?: boolean
+  materialId?: boolean
+  misconception?: boolean
+  resolvedAt?: boolean
+  detail?: boolean
   flashcard?: boolean | Prisma.ReviewLog$flashcardArgs<ExtArgs>
+  topic?: boolean | Prisma.ReviewLog$topicArgs<ExtArgs>
+  page?: boolean | Prisma.ReviewLog$pageArgs<ExtArgs>
+  material?: boolean | Prisma.ReviewLog$materialArgs<ExtArgs>
 }, ExtArgs["result"]["reviewLog"]>
 
 export type ReviewLogSelectScalar = {
   id?: boolean
   flashcardId?: boolean
   reviewedAt?: boolean
+  kind?: boolean
+  quality?: boolean
+  confidence?: boolean
+  topicId?: boolean
+  pageId?: boolean
+  materialId?: boolean
+  misconception?: boolean
+  resolvedAt?: boolean
+  detail?: boolean
 }
 
-export type ReviewLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "flashcardId" | "reviewedAt", ExtArgs["result"]["reviewLog"]>
+export type ReviewLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "flashcardId" | "reviewedAt" | "kind" | "quality" | "confidence" | "topicId" | "pageId" | "materialId" | "misconception" | "resolvedAt" | "detail", ExtArgs["result"]["reviewLog"]>
 export type ReviewLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   flashcard?: boolean | Prisma.ReviewLog$flashcardArgs<ExtArgs>
+  topic?: boolean | Prisma.ReviewLog$topicArgs<ExtArgs>
+  page?: boolean | Prisma.ReviewLog$pageArgs<ExtArgs>
+  material?: boolean | Prisma.ReviewLog$materialArgs<ExtArgs>
 }
 export type ReviewLogIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   flashcard?: boolean | Prisma.ReviewLog$flashcardArgs<ExtArgs>
+  topic?: boolean | Prisma.ReviewLog$topicArgs<ExtArgs>
+  page?: boolean | Prisma.ReviewLog$pageArgs<ExtArgs>
+  material?: boolean | Prisma.ReviewLog$materialArgs<ExtArgs>
 }
 export type ReviewLogIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   flashcard?: boolean | Prisma.ReviewLog$flashcardArgs<ExtArgs>
+  topic?: boolean | Prisma.ReviewLog$topicArgs<ExtArgs>
+  page?: boolean | Prisma.ReviewLog$pageArgs<ExtArgs>
+  material?: boolean | Prisma.ReviewLog$materialArgs<ExtArgs>
 }
 
 export type $ReviewLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "ReviewLog"
   objects: {
     flashcard: Prisma.$FlashcardPayload<ExtArgs> | null
+    topic: Prisma.$CourseTopicPayload<ExtArgs> | null
+    page: Prisma.$PagePayload<ExtArgs> | null
+    material: Prisma.$MaterialPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     flashcardId: string | null
     reviewedAt: Date
+    kind: $Enums.RecallKind
+    /**
+     * 0-5, SM-2's scale, for every kind. Rows written before RECALL_LEDGER_SINCE
+     * carry the backfilled 0 and are streak evidence, not grades — see
+     * src/lib/recall.ts.
+     */
+    quality: number
+    /**
+     * 0-3, asked before the reveal. Null when the student skipped it.
+     */
+    confidence: number | null
+    topicId: string | null
+    pageId: string | null
+    materialId: string | null
+    /**
+     * One-line diagnosis on a failed recall, from the grader that produced it.
+     */
+    misconception: string | null
+    /**
+     * Set when a later recall of the same target scores >= 4.
+     */
+    resolvedAt: Date | null
+    /**
+     * JSON: the grader's own payload (typed text, similarity, feedback).
+     */
+    detail: string | null
   }, ExtArgs["result"]["reviewLog"]>
   composites: {}
 }
@@ -823,6 +1683,9 @@ readonly fields: ReviewLogFieldRefs;
 export interface Prisma__ReviewLogClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   flashcard<T extends Prisma.ReviewLog$flashcardArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ReviewLog$flashcardArgs<ExtArgs>>): Prisma.Prisma__FlashcardClient<runtime.Types.Result.GetResult<Prisma.$FlashcardPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  topic<T extends Prisma.ReviewLog$topicArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ReviewLog$topicArgs<ExtArgs>>): Prisma.Prisma__CourseTopicClient<runtime.Types.Result.GetResult<Prisma.$CourseTopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  page<T extends Prisma.ReviewLog$pageArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ReviewLog$pageArgs<ExtArgs>>): Prisma.Prisma__PageClient<runtime.Types.Result.GetResult<Prisma.$PagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  material<T extends Prisma.ReviewLog$materialArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ReviewLog$materialArgs<ExtArgs>>): Prisma.Prisma__MaterialClient<runtime.Types.Result.GetResult<Prisma.$MaterialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -855,6 +1718,15 @@ export interface ReviewLogFieldRefs {
   readonly id: Prisma.FieldRef<"ReviewLog", 'String'>
   readonly flashcardId: Prisma.FieldRef<"ReviewLog", 'String'>
   readonly reviewedAt: Prisma.FieldRef<"ReviewLog", 'DateTime'>
+  readonly kind: Prisma.FieldRef<"ReviewLog", 'RecallKind'>
+  readonly quality: Prisma.FieldRef<"ReviewLog", 'Int'>
+  readonly confidence: Prisma.FieldRef<"ReviewLog", 'Int'>
+  readonly topicId: Prisma.FieldRef<"ReviewLog", 'String'>
+  readonly pageId: Prisma.FieldRef<"ReviewLog", 'String'>
+  readonly materialId: Prisma.FieldRef<"ReviewLog", 'String'>
+  readonly misconception: Prisma.FieldRef<"ReviewLog", 'String'>
+  readonly resolvedAt: Prisma.FieldRef<"ReviewLog", 'DateTime'>
+  readonly detail: Prisma.FieldRef<"ReviewLog", 'String'>
 }
     
 
@@ -1270,6 +2142,63 @@ export type ReviewLog$flashcardArgs<ExtArgs extends runtime.Types.Extensions.Int
    */
   include?: Prisma.FlashcardInclude<ExtArgs> | null
   where?: Prisma.FlashcardWhereInput
+}
+
+/**
+ * ReviewLog.topic
+ */
+export type ReviewLog$topicArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CourseTopic
+   */
+  select?: Prisma.CourseTopicSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CourseTopic
+   */
+  omit?: Prisma.CourseTopicOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CourseTopicInclude<ExtArgs> | null
+  where?: Prisma.CourseTopicWhereInput
+}
+
+/**
+ * ReviewLog.page
+ */
+export type ReviewLog$pageArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Page
+   */
+  select?: Prisma.PageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Page
+   */
+  omit?: Prisma.PageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PageInclude<ExtArgs> | null
+  where?: Prisma.PageWhereInput
+}
+
+/**
+ * ReviewLog.material
+ */
+export type ReviewLog$materialArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Material
+   */
+  select?: Prisma.MaterialSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Material
+   */
+  omit?: Prisma.MaterialOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.MaterialInclude<ExtArgs> | null
+  where?: Prisma.MaterialWhereInput
 }
 
 /**

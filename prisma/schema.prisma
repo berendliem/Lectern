@@ -52,6 +52,17 @@ enum ChunkSource {
   MATERIAL
 }
 
+/// Which surface produced a recall event. Every grader in the app normalizes
+/// onto ReviewLog's 0-5 quality, so these are channels, not scales.
+enum RecallKind {
+  FLASHCARD
+  QUIZ
+  FEYNMAN
+  INTERVIEW
+  BLURT
+  PRETEST
+}
+
 model Folder {
   id          String   @id @default(cuid())
   name        String
@@ -80,6 +91,7 @@ model Material {
   chunks        Chunk[]
   flashcards    Flashcard[]
   quizQuestions QuizQuestion[]
+  reviewLogs    ReviewLog[]
 
   @@index([folderId, kind])
 }
@@ -93,7 +105,8 @@ model CourseTopic {
   sourceMaterialId String?
   createdAt        DateTime @default(now())
 
-  folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folder     Folder      @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  reviewLogs ReviewLog[]
 
   @@index([folderId, order])
 }
@@ -119,6 +132,7 @@ model Page {
   interviewSessions InterviewSession[]
   actionItems       ActionItem[]
   chunks            Chunk[]
+  reviewLogs        ReviewLog[]
 
   @@index([folderId])
   @@index([status])
@@ -176,14 +190,42 @@ model Flashcard {
   @@index([nextReviewAt])
 }
 
+/// The recall ledger: one row per attempt at recalling something, whatever
+/// asked for it. Every relation is SetNull on purpose — deleting a lecture
+/// must not erase the evidence that the student once knew it, and a ledger
+/// that cascades is a ledger that lies about the streak.
 model ReviewLog {
   id          String   @id @default(cuid())
   flashcardId String?
   reviewedAt  DateTime @default(now())
 
-  flashcard Flashcard? @relation(fields: [flashcardId], references: [id], onDelete: SetNull)
+  kind       RecallKind @default(FLASHCARD)
+  /// 0-5, SM-2's scale, for every kind. Rows written before RECALL_LEDGER_SINCE
+  /// carry the backfilled 0 and are streak evidence, not grades — see
+  /// src/lib/recall.ts.
+  quality    Int        @default(0)
+  /// 0-3, asked before the reveal. Null when the student skipped it.
+  confidence Int?
+
+  topicId       String?
+  pageId        String?
+  materialId    String?
+  /// One-line diagnosis on a failed recall, from the grader that produced it.
+  misconception String?
+  /// Set when a later recall of the same target scores >= 4.
+  resolvedAt    DateTime?
+  /// JSON: the grader's own payload (typed text, similarity, feedback).
+  detail        String?
+
+  flashcard Flashcard?   @relation(fields: [flashcardId], references: [id], onDelete: SetNull)
+  topic     CourseTopic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  page      Page?        @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  material  Material?    @relation(fields: [materialId], references: [id], onDelete: SetNull)
 
   @@index([reviewedAt])
+  @@index([topicId, reviewedAt])
+  @@index([pageId, reviewedAt])
+  @@index([materialId, reviewedAt])
 }
 
 model QuizQuestion {
