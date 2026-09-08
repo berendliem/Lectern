@@ -260,6 +260,16 @@ export async function searchCourse(
     .slice(0, k);
 }
 
+export type TopicScores = {
+  /**
+   * False when this course has no indexed chunk to score against at all — a
+   * different situation from "scored, and nothing matched well", and the only
+   * way the caller can tell the two apart. Meaningless when `titles` is empty.
+   */
+  indexed: boolean;
+  matches: (TopicMatch | null)[];
+};
+
 /**
  * Best-matching chunk for each topic title, in the order the titles came in.
  * One embedding call for every title and one pass over the course's chunks —
@@ -269,11 +279,8 @@ export async function searchCourse(
  * Throws if embedding fails; the caller decides whether coverage is worth
  * failing a page render for (it is not — see the course overview).
  */
-export async function scoreTopics(
-  folderId: string,
-  titles: string[]
-): Promise<(TopicMatch | null)[]> {
-  if (titles.length === 0) return [];
+export async function scoreTopics(folderId: string, titles: string[]): Promise<TopicScores> {
+  if (titles.length === 0) return { indexed: false, matches: [] };
 
   const model = activeEmbedModelLabel();
   const rows = await db.chunk.findMany({
@@ -293,7 +300,7 @@ export async function scoreTopics(
       material: { select: { title: true } },
     },
   });
-  if (rows.length === 0) return titles.map(() => null);
+  if (rows.length === 0) return { indexed: false, matches: titles.map(() => null) };
 
   const decoded = rows.map((row) => ({
     vector: decodeVector(row.vector),
@@ -304,7 +311,7 @@ export async function scoreTopics(
 
   const topicVectors = await embedTexts(titles);
 
-  return topicVectors.map((topicVector) => {
+  const matches = topicVectors.map((topicVector) => {
     let best: TopicMatch | null = null;
     for (const chunk of decoded) {
       const score = cosine(topicVector, chunk.vector);
@@ -314,4 +321,6 @@ export async function scoreTopics(
     }
     return best;
   });
+
+  return { indexed: true, matches };
 }

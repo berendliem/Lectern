@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_TEXT_CHARS } from "./limits";
 
 export const createFolderSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -29,7 +30,7 @@ const transcriptSegmentSchema = z
 
 export const createPageFromTextSchema = z.object({
   title: z.string().trim().min(1).max(300),
-  text: z.string().trim().min(1).max(500_000),
+  text: z.string().trim().min(1).max(MAX_TEXT_CHARS),
   folderId: z.string().trim().min(1).optional(),
   // Present when the text came from a timestamped transcript rather than a
   // paste or a PDF. Storing the segments is what makes chapters, subtitle
@@ -45,7 +46,7 @@ export const createMaterialSchema = z.object({
   title: z.string().trim().min(1).max(300),
   // Same ceiling as an imported lecture body; a slide deck's text is far
   // smaller than this in practice.
-  text: z.string().trim().min(1).max(500_000),
+  text: z.string().trim().min(1).max(MAX_TEXT_CHARS),
   sourceFileName: z.string().trim().max(300).optional(),
   slideCount: z.number().int().min(0).max(10_000).optional(),
 });

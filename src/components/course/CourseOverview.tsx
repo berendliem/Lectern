@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Check, Plus, ScrollText, Sparkles, TriangleAlert, Trash2 } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { MASTERY_CLASSES, MASTERY_LABEL, type Mastery } from "@/lib/mastery";
+import type { CoverageState } from "@/lib/coverage";
 
 export type TopicRow = {
   id: string;
@@ -21,12 +22,12 @@ export function CourseOverview({
   folderId,
   topics,
   hasSyllabus,
-  coverageAvailable,
+  coverage,
 }: {
   folderId: string;
   topics: TopicRow[];
   hasSyllabus: boolean;
-  coverageAvailable: boolean;
+  coverage: CoverageState;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +90,8 @@ export function CourseOverview({
 
   const covered = topics.filter((t) => t.covered).length;
   const uncovered = topics.length - covered;
-  const coverageSummary = !coverageAvailable
+  const scored = coverage === "scored";
+  const coverageSummary = !scored
     ? `${topics.length} topics, coverage not checked.`
     : uncovered === 0
       ? `All ${topics.length} topics have a lecture or material behind them.`
@@ -135,7 +137,7 @@ export function CourseOverview({
           {/* Without a coverage verdict every segment would read as uncovered, which is
               an accusation the data doesn't support — so the strip waits for the verdict
               and the summary line carries the explanation on its own. */}
-          {coverageAvailable && (
+          {scored && (
             <div className="flex h-3 gap-px" role="img" aria-label={coverageSummary}>
               {topics.map((topic) => (
                 <span
@@ -157,11 +159,11 @@ export function CourseOverview({
 
       {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
 
-      {!coverageAvailable && topics.length > 0 && (
+      {!scored && topics.length > 0 && (
         <p className="rounded-xl border border-line bg-daisy-soft/50 px-4 py-3 text-[13px] text-ink-soft dark:bg-surface-3">
-          Coverage is unavailable: nothing in this course is indexed for semantic search yet, or
-          embedding failed. Topics are listed without a coverage verdict — none of them is being
-          called uncovered.
+          {coverage === "no-sources"
+            ? "Coverage has nothing to check against yet: this course has no indexed lecture or material other than the syllabus, and the syllabus can't cover itself. Import a lecture or upload course material, then this list gets a verdict."
+            : "Coverage could not be checked: embedding the topics failed (see the server log). Topics are listed without a verdict — none of them is being called uncovered."}
         </p>
       )}
 
@@ -229,7 +231,7 @@ export function CourseOverview({
                     ) : (
                       `Covered by ${topic.matchTitle}`
                     )
-                  ) : !coverageAvailable ? (
+                  ) : !scored ? (
                     "Coverage not checked"
                   ) : topic.matchTitle ? (
                     `No lecture covers this — closest is ${topic.matchTitle}`

@@ -3,7 +3,13 @@ import { notFound } from "next/navigation";
 import { CheckCheck, GraduationCap, Lightbulb, MessagesSquare } from "lucide-react";
 import { db } from "@/lib/db";
 import { courseScopeFilter } from "@/lib/cards";
-import { classifyTopic, coverageThreshold, rollUpMastery } from "@/lib/coverage";
+import {
+  classifyTopic,
+  coverageThreshold,
+  rollUpMastery,
+  type CoverageState,
+  type TopicMatch,
+} from "@/lib/coverage";
 import { scoreTopics } from "@/lib/embeddings";
 import { CourseOverview, type TopicRow } from "@/components/course/CourseOverview";
 import { PageList } from "@/components/dashboard/PageList";
@@ -15,6 +21,7 @@ import { PageTabs } from "@/components/page-detail/PageTabs";
 import { MaterialUploadButton } from "@/components/dashboard/MaterialUploadButton";
 import { MaterialList } from "@/components/dashboard/MaterialList";
 import { CourseChat } from "@/components/ask/CourseChat";
+import { CourseDropZone } from "@/components/dashboard/CourseDropZone";
 
 export const dynamic = "force-dynamic";
 
@@ -61,13 +68,12 @@ export default async function FolderPage({
     }),
   ]);
 
-  const topicRows = await buildTopicRows(folderId, topics, cards);
-  // A topic with no match at all means nothing in this course is indexed for
-  // the active embedder (or embedding failed) — not that the syllabus is
-  // uncovered. Coverage stays silent rather than accusing every topic.
-  const coverageAvailable = topicRows.some((t) => t.matchTitle !== null);
+  // Without a verdict every topic would read as uncovered, which is not what
+  // "nothing to score against" means. Coverage stays silent instead, and says
+  // which of the two reasons it is.
+  const { rows: topicRows, coverage } = await buildTopicRows(folderId, topics, cards);
   const hasSyllabus = materials.some((m) => m.kind === "SYLLABUS");
-  const uncovered = coverageAvailable ? topicRows.filter((t) => !t.covered).length : 0;
+  const uncovered = coverage === "scored" ? topicRows.filter((t) => !t.covered).length : 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,63 +117,68 @@ export default async function FolderPage({
         </div>
       </div>
 
-      <PageTabs
-        tabs={[
-          {
-            id: "overview",
-            label: uncovered > 0 ? `Overview (${uncovered} uncovered)` : "Overview",
-            content: (
-              <CourseOverview
-                folderId={folder.id}
-                topics={topicRows}
-                hasSyllabus={hasSyllabus}
-                coverageAvailable={coverageAvailable}
-              />
-            ),
-          },
-          {
-            id: "lectures",
-            label: `Lectures (${pages.length})`,
-            content: (
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-end gap-2">
-                  <TranscriptImportButton folderId={folder.id} />
-                  <ImportButton folderId={folder.id} />
-                </div>
-                <PageList pages={pages} />
-              </div>
-            ),
-          },
-          {
-            id: "materials",
-            label: `Materials (${materials.length})`,
-            content: (
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-end">
-                  <MaterialUploadButton folderId={folder.id} />
-                </div>
-                <MaterialList
-                  materials={materials.map((m) => ({
-                    id: m.id,
-                    kind: m.kind,
-                    title: m.title,
-                    sourceFileName: m.sourceFileName,
-                    slideCount: m.slideCount,
-                    createdAt: m.createdAt,
-                    flashcardCount: m._count.flashcards,
-                    quizCount: m._count.quizQuestions,
-                  }))}
+      {/* Wraps the whole tab area rather than the Materials tab alone: a drop
+          can hold both slides and transcripts, and the user should not have to
+          guess which tab it belongs to. */}
+      <CourseDropZone folderId={folder.id}>
+        <PageTabs
+          tabs={[
+            {
+              id: "overview",
+              label: uncovered > 0 ? `Overview (${uncovered} uncovered)` : "Overview",
+              content: (
+                <CourseOverview
+                  folderId={folder.id}
+                  topics={topicRows}
+                  hasSyllabus={hasSyllabus}
+                  coverage={coverage}
                 />
-              </div>
-            ),
-          },
-          {
-            id: "ask",
-            label: "Ask",
-            content: <CourseChat folderId={folder.id} />,
-          },
-        ]}
-      />
+              ),
+            },
+            {
+              id: "lectures",
+              label: `Lectures (${pages.length})`,
+              content: (
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-end gap-2">
+                    <TranscriptImportButton folderId={folder.id} />
+                    <ImportButton folderId={folder.id} />
+                  </div>
+                  <PageList pages={pages} />
+                </div>
+              ),
+            },
+            {
+              id: "materials",
+              label: `Materials (${materials.length})`,
+              content: (
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-end">
+                    <MaterialUploadButton folderId={folder.id} />
+                  </div>
+                  <MaterialList
+                    materials={materials.map((m) => ({
+                      id: m.id,
+                      kind: m.kind,
+                      title: m.title,
+                      sourceFileName: m.sourceFileName,
+                      slideCount: m.slideCount,
+                      createdAt: m.createdAt,
+                      flashcardCount: m._count.flashcards,
+                      quizCount: m._count.quizQuestions,
+                    }))}
+                  />
+                </div>
+              ),
+            },
+            {
+              id: "ask",
+              label: "Ask",
+              content: <CourseChat folderId={folder.id} />,
+            },
+          ]}
+        />
+      </CourseDropZone>
     </div>
   );
 }
@@ -189,15 +200,21 @@ async function buildTopicRows(
   folderId: string,
   topics: TopicRecord[],
   cards: CardRecord[]
-): Promise<TopicRow[]> {
-  if (topics.length === 0) return [];
+): Promise<{ rows: TopicRow[]; coverage: CoverageState }> {
+  if (topics.length === 0) return { rows: [], coverage: "no-sources" };
 
-  let matches;
+  let matches: (TopicMatch | null)[];
+  let coverage: CoverageState;
   try {
-    matches = await scoreTopics(folderId, topics.map((t) => t.title));
+    const scores = await scoreTopics(folderId, topics.map((t) => t.title));
+    matches = scores.matches;
+    // The syllabus itself is excluded from scoring, so a course whose only
+    // indexed material is its syllabus has nothing to check against.
+    coverage = scores.indexed ? "scored" : "no-sources";
   } catch (e) {
     console.error(`[coverage] scoring topics for course ${folderId} failed:`, e);
     matches = topics.map(() => null);
+    coverage = "failed";
   }
 
   const threshold = coverageThreshold();
@@ -210,7 +227,7 @@ async function buildTopicRows(
     else cardsBySource.set(key, [card]);
   }
 
-  return topics.map((topic, i) => {
+  const rows = topics.map((topic, i) => {
     const { covered, match } = classifyTopic(matches[i], threshold);
     const key = match?.pageId ? `p:${match.pageId}` : match?.materialId ? `m:${match.materialId}` : null;
     return {
@@ -226,4 +243,6 @@ async function buildTopicRows(
       mastery: covered && key ? rollUpMastery(cardsBySource.get(key) ?? []) : null,
     };
   });
+
+  return { rows, coverage };
 }
