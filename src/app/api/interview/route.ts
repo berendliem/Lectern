@@ -43,10 +43,12 @@ export async function POST(req: NextRequest) {
       notesMarkdown: page.notes?.markdown ?? null,
       transcriptText: page.transcript?.rawText ?? null,
     };
-  } else {
+  } else if (input.source === "TOPIC") {
     topicText = input.topicText;
     title = input.title && input.title.trim() ? input.title.trim() : topicText.slice(0, 80);
     context = { title, source: "TOPIC", topicText };
+  } else {
+    return jsonError("COURSE_TOPIC sessions must be created through the course interface", 501);
   }
 
   const session = await db.interviewSession.create({
