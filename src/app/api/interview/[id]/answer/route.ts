@@ -17,6 +17,7 @@ import {
   INTERVIEW_QUESTION_SYSTEM_PROMPT,
   buildNextQuestionUserPrompt,
 } from "@/lib/prompts/interview";
+import { writeRecallSafely } from "@/lib/recall-log";
 
 const MODEL =
   process.env.OPENROUTER_MODEL_INTERVIEW ?? process.env.OPENROUTER_MODEL_QUIZ ?? "openrouter/free";
@@ -70,6 +71,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   await db.interviewTurn.update({
     where: { id: turn.id },
     data: { answer, feedback: JSON.stringify(feedback) },
+  });
+
+  // A topic-sourced session has no page, so the event lands parentless rather
+  // than being dropped — the scale is the point, the parent is a bonus.
+  await writeRecallSafely({
+    raw: { kind: "INTERVIEW", rating: feedback.score },
+    pageId: session.pageId,
+    misconception: feedback.improvements[0] ?? null,
+    detail: { question: turn.question, score: feedback.score },
   });
 
   const answeredCount = session.turns.filter((t) => t.answer !== null).length + 1;

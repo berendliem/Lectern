@@ -63,6 +63,10 @@ export const tagOnPageSchema = z.object({
 
 export const reviewGradeSchema = z.object({
   quality: z.number().int().min(0).max(5),
+  /** What the student typed before revealing, when they typed anything. */
+  typed: z.string().trim().max(4000).optional(),
+  /** Guessing / Fairly sure / Certain. Absent when they skipped the control. */
+  confidence: z.number().int().min(1).max(3).optional(),
 });
 
 export const quizAnswerSchema = z.object({
@@ -87,6 +91,9 @@ export const chatRequestSchema = z.object({
 
 export const feynmanEvaluateSchema = z.object({
   concept: z.string().trim().min(1).max(300),
+  /** The lecture the coach was launched from, so the attempt reaches the
+   * ledger with a parent. Absent when the coach was opened on its own. */
+  pageId: z.string().trim().min(1).max(64).optional(),
   reference: z.string().trim().max(20_000).optional(),
   explanation: z.string().trim().min(1).max(8000),
   priorExplanations: z.array(z.string().trim().min(1).max(8000)).max(10).optional(),
