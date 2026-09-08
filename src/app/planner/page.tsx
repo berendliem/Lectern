@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CalendarDays, Flame, GraduationCap, Layers } from "lucide-react";
 import { db } from "@/lib/db";
 import { computeStreak, upcomingSchedule } from "@/lib/planner";
+import { RECALL_LEDGER_SINCE, calibration } from "@/lib/recall";
 import clsx from "@/lib/clsx";
 
 export const dynamic = "force-dynamic";
@@ -10,17 +11,30 @@ export default async function PlannerPage() {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const [logs, cards, dueNow, reviewedToday, totalCards] = await Promise.all([
+  const [logs, cards, dueNow, reviewedToday, totalCards, rated] = await Promise.all([
+    // Deliberately unfiltered by date: this read counts events for the streak and
+    // never scores them, so the pre-ledger rows still belong in it.
     db.reviewLog.findMany({ orderBy: { reviewedAt: "desc" }, take: 500, select: { reviewedAt: true } }),
     db.flashcard.findMany({ select: { nextReviewAt: true } }),
     db.flashcard.count({ where: { nextReviewAt: { lte: now } } }),
     db.reviewLog.count({ where: { reviewedAt: { gte: startOfToday } } }),
     db.flashcard.count(),
+    // This read scores, so it starts at the ledger: a backfilled quality of 0 is
+    // not a failed recall, and reading it as one would invent an overconfidence
+    // the student never showed.
+    db.reviewLog.findMany({
+      where: { reviewedAt: { gte: RECALL_LEDGER_SINCE }, confidence: { not: null } },
+      orderBy: { reviewedAt: "desc" },
+      take: 200,
+      select: { confidence: true, quality: true },
+    }),
   ]);
 
   const streak = computeStreak(logs.map((l) => l.reviewedAt), now);
   const schedule = upcomingSchedule(cards.map((c) => c.nextReviewAt), 7, now);
   const maxCount = Math.max(1, ...schedule.map((d) => d.count));
+  const calibrated = calibration(rated);
+  const percent = (share: number) => `${Math.round(share * 100)}%`;
 
   const stats = [
     { label: "Due now", value: dueNow, icon: GraduationCap, tint: "bg-brand-soft text-brand-ink", href: dueNow > 0 ? "/review" : null },
@@ -53,6 +67,24 @@ export default async function PlannerPage() {
           </p>
         </div>
       </div>
+
+      {/* Calibration: read-only, and only once there is something to read. */}
+      {calibrated.rated > 0 && (
+        <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-2">
+            How well you know what you know
+          </p>
+          <p className="text-[13px] text-ink-soft">
+            Certain and wrong on <span className="font-semibold">{percent(calibrated.overconfidentWrong)}</span>{" "}
+            of the cards you were sure about; right anyway on{" "}
+            <span className="font-semibold">{percent(calibrated.underconfidentRight)}</span> of the ones you were
+            guessing at.
+          </p>
+          <p className="text-[12px] text-muted-2">
+            Over your last {calibrated.rated} rated review{calibrated.rated === 1 ? "" : "s"}.
+          </p>
+        </div>
+      )}
 
       {/* Stat tiles */}
       <div className="grid grid-cols-3 gap-3">

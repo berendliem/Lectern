@@ -17,16 +17,25 @@ export type TopicRow = {
   mastery: Mastery | null;
 };
 
+export type OpenMisconception = {
+  id: string;
+  text: string;
+  /** The lecture or material it was diagnosed against. */
+  source: string | null;
+};
+
 export function CourseOverview({
   folderId,
   topics,
   hasSyllabus,
   coverageAvailable,
+  misconceptions = [],
 }: {
   folderId: string;
   topics: TopicRow[];
   hasSyllabus: boolean;
   coverageAvailable: boolean;
+  misconceptions?: OpenMisconception[];
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -156,6 +165,25 @@ export function CourseOverview({
       )}
 
       {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
+
+      {/* What this course got wrong and has not since got right. Each entry closes
+          itself the next time the same lecture or card scores well, so the list is
+          a to-do that empties on its own. */}
+      {misconceptions.length > 0 && (
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-2">
+            Still getting this wrong
+          </p>
+          <ul className="flex flex-col gap-1.5 text-[13px] text-ink-soft">
+            {misconceptions.map((m) => (
+              <li key={m.id}>
+                {m.text}
+                {m.source && <span className="text-muted-2"> · {m.source}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {!coverageAvailable && topics.length > 0 && (
         <p className="rounded-xl border border-line bg-daisy-soft/50 px-4 py-3 text-[13px] text-ink-soft dark:bg-surface-3">
