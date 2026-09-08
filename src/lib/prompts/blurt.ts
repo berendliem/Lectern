@@ -20,6 +20,14 @@ Guidelines:
 
 ${UNTRUSTED_CONTENT_CLAUSE}`;
 
+/**
+ * Notes have no length ceiling of their own, and every blurt re-sends them in
+ * full. The cap matches the Feynman coach's reference bound so one long lecture
+ * cannot make each submission cost more than the last.
+ */
+const MAX_NOTES_CHARS = 20_000;
+
 export function buildBlurtUserPrompt(notesMarkdown: string, dump: string): string {
-  return `Here are the lecture notes, then what the learner wrote from memory. Mark the dump following the required JSON shape.\n\nNOTES:\n"""\n${notesMarkdown}\n"""\n\nWHAT THE LEARNER REMEMBERED:\n"""\n${dump}\n"""`;
+  const notes = notesMarkdown.slice(0, MAX_NOTES_CHARS);
+  return `Here are the lecture notes, then what the learner wrote from memory. Mark the dump following the required JSON shape.\n\nNOTES:\n"""\n${notes}\n"""\n\nWHAT THE LEARNER REMEMBERED:\n"""\n${dump}\n"""`;
 }

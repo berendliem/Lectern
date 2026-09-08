@@ -26,6 +26,22 @@ import {
 const STRIKES_FOR_CARD = 3;
 
 /**
+ * A diagnosis is one line. Capping here rather than in each grader's schema is
+ * what makes it true of all four: the text arrives from a model that has just
+ * read lecture notes it does not control, and it ends up in a flashcard.
+ */
+const MAX_MISCONCEPTION_CHARS = 1000;
+
+function oneLine(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return null;
+  return trimmed.length > MAX_MISCONCEPTION_CHARS
+    ? `${trimmed.slice(0, MAX_MISCONCEPTION_CHARS - 1)}…`
+    : trimmed;
+}
+
+/**
  * What the event is about. All are optional — a Feynman attempt on a typed
  * concept has no parent at all, and the event still counts.
  */
@@ -79,7 +95,7 @@ export function recallRow(event: RecallEvent) {
     topicId: event.topicId ?? null,
     // A diagnosis only means something against a failed attempt; storing one
     // on a pass would leave the misconception list arguing with the grade.
-    misconception: quality < PASS_QUALITY ? (event.misconception ?? null) : null,
+    misconception: quality < PASS_QUALITY ? oneLine(event.misconception) : null,
     detail: event.detail === undefined ? null : JSON.stringify(event.detail),
   };
 }
@@ -163,7 +179,8 @@ async function maybeCardFromMisconception(event: RecallEvent, scope: Scope): Pro
   if (strikes < STRIKES_FOR_CARD) return;
 
   const sourceTerm = `Missed ${strikes}×`;
-  const correction = event.misconception as string;
+  const correction = oneLine(event.misconception);
+  if (!correction) return;
 
   // "Once" is enforced by the card's own text: the same correction on the same
   // parent does not earn a second card on the fourth and fifth failure.

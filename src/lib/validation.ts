@@ -97,15 +97,19 @@ export const blurtSubmitSchema = z.object({
   dump: z.string().trim().min(1).max(8000),
 });
 
-/** What the reasoning tier returns when it marks a blurt. */
+/**
+ * What the reasoning tier returns when it marks a blurt. Every string is
+ * capped, not just every array: these become flashcard text and ledger rows,
+ * and the model wrote them after reading notes it does not control.
+ */
 export const blurtResponseSchema = z.object({
-  covered: z.array(z.string().trim().min(1)).max(40).default([]),
-  missed: z.array(z.string().trim().min(1)).max(8).default([]),
+  covered: z.array(z.string().trim().min(1).max(500)).max(40).default([]),
+  missed: z.array(z.string().trim().min(1).max(500)).max(8).default([]),
   wrong: z
     .array(
       z.object({
-        claim: z.string().trim().min(1),
-        correction: z.string().trim().min(1),
+        claim: z.string().trim().min(1).max(500),
+        correction: z.string().trim().min(1).max(1000),
       })
     )
     .max(8)
