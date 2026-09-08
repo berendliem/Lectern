@@ -61,3 +61,6 @@ whisper-service/.venv
 whisper-service/__pycache__
 **/__pycache__
 *.pyc
+
+# swift build products (mac-speech is built by scripts/setup.sh)
+/mac-speech/.build
