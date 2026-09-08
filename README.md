@@ -11,6 +11,7 @@ It also has a **live assistant** for use *during* a lecture: while you record, a
 - **Transcription**: a separate local Python service (`whisper-service/`, FastAPI + [faster-whisper](https://github.com/SYSTRAN/faster-whisper)) that the web app calls over `localhost`. Runs fully offline once the model is downloaded.
 - **Summarization, flashcards, quiz**: [OpenRouter](https://openrouter.ai) chat completions, using a free-tier model by default (configurable per pipeline stage).
 - **Export**: Markdown and PDF (`@react-pdf/renderer`).
+- **Reading uploads**: PDF, `.pptx` and `.docx` text is extracted in the browser, so the file itself never reaches the server. Pages with no text layer — a scanned reading, a photographed handout — are OCR'd on the page image with [tesseract.js](https://tesseract.projectnaptha.com/) (English by default; set `NEXT_PUBLIC_OCR_LANG` for another language). This is the one step that isn't offline: the OCR engine and its language data come from `cdn.jsdelivr.net` the first time you OCR anything in a given browser, and are cached from then on. The page image is not uploaded anywhere.
 
 ## Quick start
 

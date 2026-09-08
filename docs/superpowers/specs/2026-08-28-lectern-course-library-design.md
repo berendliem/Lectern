@@ -39,7 +39,9 @@ and can be reviewed, quizzed, and questioned as a whole. The app is renamed
 - Multi-user, auth, or sharing. Single-user local app, unchanged.
 - Storing original uploaded files. Text is extracted client-side; the source
   file is not persisted.
-- OCR of scanned PDFs or images in slides.
+- ~~OCR of scanned PDFs or images in slides.~~ Shipped later for PDFs: a page
+  with no text layer is OCR'd in the browser with tesseract.js. Image-only
+  slides in a `.pptx` are still skipped.
 - Speaker diarization for live copilot chunks. Diarization needs the whole
   file, so it runs on saved recordings only.
 - Rewriting the visual design. The rebrand is vocabulary, navigation, and name.
