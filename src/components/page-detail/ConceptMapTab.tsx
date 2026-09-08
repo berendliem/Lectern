@@ -101,7 +101,7 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
   if (!hasMaterial) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-4 py-14 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
           <Waypoints className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
@@ -117,7 +117,7 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
   if (!map) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-xl border border-line/80 bg-surface px-4 py-14 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
           <Waypoints className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
@@ -129,7 +129,7 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
         <button
           onClick={generate}
           disabled={loading}
-          className="flex items-center gap-1.5 rounded-lg grad-brand px-4 py-2 text-sm font-medium text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
+          className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.2} /> : <Waypoints className="h-4 w-4" strokeWidth={2.2} />}
           {loading ? "Mapping concepts…" : "Generate concept map"}

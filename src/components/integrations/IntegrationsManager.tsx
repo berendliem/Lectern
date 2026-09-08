@@ -126,7 +126,7 @@ export function IntegrationsManager() {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight text-ink">
-          <Plug className="h-5 w-5 text-brand" strokeWidth={2.2} />
+          <Plug className="h-5 w-5 text-brand-ink" strokeWidth={2.2} />
           Integrations
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm text-muted">
@@ -213,7 +213,7 @@ export function IntegrationsManager() {
                     </div>
                     <div className="ml-auto">
                       {pageId ? (
-                        <Link href={`/pages/${pageId}`} className="text-[12.5px] font-medium text-brand hover:underline">
+                        <Link href={`/pages/${pageId}`} className="text-[12.5px] font-medium text-brand-ink hover:underline">
                           Open page →
                         </Link>
                       ) : (

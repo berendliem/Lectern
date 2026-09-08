@@ -49,7 +49,7 @@ export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: 
   if (!hasMaterial) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-4 py-14 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
           <MessageCircleQuestion className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
@@ -71,7 +71,7 @@ export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: 
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="rounded-full border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand"
+                  className="rounded-full border border-line bg-surface-2 px-3 py-1.5 text-xs text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/50 hover:text-brand-ink"
                 >
                   {s}
                 </button>
@@ -114,7 +114,7 @@ export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: 
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about this lecture…"
-          className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+          className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
         />
         <button
           type="submit"

@@ -17,7 +17,7 @@ export default async function InterviewSessionPage({ params }: { params: Promise
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
-      <Link href="/interview" className="flex items-center gap-1 self-start text-[13px] font-medium text-muted-2 hover:text-brand">
+      <Link href="/interview" className="flex items-center gap-1 self-start text-[13px] font-medium text-muted-2 hover:text-brand-ink">
         <ArrowLeft className="h-4 w-4" strokeWidth={2} />
         All interviews
       </Link>

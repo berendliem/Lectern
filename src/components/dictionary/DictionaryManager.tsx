@@ -92,7 +92,7 @@ export function DictionaryManager({
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="flex items-center gap-2.5 text-xl font-semibold tracking-tight text-ink">
-          <BookOpen className="h-5 w-5 text-brand" strokeWidth={2.2} />
+          <BookOpen className="h-5 w-5 text-brand-ink" strokeWidth={2.2} />
           Personal dictionary
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm text-muted">
@@ -125,8 +125,8 @@ export function DictionaryManager({
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {pending.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-xl border border-brand-border grad-brand-soft p-4">
-          <p className="text-[12.5px] font-semibold uppercase tracking-wide text-brand">
+        <div className="flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-soft p-4">
+          <p className="text-[12.5px] font-semibold uppercase tracking-wide text-brand-ink">
             {contextLabel ? `Key terms from ${contextLabel}` : "Suggested terms"}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -136,7 +136,7 @@ export function DictionaryManager({
                 disabled={submitting}
                 onClick={() => add(s.term, s.hint)}
                 title={s.hint}
-                className="inline-flex items-center gap-1 rounded-full border border-brand-border bg-surface px-3 py-1 text-xs font-medium text-brand transition-colors hover:bg-brand-soft disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-full border border-brand-border bg-surface px-3 py-1 text-xs font-medium text-brand-ink transition-colors hover:bg-brand-soft disabled:opacity-50"
               >
                 <Plus className="h-3 w-3" strokeWidth={2.4} /> {s.term}
               </button>

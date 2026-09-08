@@ -21,7 +21,7 @@ const GRADES: { label: string; sublabel: string; quality: number; classes: strin
     label: "Easy",
     sublabel: "Instant",
     quality: 5,
-    classes: "border-brand-border bg-brand-soft/60 text-brand hover:bg-brand-soft",
+    classes: "border-brand-border bg-brand-soft/60 text-brand-ink hover:bg-brand-soft",
   },
 ];
 

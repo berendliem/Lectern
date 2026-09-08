@@ -5,59 +5,63 @@
    in layout.tsx, so a reload never flashes the wrong theme. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Brand: an energetic violet→magenta identity on a soft, faintly tinted canvas.
+/* Brand: the logo's navy and gold — an academic identity on a parchment ground.
    Pastel content families stay for status/section accents. */
 :root {
-  --background: #fbfaff;
-  --foreground: #2b2540;
-
-  --brand-from: #7c3aed;
-  --brand-mid: #a21caf;
-  --brand-to: #db2777;
+  --background: #fbfaf7;
+  --foreground: #001b42;
 
   /* Semantic surface tokens. Components use these (bg-surface, text-ink,
      border-line…) instead of literal zinc/white, which is what lets one class
      on <html> repaint the whole app. */
   --surface: #ffffff;
-  --surface-2: #fafafa;
-  --surface-3: #f4f4f5;
-  --line: #e4e4e7;
-  --line-strong: #d4d4d8;
-  --ink: #18181b;
-  --ink-soft: #3f3f46;
-  --muted: #71717a;
-  --muted-2: #a1a1aa;
+  --surface-2: #f7f5f0;
+  --surface-3: #efebe2;
+  --line: #e3dfd5;
+  --line-strong: #cfc9bb;
+  --ink: #001b42;
+  --ink-soft: #2e4568;
+  --muted: #5c6b85;
+  --muted-2: #8593a8;
 
-  --brand: #7c3aed;
-  --brand-hover: #6d28d9;
-  --brand-soft: #f2ecff;
-  --brand-border: #ddd0fe;
+  --brand: #001b42;
+  --brand-hover: #0a2c60;
+  --brand-soft: #e8edf5;
+  --brand-border: #c3cfe0;
+  --brand-ink: #001b42;
+
+  /* Gold is a fill or a rule, never text: it reads 2.2 : 1 on white. Bronze is
+     its text form at 5.2 : 1 on the parchment ground. */
+  --gold: #d5a95c;
+  --bronze: #8a6320;
 }
 
 .dark {
-  --background: #0d0f16;
-  --foreground: #e6e7ec;
+  --background: #0b1220;
+  --foreground: #edf1f8;
 
-  /* The brand ramp lifts in dark: the light-mode violet is too dense to read
-     as a light source against a near-black ground. */
-  --brand-from: #9061f9;
-  --brand-mid: #c026d3;
-  --brand-to: #f0459a;
+  --surface: #141c2c;
+  --surface-2: #1a2436;
+  --surface-3: #212c41;
+  --line: #26314a;
+  --line-strong: #35425e;
+  --ink: #edf1f8;
+  --ink-soft: #c7d0e0;
+  --muted: #93a0b5;
+  --muted-2: #74819a;
 
-  --surface: #161922;
-  --surface-2: #1c202b;
-  --surface-3: #232834;
-  --line: #2b3140;
-  --line-strong: #3a4152;
-  --ink: #f2f3f7;
-  --ink-soft: #d3d6de;
-  --muted: #9ba2b0;
-  --muted-2: #7b8290;
+  /* The logo navy disappears into a near-black ground, so the action colour
+     lifts to a mid navy that still carries white text at 7.1 : 1. */
+  --brand: #2f5896;
+  --brand-hover: #3c6ab0;
+  --brand-soft: #1b2740;
+  --brand-border: #2f3f5e;
+  /* Brand as text needs to lift further than brand as a fill: the fill carries
+     white at 7.1 : 1, while this reads 8.9 : 1 on a dark surface. */
+  --brand-ink: #9dbdf0;
 
-  --brand: #a78bfa;
-  --brand-hover: #c4b5fd;
-  --brand-soft: #241d3d;
-  --brand-border: #3b2f63;
+  --gold: #d5a95c;
+  --bronze: #e5c489;
 }
 
 @theme inline {
@@ -81,6 +85,9 @@
   --color-brand-hover: var(--brand-hover);
   --color-brand-soft: var(--brand-soft);
   --color-brand-border: var(--brand-border);
+  --color-brand-ink: var(--brand-ink);
+  --color-gold: var(--gold);
+  --color-bronze: var(--bronze);
 }
 
 @theme {
@@ -107,19 +114,8 @@
 }
 
 body {
-  background:
-    radial-gradient(48rem 34rem at 108% -8%, rgba(219, 39, 119, 0.10), transparent 60%),
-    radial-gradient(44rem 34rem at -8% 4%, rgba(124, 58, 237, 0.12), transparent 58%),
-    radial-gradient(60rem 40rem at 50% 120%, rgba(162, 28, 175, 0.06), transparent 60%),
-    var(--background);
-  background-attachment: fixed;
-  color: var(--foreground);
-}
-
-/* The violet washes are a light-mode device; on a near-black ground they turn
-   into muddy smears, so dark mode gets a flat field instead. */
-.dark body {
   background: var(--background);
+  color: var(--foreground);
 }
 
 .line-clamp-2 {
@@ -129,23 +125,6 @@ body {
   overflow: hidden;
 }
 
-/* Brand gradient — used on primary CTAs, the logo, active nav, hero cards.
-   Named without a `bg-`/`text-` prefix so Tailwind v4 doesn't treat it as a
-   utility candidate and tree-shake it away. */
-.grad-brand {
-  background-image: linear-gradient(125deg, var(--brand-from) 0%, var(--brand-mid) 52%, var(--brand-to) 100%);
-}
-.grad-brand-soft {
-  background-image: linear-gradient(125deg, rgba(124, 58, 237, 0.1) 0%, rgba(219, 39, 119, 0.08) 100%);
-}
-
-.text-gradient {
-  background: linear-gradient(100deg, var(--brand-from) 0%, var(--brand-mid) 55%, var(--brand-to) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
 .shadow-brand {
-  box-shadow: 0 8px 24px -8px rgba(124, 58, 237, 0.45);
+  box-shadow: 0 8px 24px -10px rgba(0, 27, 66, 0.4);
 }

@@ -24,14 +24,14 @@ export default async function CourseReviewPage({
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
       <Link
         href={`/folders/${folder.id}`}
-        className="flex items-center gap-1 self-start text-[13px] font-medium text-muted-2 hover:text-brand"
+        className="flex items-center gap-1 self-start text-[13px] font-medium text-muted-2 hover:text-brand-ink"
       >
         <ArrowLeft className="h-4 w-4" strokeWidth={2} />
         {folder.name}
       </Link>
 
-      <div className="flex items-center gap-3 rounded-2xl border border-brand-border grad-brand-soft p-5">
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl grad-brand text-white shadow-brand">
+      <div className="flex items-center gap-3 rounded-2xl border border-brand-border bg-brand-soft p-5">
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-white shadow-brand">
           <CheckCheck className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>

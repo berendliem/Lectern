@@ -5,7 +5,7 @@ import Link from "next/link";
 import { BookOpen, CalendarPlus, Lightbulb, Loader2, Timer } from "lucide-react";
 
 const LINK_CLASSES =
-  "inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/40 hover:text-brand";
+  "inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:border-brand-border hover:bg-brand-soft/40 hover:text-brand-ink";
 
 /**
  * The lecture-tier entry points: every one of these features works better when

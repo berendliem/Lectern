@@ -148,15 +148,15 @@ export function InterviewRunner({
     return (
       <div className="flex flex-col gap-5">
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-brand-border bg-gradient-to-br from-brand-soft to-lavender-soft/60 px-4 py-8 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-brand shadow-sm">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-brand-ink shadow-sm">
             <Trophy className="h-6 w-6" strokeWidth={2} />
           </span>
           <p className="text-lg font-semibold text-ink">Interview complete</p>
           <p className="text-sm text-ink-soft">
             {history.length} question{history.length === 1 ? "" : "s"} · average score{" "}
-            <span className="font-semibold text-brand">{avg.toFixed(1)}/5</span>
+            <span className="font-semibold text-brand-ink">{avg.toFixed(1)}/5</span>
           </p>
-          <Link href="/interview" className="mt-1 text-[13px] font-medium text-brand hover:underline">
+          <Link href="/interview" className="mt-1 text-[13px] font-medium text-brand-ink hover:underline">
             Start another interview
           </Link>
         </div>
@@ -193,7 +193,7 @@ export function InterviewRunner({
       </div>
 
       <div className="rounded-2xl border border-line/80 bg-surface p-6">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand">Interviewer</p>
+        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-brand-ink">Interviewer</p>
         <p className="text-lg leading-7 text-ink">{current.question}</p>
       </div>
 
@@ -244,7 +244,7 @@ function FeedbackBlock({ feedback }: { feedback: InterviewFeedback }) {
     <div className="flex flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-5">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-ink">Feedback</p>
-        <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-semibold text-brand">
+        <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-xs font-semibold text-brand-ink">
           {feedback.score}/5
         </span>
       </div>
@@ -274,7 +274,7 @@ function FeedbackBlock({ feedback }: { feedback: InterviewFeedback }) {
       </div>
       <button
         onClick={() => setShowModel((v) => !v)}
-        className="flex items-center gap-1 self-start text-[13px] font-medium text-brand hover:underline"
+        className="flex items-center gap-1 self-start text-[13px] font-medium text-brand-ink hover:underline"
       >
         <ChevronDown className={clsx("h-4 w-4 transition-transform", showModel && "rotate-180")} strokeWidth={2} />
         {showModel ? "Hide model answer" : "Show model answer"}
@@ -301,7 +301,7 @@ function ReviewCard({
         <p className="text-sm font-medium text-ink">
           <span className="text-muted-2">Q{index + 1}.</span> {question}
         </p>
-        <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand">
+        <span className="shrink-0 rounded-full bg-brand-soft px-2 py-0.5 text-xs font-semibold text-brand-ink">
           {feedback.score}/5
         </span>
       </div>

@@ -5,7 +5,7 @@ export function PageList({ pages }: { pages: PageCardData[] }) {
   if (pages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line-strong py-16 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
           <Mic className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>

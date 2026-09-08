@@ -21,9 +21,9 @@ const PHASE_META: Record<Phase, { label: string; blurb: string; pill: string; gr
   focus: {
     label: "Focus",
     blurb: "Deep work — one task, no tabs.",
-    pill: "bg-brand-soft text-brand",
+    pill: "bg-brand-soft text-brand-ink",
     grad: "grad-focus",
-    stops: ["#7c3aed", "#db2777"],
+    stops: ["var(--brand)", "var(--gold)"],
   },
   short: {
     label: "Short break",
@@ -286,8 +286,8 @@ export function PomodoroTimer({
   return (
     <div className="flex max-w-xl flex-col gap-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-gradient">
-          <Timer className="h-6 w-6 text-brand" strokeWidth={2.2} />
+        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+          <Timer className="h-6 w-6 text-brand-ink" strokeWidth={2.2} />
           Focus timer
         </h1>
         <p className="mt-0.5 text-[13px] text-muted">
@@ -296,14 +296,14 @@ export function PomodoroTimer({
         {lecture && (
           <Link
             href={`/pages/${lecture.id}`}
-            className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-[12.5px] font-medium text-brand hover:underline"
+            className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-[12.5px] font-medium text-brand-ink hover:underline"
           >
             <Timer className="h-3.5 w-3.5" strokeWidth={2.2} /> Studying: {lecture.title}
           </Link>
         )}
       </div>
 
-      <div className="flex flex-col items-center gap-6 rounded-2xl border border-brand-border grad-brand-soft p-8">
+      <div className="flex flex-col items-center gap-6 rounded-2xl border border-brand-border bg-brand-soft p-8">
         <span className={clsx("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold", meta.pill)}>
           {phase === "focus" ? <Sparkles className="h-3.5 w-3.5" strokeWidth={2.4} /> : <Coffee className="h-3.5 w-3.5" strokeWidth={2.4} />}
           {meta.label}
@@ -351,7 +351,7 @@ export function PomodoroTimer({
           </button>
           <button
             onClick={running ? pause : start}
-            className="flex h-16 w-16 items-center justify-center rounded-full grad-brand text-white shadow-brand transition-transform hover:scale-105 active:scale-95"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-white shadow-brand transition-transform hover:scale-105 active:scale-95"
             aria-label={running ? "Pause" : "Start"}
           >
             {running ? <Pause className="h-7 w-7" strokeWidth={2.4} /> : <Play className="ml-0.5 h-7 w-7" strokeWidth={2.4} />}
@@ -370,7 +370,7 @@ export function PomodoroTimer({
           {Array.from({ length: settings.longEvery }).map((_, i) => (
             <span
               key={i}
-              className={clsx("h-2 w-2 rounded-full transition-colors", i < dotsFilled ? "grad-brand" : "bg-surface/70 ring-1 ring-brand-border")}
+              className={clsx("h-2 w-2 rounded-full transition-colors", i < dotsFilled ? "bg-brand" : "bg-surface/70 ring-1 ring-brand-border")}
             />
           ))}
         </div>
@@ -379,7 +379,7 @@ export function PomodoroTimer({
       {/* Stats + settings toggle */}
       <div className="flex items-center justify-between rounded-xl border border-line/80 bg-surface p-4">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft text-brand">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft text-brand-ink">
             <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} />
           </span>
           <span>
@@ -445,7 +445,7 @@ function DurationField({
             const n = Math.round(Number(e.target.value));
             if (Number.isFinite(n)) onChange(Math.min(max, Math.max(min, n)));
           }}
-          className="w-16 rounded-lg border border-line-strong bg-surface px-2.5 py-1.5 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+          className="w-16 rounded-lg border border-line-strong bg-surface px-2.5 py-1.5 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
         />
         <span className="text-[12px] text-muted-2">{suffix}</span>
       </span>

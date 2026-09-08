@@ -68,7 +68,7 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
   if (index >= cards.length) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-4 py-16 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
           <PartyPopper className="h-5 w-5" strokeWidth={2} />
         </span>
         <div>
@@ -77,7 +77,7 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
           </p>
           <Link
             href={folderId ? `/folders/${folderId}` : "/"}
-            className="mt-1 inline-block text-[13px] font-medium text-brand hover:underline"
+            className="mt-1 inline-block text-[13px] font-medium text-brand-ink hover:underline"
           >
             Back to your courses
           </Link>
@@ -100,7 +100,7 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
             const source = cardSource(card);
             if (source?.kind === "lecture") {
               return (
-                <Link href={`/pages/${source.id}`} className="truncate font-medium hover:text-brand">
+                <Link href={`/pages/${source.id}`} className="truncate font-medium hover:text-brand-ink">
                   {source.title}
                 </Link>
               );
