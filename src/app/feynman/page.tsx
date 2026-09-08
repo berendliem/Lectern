@@ -31,6 +31,7 @@ export default async function FeynmanPage({
       const terms: KeyTerm[] = page.notes?.keyTerms ? JSON.parse(page.notes.keyTerms) : [];
       return (
         <FeynmanCoach
+          pageId={pageId}
           contextLabel={`Lecture: ${page.title}`}
           suggestions={terms.slice(0, MAX_SUGGESTIONS).map((t) => t.term)}
           initialReference={(page.notes?.markdown ?? "").slice(0, MAX_REFERENCE_CHARS)}

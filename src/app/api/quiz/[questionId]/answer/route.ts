@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { quizAnswerSchema } from "@/lib/validation";
 import { gradeShortAnswer, gradeMultipleChoice } from "@/lib/grading";
+import { writeRecallSafely } from "@/lib/recall-log";
+import type { RecallRaw } from "@/lib/recall";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ questionId: string }> }) {
   const { questionId } = await params;
@@ -17,13 +19,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ que
 
   let isCorrect: boolean;
   let scoreDetail: Record<string, unknown> | null = null;
+  let raw: RecallRaw;
 
   if (question.type === "MULTIPLE_CHOICE") {
     isCorrect = gradeMultipleChoice(answer, question.correctAnswer);
+    raw = { kind: "QUIZ", correct: isCorrect };
   } else {
     const grade = gradeShortAnswer(answer, question.correctAnswer);
     isCorrect = grade.isCorrect;
     scoreDetail = { similarity: grade.similarity };
+    // The similarity, not the pass/fail: a half-right short answer should
+    // shorten the interval without being scored as a blackout.
+    raw = { kind: "QUIZ", similarity: grade.similarity };
   }
 
   await db.quizAttempt.create({
@@ -33,6 +40,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ que
       isCorrect,
       scoreDetail: scoreDetail ? JSON.stringify(scoreDetail) : null,
     },
+  });
+
+  // The explanation is written for exactly this moment and thrown away today.
+  // On a wrong answer it is the misconception, verbatim.
+  await writeRecallSafely({
+    raw,
+    pageId: question.pageId,
+    materialId: question.materialId,
+    misconception: question.explanation,
+    detail: { answer, ...(scoreDetail ?? {}) },
   });
 
   return NextResponse.json({

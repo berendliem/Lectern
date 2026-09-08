@@ -11,6 +11,7 @@ import {
   type TopicMatch,
 } from "@/lib/coverage";
 import { scoreTopics } from "@/lib/embeddings";
+import { RECALL_LEDGER_SINCE } from "@/lib/recall";
 import { CourseOverview, type TopicRow } from "@/components/course/CourseOverview";
 import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
@@ -34,7 +35,7 @@ export default async function FolderPage({
   const folder = await db.folder.findUnique({ where: { id: folderId } });
   if (!folder) notFound();
 
-  const [pages, quizCount, dueCount, materials, topics, cards] = await Promise.all([
+  const [pages, quizCount, dueCount, materials, topics, cards, openMisconceptions] = await Promise.all([
     db.page.findMany({
       where: { folderId },
       orderBy: { updatedAt: "desc" },
@@ -65,6 +66,25 @@ export default async function FolderPage({
     db.flashcard.findMany({
       where: courseScopeFilter(folderId),
       select: { pageId: true, materialId: true, repetitions: true, lastReviewedAt: true },
+    }),
+    // What this course got wrong and has not since got right. A scored read, so
+    // it starts at the ledger — backfilled rows carry no diagnosis anyway, but
+    // the filter is the habit that keeps the next such read honest.
+    db.reviewLog.findMany({
+      where: {
+        reviewedAt: { gte: RECALL_LEDGER_SINCE },
+        resolvedAt: null,
+        misconception: { not: null },
+        OR: [{ page: { folderId } }, { material: { folderId } }],
+      },
+      orderBy: { reviewedAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        misconception: true,
+        page: { select: { title: true } },
+        material: { select: { title: true } },
+      },
     }),
   ]);
 
@@ -132,6 +152,13 @@ export default async function FolderPage({
                   topics={topicRows}
                   hasSyllabus={hasSyllabus}
                   coverage={coverage}
+                  misconceptions={openMisconceptions.map((m) => ({
+                    id: m.id,
+                    // The query filters `misconception: { not: null }`; Prisma
+                    // just cannot carry that through to the return type.
+                    text: m.misconception as string,
+                    source: m.page?.title ?? m.material?.title ?? null,
+                  }))}
                 />
               ),
             },

@@ -1820,7 +1820,16 @@ export type FlashcardScalarFieldEnum = (typeof FlashcardScalarFieldEnum)[keyof t
 export const ReviewLogScalarFieldEnum = {
   id: 'id',
   flashcardId: 'flashcardId',
-  reviewedAt: 'reviewedAt'
+  reviewedAt: 'reviewedAt',
+  kind: 'kind',
+  quality: 'quality',
+  confidence: 'confidence',
+  topicId: 'topicId',
+  pageId: 'pageId',
+  materialId: 'materialId',
+  misconception: 'misconception',
+  resolvedAt: 'resolvedAt',
+  detail: 'detail'
 } as const
 
 export type ReviewLogScalarFieldEnum = (typeof ReviewLogScalarFieldEnum)[keyof typeof ReviewLogScalarFieldEnum]
@@ -1996,6 +2005,13 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'PageStatus'
  */
 export type EnumPageStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PageStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'RecallKind'
+ */
+export type EnumRecallKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RecallKind'>
     
 
 

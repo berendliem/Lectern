@@ -189,7 +189,16 @@ export type FlashcardScalarFieldEnum = (typeof FlashcardScalarFieldEnum)[keyof t
 export const ReviewLogScalarFieldEnum = {
   id: 'id',
   flashcardId: 'flashcardId',
-  reviewedAt: 'reviewedAt'
+  reviewedAt: 'reviewedAt',
+  kind: 'kind',
+  quality: 'quality',
+  confidence: 'confidence',
+  topicId: 'topicId',
+  pageId: 'pageId',
+  materialId: 'materialId',
+  misconception: 'misconception',
+  resolvedAt: 'resolvedAt',
+  detail: 'detail'
 } as const
 
 export type ReviewLogScalarFieldEnum = (typeof ReviewLogScalarFieldEnum)[keyof typeof ReviewLogScalarFieldEnum]

@@ -20,6 +20,10 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [confidence, setConfidence] = useState<number | null>(null);
+  const [suggested, setSuggested] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -34,16 +38,68 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
     };
   }, [folderId]);
 
+  /**
+   * Reveal, and — only if something was typed — ask what that attempt was worth.
+   * The reveal never waits on the answer: the reference explanation appears
+   * immediately and the suggestion catches up when it arrives.
+   */
+  async function handleFlip() {
+    const next = !flipped;
+    setFlipped(next);
+    const card = cards?.[index];
+    if (!next || !card || typed.trim().length === 0) return;
+
+    try {
+      const res = await fetch(`/api/review/${card.id}/suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ typed }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      // Embedding is slow enough to lose a race with an impatient student. A
+      // suggestion that arrives after they have moved on belongs to the card it
+      // was computed for, not to whatever is on screen now.
+      if (cards?.[index]?.id !== card.id) return;
+      setSuggested(typeof data.quality === "number" ? data.quality : null);
+    } catch {
+      // A suggestion is a convenience; grading works exactly as before without it.
+    }
+  }
+
   async function handleGrade(quality: number) {
     const card = cards?.[index];
     if (!card) return;
-    await fetch(`/api/review/${card.id}/grade`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quality }),
-    });
+    setError(null);
+
+    // Advancing on a failed write would drop the grade silently: the card keeps
+    // the interval it had, and the student has no way to know their answer went
+    // nowhere. So the deck only moves once the grade is recorded.
+    try {
+      const res = await fetch(`/api/review/${card.id}/grade`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quality,
+          typed: typed.trim() || undefined,
+          confidence: confidence ?? undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "That grade didn't save. Try again.");
+        return;
+      }
+    } catch {
+      setError("That grade didn't save — check your connection and try again.");
+      return;
+    }
+
     setReviewedCount((c) => c + 1);
     setFlipped(false);
+    setTyped("");
+    setConfidence(null);
+    setSuggested(null);
     setIndex((i) => i + 1);
   }
 
@@ -119,9 +175,14 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
         prompt={card.prompt}
         idealExplanation={card.idealExplanation}
         flipped={flipped}
-        onFlip={() => setFlipped((f) => !f)}
+        onFlip={handleFlip}
+        typed={typed}
+        onTyped={setTyped}
+        confidence={confidence}
+        onConfidence={setConfidence}
       />
-      {flipped && <ReviewGradeButtons onGrade={handleGrade} />}
+      {flipped && <ReviewGradeButtons onGrade={handleGrade} suggested={suggested} />}
+      {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
     </div>
   );
 }

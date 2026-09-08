@@ -273,6 +273,23 @@ export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
 }
 
+export type EnumRecallKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecallKind | Prisma.EnumRecallKindFieldRefInput<$PrismaModel>
+  in?: $Enums.RecallKind[]
+  notIn?: $Enums.RecallKind[]
+  not?: Prisma.NestedEnumRecallKindFilter<$PrismaModel> | $Enums.RecallKind
+}
+
+export type EnumRecallKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecallKind | Prisma.EnumRecallKindFieldRefInput<$PrismaModel>
+  in?: $Enums.RecallKind[]
+  notIn?: $Enums.RecallKind[]
+  not?: Prisma.NestedEnumRecallKindWithAggregatesFilter<$PrismaModel> | $Enums.RecallKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRecallKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRecallKindFilter<$PrismaModel>
+}
+
 export type EnumQuestionTypeFilter<$PrismaModel = never> = {
   equals?: $Enums.QuestionType | Prisma.EnumQuestionTypeFieldRefInput<$PrismaModel>
   in?: $Enums.QuestionType[]
@@ -640,6 +657,23 @@ export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumRecallKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecallKind | Prisma.EnumRecallKindFieldRefInput<$PrismaModel>
+  in?: $Enums.RecallKind[]
+  notIn?: $Enums.RecallKind[]
+  not?: Prisma.NestedEnumRecallKindFilter<$PrismaModel> | $Enums.RecallKind
+}
+
+export type NestedEnumRecallKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.RecallKind | Prisma.EnumRecallKindFieldRefInput<$PrismaModel>
+  in?: $Enums.RecallKind[]
+  notIn?: $Enums.RecallKind[]
+  not?: Prisma.NestedEnumRecallKindWithAggregatesFilter<$PrismaModel> | $Enums.RecallKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumRecallKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumRecallKindFilter<$PrismaModel>
 }
 
 export type NestedEnumQuestionTypeFilter<$PrismaModel = never> = {
