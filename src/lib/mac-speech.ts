@@ -27,14 +27,27 @@ export function macSpeechBinary(): string {
 const UNREADABLE_CONTAINERS = new Set(["webm", "ogg", "oga", "opus", "mkv", "avi"]);
 
 export function needsConversion(filename: string): boolean {
-  const extension = filename.toLowerCase().split(".").pop() ?? "";
-  return UNREADABLE_CONTAINERS.has(extension);
+  return UNREADABLE_CONTAINERS.has(safeExtension(filename));
+}
+
+/**
+ * The filename's extension, reduced to something safe to paste into a path.
+ * Callers pass names built from stored audio paths and upload mime types;
+ * `audio-storage.ts` sanitizes the same way before touching the filesystem.
+ */
+export function safeExtension(filename: string): string {
+  const raw = filename.toLowerCase().split(".").pop() ?? "";
+  return raw.replace(/[^a-z0-9]/g, "").slice(0, 5) || "bin";
 }
 
 /**
  * The speaker whose span covers a word's midpoint. Midpoint rather than start,
  * so a word straddling a handover is attributed to whoever said most of it.
  * Undefined when no span covers it — the caller decides what to do with that.
+ *
+ * ponytail: a linear scan per word, so words × spans. A two-hour lecture is
+ * ~20k words over a few hundred spans, which is milliseconds; make it a
+ * two-pointer walk if a recording ever gets long enough to notice.
  */
 export function speakerForMidpoint(word: MacSpeechWord, spans: SpeakerSpan[]): string | undefined {
   const midpoint = (word.start + word.end) / 2;
@@ -117,17 +130,30 @@ async function assertExecutable(binary: string): Promise<void> {
   }
 }
 
+// ponytail: 30 minutes covers a long lecture on a slow machine with the models
+// cold. It exists so a wedged child cannot pin a request open forever, not to
+// bound honest work — raise it if a real recording ever hits it.
+const CHILD_TIMEOUT_MS = 30 * 60 * 1000;
+
 function run(command: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
-    let stdout = "";
-    let stderr = "";
-    child.stdout.on("data", (chunk) => (stdout += chunk));
-    child.stderr.on("data", (chunk) => (stderr += chunk));
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"], timeout: CHILD_TIMEOUT_MS });
+    // Buffers, not string concatenation: a multi-byte character split across
+    // two chunks decodes to replacement characters when each chunk is decoded
+    // on its own, which quietly corrupts any transcript that isn't ASCII.
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+    child.stdout.on("data", (chunk: Buffer) => stdout.push(chunk));
+    child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk));
     child.on("error", reject);
-    child.on("close", (code) => {
-      if (code === 0) resolve(stdout);
-      else reject(new Error(stderr.trim().split("\n").at(-1) || `${command} exited with ${code}`));
+    child.on("close", (code, signal) => {
+      if (code === 0) return resolve(Buffer.concat(stdout).toString("utf8"));
+
+      // FluidAudio writes timing logs to stderr, so the last line there is
+      // usually noise; the binary's own messages are what's worth reporting.
+      const lines = Buffer.concat(stderr).toString("utf8").trim().split("\n");
+      const own = lines.filter((line) => line.startsWith("mac-speech:")).at(-1);
+      reject(new Error(own ?? lines.at(-1) ?? `${command} exited with ${code ?? signal}`));
     });
   });
 }
@@ -148,8 +174,7 @@ export async function transcribeWithMacSpeech(
   await assertExecutable(binary);
 
   const directory = await mkdtemp(path.join(tmpdir(), "lectern-mac-speech-"));
-  const extension = filename.toLowerCase().split(".").pop() || "bin";
-  const source = path.join(directory, `audio.${extension}`);
+  const source = path.join(directory, `audio.${safeExtension(filename)}`);
 
   try {
     await writeFile(source, buffer);
