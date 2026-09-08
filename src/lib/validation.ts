@@ -150,6 +150,35 @@ export const syllabusTopicsResponseSchema = z.object({
     .max(200),
 });
 
+/**
+ * stdout of the `mac-speech` binary. A local process is still a trust
+ * boundary: it prints whatever Apple's Speech framework and FluidAudio hand
+ * it, and those numbers end up in subtitle cues and a synced player.
+ */
+export const macSpeechResultSchema = z.object({
+  language: z.string().trim().max(32),
+  text: z.string().max(2_000_000),
+  words: z
+    .array(
+      z.object({
+        word: z.string().max(200),
+        start: z.number().min(0),
+        end: z.number().min(0),
+        probability: z.number().min(0).max(1),
+      })
+    )
+    .max(500_000),
+  speakerSpans: z
+    .array(
+      z.object({
+        start: z.number().min(0),
+        end: z.number().min(0),
+        speakerId: z.string().trim().min(1).max(120),
+      })
+    )
+    .max(50_000),
+});
+
 export const createTopicSchema = z.object({
   title: z.string().trim().min(1).max(300),
   week: z.number().int().min(0).max(60).nullable().optional(),
