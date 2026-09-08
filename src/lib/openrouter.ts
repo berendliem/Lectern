@@ -2,9 +2,20 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
+/**
+ * What the wire format actually allows: content is either a string or a list
+ * of parts, which is how an image reaches a vision model. Internal, so
+ * ChatMessage — what every text caller passes — stays a plain string.
+ */
+type ContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
+type ApiMessage = { role: ChatMessage["role"]; content: string | ContentPart[] };
+
 async function callOpenRouter(opts: {
   model: string;
-  messages: ChatMessage[];
+  messages: ApiMessage[];
   jsonMode?: boolean;
 }): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -49,6 +60,33 @@ export async function callOpenRouterText(opts: {
   messages: ChatMessage[];
 }): Promise<string> {
   return (await callOpenRouter(opts)).trim();
+}
+
+/**
+ * Page images plus an instruction, for a vision-capable model. `images` are
+ * `data:` URLs, inlined into the request body — so a scan reaches the model
+ * provider and nowhere else, the same trade the rest of the cloud path makes.
+ */
+export async function callOpenRouterVision(opts: {
+  model: string;
+  systemPrompt: string;
+  userPrompt: string;
+  images: string[];
+}): Promise<string> {
+  const content = await callOpenRouter({
+    model: opts.model,
+    messages: [
+      { role: "system", content: opts.systemPrompt },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: opts.userPrompt },
+          ...opts.images.map((url) => ({ type: "image_url" as const, image_url: { url } })),
+        ],
+      },
+    ],
+  });
+  return content.trim();
 }
 
 export async function callOpenRouterJSON(opts: {

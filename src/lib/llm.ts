@@ -1,4 +1,9 @@
-import { callOpenRouterText, callOpenRouterJSON, type ChatMessage } from "@/lib/openrouter";
+import {
+  callOpenRouterText,
+  callOpenRouterJSON,
+  callOpenRouterVision,
+  type ChatMessage,
+} from "@/lib/openrouter";
 import { callOllama, ollamaModel, ollamaReasoningModel } from "@/lib/ollama";
 
 export type { ChatMessage };
@@ -8,14 +13,22 @@ export type { ChatMessage };
  * (LLM_PROVIDER_SUMMARY), so you can run summaries locally on Qwen3 via Ollama
  * while everything else stays on OpenRouter — or vice versa. "reasoning"
  * selects OLLAMA_MODEL_REASONING on the ollama path (see reasoningModel()
- * below for the OpenRouter half of that tier).
+ * below for the OpenRouter half of that tier). "vision" has the same kind of
+ * override (LLM_PROVIDER_VISION), which is what lets scanned notes run on a
+ * local multimodal model — no rate limit, and the photo stays on the machine —
+ * without moving every other step off OpenRouter.
  */
-export type LLMStage = "summary" | "reasoning";
+export type LLMStage = "summary" | "reasoning" | "vision";
 
 type Provider = "openrouter" | "ollama";
 
 function resolveProvider(stage?: LLMStage): Provider {
-  const override = stage === "summary" ? process.env.LLM_PROVIDER_SUMMARY : undefined;
+  const override =
+    stage === "summary"
+      ? process.env.LLM_PROVIDER_SUMMARY
+      : stage === "vision"
+        ? process.env.LLM_PROVIDER_VISION
+        : undefined;
   const raw = (override || process.env.LLM_PROVIDER || "openrouter").trim().toLowerCase();
   if (raw === "ollama") return "ollama";
   if (raw !== "openrouter") {
@@ -72,6 +85,54 @@ export async function callLLMJSON(opts: {
     systemPrompt: opts.systemPrompt,
     userPrompt: opts.userPrompt,
   });
+}
+
+/**
+ * Reads page images. Dispatched by LLM_PROVIDER like every other call, but the
+ * model on either side has to be multimodal — a text-only one answers from the
+ * prompt alone and invents a page it never saw, so both defaults name a vision
+ * model rather than inheriting the general-purpose one.
+ *
+ * `images` are `data:` URLs; the ollama path strips the prefix because its API
+ * takes bare base64.
+ */
+export async function callLLMVision(opts: {
+  systemPrompt: string;
+  userPrompt: string;
+  images: string[];
+}): Promise<string> {
+  if (resolveProvider("vision") === "ollama") {
+    return callOllama({
+      model: ollamaVisionModel(),
+      messages: [
+        { role: "system", content: opts.systemPrompt },
+        { role: "user", content: opts.userPrompt },
+      ],
+      images: opts.images.map((url) => url.replace(/^data:[^,]*,/, "")),
+    });
+  }
+  return callOpenRouterVision({
+    model: visionModel(),
+    systemPrompt: opts.systemPrompt,
+    userPrompt: opts.userPrompt,
+    images: opts.images,
+  });
+}
+
+/** Label recorded in a scanned material's provenance line. */
+export function visionModelLabel(): string {
+  return resolveProvider("vision") === "ollama" ? `ollama:${ollamaVisionModel()}` : visionModel();
+}
+
+function visionModel(): string {
+  // Free, like every other stage's default — but named rather than left to
+  // openrouter/free, which can route a request to a text-only model that then
+  // answers from the prompt alone and invents a page it never saw.
+  return process.env.OPENROUTER_MODEL_VISION ?? "google/gemma-4-31b-it:free";
+}
+
+function ollamaVisionModel(): string {
+  return process.env.OLLAMA_MODEL_VISION || "qwen2.5vl:7b";
 }
 
 /**
