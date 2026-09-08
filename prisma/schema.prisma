@@ -26,6 +26,16 @@ enum QuestionType {
 enum InterviewSource {
   LECTURE
   TOPIC
+  COURSE_TOPIC
+}
+
+/// Which classroom the session runs in. VIVA is the examiner that existed before
+/// Phase 6; PROTEGE is a confused classmate the student teaches; DEBATE is two
+/// agents arguing a course concept while the student interjects.
+enum InterviewMode {
+  VIVA
+  PROTEGE
+  DEBATE
 }
 
 enum InterviewStatus {
@@ -105,8 +115,9 @@ model CourseTopic {
   sourceMaterialId String?
   createdAt        DateTime @default(now())
 
-  folder     Folder      @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  reviewLogs ReviewLog[]
+  folder            Folder             @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  reviewLogs        ReviewLog[]
+  interviewSessions InterviewSession[]
 
   @@index([folderId, order])
 }
@@ -267,14 +278,25 @@ model InterviewSession {
   status    InterviewStatus @default(ACTIVE)
   pageId    String?
   topicText String?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+
+  mode InterviewMode @default(VIVA)
+  /// Free text: the agent's brief. Null on a plain viva.
+  persona String?
+  /// The syllabus topic a course-scoped session argues about or recites. Debate
+  /// and recitation write ledger events against it, so without this column their
+  /// events land with no target and the scheduler cannot see them.
+  courseTopicId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   page  Page?           @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  topic CourseTopic?    @relation(fields: [courseTopicId], references: [id], onDelete: SetNull)
   turns InterviewTurn[]
 
   @@index([pageId])
   @@index([status])
+  @@index([courseTopicId])
 }
 
 model InterviewTurn {
@@ -285,6 +307,9 @@ model InterviewTurn {
   answer          String?
   answerAudioPath String?
   feedback        String?
+  /// Null = the examiner asking. "You" = the student. Anything else is an agent
+  /// name in a debate.
+  speaker         String?
   createdAt       DateTime @default(now())
 
   session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
