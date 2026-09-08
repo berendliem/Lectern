@@ -66,13 +66,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const page = await db.page.findUnique({ where: { id } });
   if (!page) return jsonError("Page not found", 404);
 
+  // A body that was cut short (too large, or a dropped connection) fails to
+  // parse as multipart at all, which is not the same as "you sent no file".
   const formData = await req.formData().catch(() => null);
-  const file = formData?.get("file");
+  if (!formData) {
+    return jsonError("The upload did not arrive in one piece — the recording may be too large or the connection dropped", 413);
+  }
+  const file = formData.get("file");
   if (!file || !(file instanceof Blob)) {
     return jsonError("Missing audio file", 422);
   }
 
-  const durationRaw = formData?.get("durationSeconds");
+  const durationRaw = formData.get("durationSeconds");
   const duration = typeof durationRaw === "string" ? Number(durationRaw) : null;
 
   const buffer = Buffer.from(await file.arrayBuffer());

@@ -25,6 +25,14 @@ export type TopicMatch = {
   materialId: string | null;
 };
 
+/**
+ * Why the course page is (or is not) showing a coverage verdict.
+ * "no-sources" and "failed" both mean no verdict, but for opposite reasons —
+ * nothing indexed to check against, versus embedding blew up — and telling a
+ * user the wrong one sends them looking in the wrong place.
+ */
+export type CoverageState = "scored" | "no-sources" | "failed";
+
 export type TopicCoverage = {
   covered: boolean;
   /** The best match, whether or not it cleared the threshold. */
