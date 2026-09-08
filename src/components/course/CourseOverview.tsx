@@ -88,19 +88,27 @@ export function CourseOverview({
   }
 
   const covered = topics.filter((t) => t.covered).length;
+  const uncovered = topics.length - covered;
+  const coverageSummary = !coverageAvailable
+    ? `${topics.length} topics, coverage not checked.`
+    : uncovered === 0
+      ? `All ${topics.length} topics have a lecture or material behind them.`
+      : `${covered} of ${topics.length} topics covered — ${uncovered} still ${
+          uncovered === 1 ? "has no lecture behind it" : "have no lecture behind them"
+        }.`;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-            <ScrollText className="h-4 w-4 text-brand" strokeWidth={2.2} />
+            <ScrollText className="h-4 w-4 text-brand-ink" strokeWidth={2.2} />
             Syllabus coverage
           </h2>
           <p className="mt-0.5 text-[13px] text-muted">
             {topics.length === 0
               ? "Parse the syllabus to see what this course is meant to cover."
-              : `${covered} of ${topics.length} topics have a lecture or material behind them.`}
+              : "What this course is meant to cover, and what nothing has covered yet."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -114,13 +122,36 @@ export function CourseOverview({
             onClick={parseSyllabus}
             disabled={!hasSyllabus || busy !== null}
             title={hasSyllabus ? undefined : "Upload a syllabus to this course first"}
-            className="inline-flex items-center gap-1.5 rounded-lg grad-brand px-3 py-2 text-[13px] font-medium text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-[13px] font-medium text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
           >
             <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
             {busy === "parse" ? "Parsing…" : topics.length > 0 ? "Re-parse syllabus" : "Parse syllabus"}
           </button>
         </div>
       </div>
+
+      {topics.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {/* Without a coverage verdict every segment would read as uncovered, which is
+              an accusation the data doesn't support — so the strip waits for the verdict
+              and the summary line carries the explanation on its own. */}
+          {coverageAvailable && (
+            <div className="flex h-3 gap-px" role="img" aria-label={coverageSummary}>
+              {topics.map((topic) => (
+                <span
+                  key={topic.id}
+                  title={`${topic.title} — ${topic.covered ? "covered" : "not covered yet"}`}
+                  className={clsx(
+                    "min-w-[3px] flex-1 first:rounded-l-full last:rounded-r-full",
+                    topic.covered ? "bg-brand" : "bg-gold"
+                  )}
+                />
+              ))}
+            </div>
+          )}
+          <p className="text-[13px] text-ink-soft">{coverageSummary}</p>
+        </div>
+      )}
 
       {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
 
@@ -139,12 +170,12 @@ export function CourseOverview({
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="Topic the syllabus covers"
-            className="flex-1 rounded-lg border border-line-strong bg-surface px-3.5 py-2 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand-soft"
+            className="flex-1 rounded-lg border border-line-strong bg-surface px-3.5 py-2 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
           />
           <button
             type="submit"
             disabled={!newTitle.trim() || busy !== null}
-            className="rounded-lg grad-brand px-3.5 py-2 text-[13px] font-medium text-white shadow-brand disabled:opacity-50"
+            className="rounded-lg bg-brand px-3.5 py-2 text-[13px] font-medium text-white shadow-brand disabled:opacity-50"
           >
             Add
           </button>
@@ -189,7 +220,7 @@ export function CourseOverview({
                     topic.matchHref ? (
                       <>
                         Covered by{" "}
-                        <Link href={topic.matchHref} className="text-brand hover:underline">
+                        <Link href={topic.matchHref} className="text-brand-ink hover:underline">
                           {topic.matchTitle}
                         </Link>
                       </>
