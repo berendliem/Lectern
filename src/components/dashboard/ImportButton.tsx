@@ -6,19 +6,27 @@ import { FileText, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input, Textarea } from "@/components/ui/Input";
-import { extractPdfText } from "@/lib/pdf-extract";
+import { extractPdfText, type OcrProgress } from "@/lib/pdf-extract";
 
 export function ImportButton({ folderId }: { folderId?: string }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [extracting, setExtracting] = useState(false);
+  const [ocr, setOcr] = useState<OcrProgress | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Closing the modal leaves the component mounted, so without this the
+  // extraction runs on — and a minutes-long OCR pass would eventually drop
+  // the abandoned file's text into whatever the modal is showing next.
+  const abortRef = useRef<AbortController | null>(null);
   const router = useRouter();
 
   function close() {
+    abortRef.current?.abort();
+    setExtracting(false);
+    setOcr(null);
     setOpen(false);
     setTitle("");
     setText("");
@@ -26,20 +34,30 @@ export function ImportButton({ folderId }: { folderId?: string }) {
   }
 
   async function handlePdf(file: File) {
+    abortRef.current?.abort();
+    const abort = new AbortController();
+    abortRef.current = abort;
     setError(null);
+    setOcr(null);
     setExtracting(true);
     try {
-      const extracted = await extractPdfText(file);
+      const extracted = await extractPdfText(file, {
+        onOcrProgress: setOcr,
+        signal: abort.signal,
+      });
       if (!extracted) {
-        setError("Couldn't find any selectable text in that PDF (scanned images aren't supported).");
+        setError("Couldn't read any text from that PDF, even by OCR-ing its pages.");
       } else {
         setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${extracted}` : extracted));
         if (!title.trim()) setTitle(file.name.replace(/\.pdf$/i, ""));
       }
     } catch {
-      setError("Could not read that PDF.");
+      if (!abort.signal.aborted) setError("Could not read that PDF.");
     } finally {
-      setExtracting(false);
+      if (!abort.signal.aborted) {
+        setOcr(null);
+        setExtracting(false);
+      }
     }
   }
 
@@ -93,7 +111,13 @@ export function ImportButton({ folderId }: { folderId?: string }) {
             ) : (
               <FileText className="h-4 w-4 text-brand-ink" strokeWidth={2} />
             )}
-            {extracting ? "Extracting text…" : "Choose a PDF (text is extracted in your browser)"}
+            <span role="status" aria-live="polite">
+              {!extracting
+                ? "Choose a PDF (text is extracted in your browser)"
+                : ocr
+                  ? `Reading scanned page ${ocr.page} of ${ocr.pages}…`
+                  : "Extracting text…"}
+            </span>
           </button>
           <input
             ref={inputRef}

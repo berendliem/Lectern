@@ -6,7 +6,7 @@ import { FileText, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
-import { extractPdfText } from "@/lib/pdf-extract";
+import { extractPdfText, type OcrProgress } from "@/lib/pdf-extract";
 import { extractDocxText, extractPptxText } from "@/lib/office-extract";
 
 const KINDS = [
@@ -26,13 +26,19 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
   const [sourceFileName, setSourceFileName] = useState<string | null>(null);
   const [slideCount, setSlideCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [ocr, setOcr] = useState<OcrProgress | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Closing the modal leaves the component mounted, so without this the
+  // extraction runs on — and a minutes-long OCR pass would eventually drop
+  // the abandoned file's text into whatever the modal is showing next.
+  const abortRef = useRef<AbortController | null>(null);
   const router = useRouter();
 
   function reset() {
     setKind("SLIDES");
+    setOcr(null);
     setTitle("");
     setText("");
     setSourceFileName(null);
@@ -41,15 +47,21 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
   }
 
   function close() {
+    abortRef.current?.abort();
+    setBusy(false);
     setOpen(false);
     reset();
   }
 
   async function handleFile(file: File) {
+    abortRef.current?.abort();
+    const abort = new AbortController();
+    abortRef.current = abort;
     setError(null);
     setText("");
     setSourceFileName(null);
     setSlideCount(null);
+    setOcr(null);
     setBusy(true);
     try {
       // `accept` is only a hint — a file picked through "All Files" still
@@ -71,7 +83,13 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
         kindOfFile === "pptx"
           ? await extractPptxText(file)
           : {
-              text: kindOfFile === "docx" ? await extractDocxText(file) : await extractPdfText(file),
+              text:
+                kindOfFile === "docx"
+                  ? await extractDocxText(file)
+                  : await extractPdfText(file, {
+                      onOcrProgress: setOcr,
+                      signal: abort.signal,
+                    }),
               slideCount: null,
             };
 
@@ -81,7 +99,7 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
             ? "That deck has no selectable text — image-only slides aren't supported."
             : kindOfFile === "docx"
               ? "That document has no readable text."
-              : "Couldn't find any selectable text in that PDF (scanned images aren't supported)."
+              : "Couldn't read any text from that PDF, even by OCR-ing its pages."
         );
         return;
       }
@@ -92,9 +110,14 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
       if (!title.trim()) setTitle(file.name.replace(/\.(pptx|docx|pdf)$/i, ""));
       if (kindOfFile === "pptx") setKind("SLIDES");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not read that file.");
+      if (!abort.signal.aborted) {
+        setError(e instanceof Error ? e.message : "Could not read that file.");
+      }
     } finally {
-      setBusy(false);
+      if (!abort.signal.aborted) {
+        setOcr(null);
+        setBusy(false);
+      }
     }
   }
 
@@ -172,7 +195,13 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
             ) : (
               <FileText className="h-4 w-4 text-brand-ink" strokeWidth={2} />
             )}
-            {busy ? "Extracting text…" : "Choose a PDF, PowerPoint or Word file"}
+            <span role="status" aria-live="polite">
+              {!busy
+                ? "Choose a PDF, PowerPoint or Word file"
+                : ocr
+                  ? `Reading scanned page ${ocr.page} of ${ocr.pages}…`
+                  : "Extracting text…"}
+            </span>
           </button>
           <input
             ref={inputRef}
