@@ -119,11 +119,6 @@ export async function callLLMVision(opts: {
   });
 }
 
-/** Label recorded in a scanned material's provenance line. */
-export function visionModelLabel(): string {
-  return resolveProvider("vision") === "ollama" ? `ollama:${ollamaVisionModel()}` : visionModel();
-}
-
 function visionModel(): string {
   // Free, like every other stage's default — but named rather than left to
   // openrouter/free, which can route a request to a text-only model that then

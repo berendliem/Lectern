@@ -40,9 +40,7 @@ async function toDownscaledDataUrl(file: File): Promise<string> {
   try {
     bitmap = await createImageBitmap(file);
   } catch {
-    throw new Error(
-      `could not be read as an image — HEIC photos need converting to JPEG first`
-    );
+    throw new Error("could not be read as an image — HEIC photos need converting to JPEG first");
   }
 
   const { width, height } = scaledSize(bitmap.width, bitmap.height, SCAN_MAX_EDGE);
@@ -57,7 +55,7 @@ async function toDownscaledDataUrl(file: File): Promise<string> {
     // use and megabytes of upload.
     const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
     if (dataUrl.length > MAX_SCAN_IMAGE_CHARS) {
-      throw new Error("is still too large after downscaling");
+      throw new Error(`still too large after downscaling to ${SCAN_MAX_EDGE}px`);
     }
     return dataUrl;
   } finally {

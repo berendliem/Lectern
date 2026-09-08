@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callLLMVision, visionModelLabel } from "@/lib/llm";
+import { callLLMVision } from "@/lib/llm";
 import { buildHandwritingUserPrompt, HANDWRITING_SYSTEM_PROMPT } from "@/lib/prompts/handwriting";
 import { scanNotesSchema } from "@/lib/validation";
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ text: cleaned, modelUsed: visionModelLabel() });
+    return NextResponse.json({ text: cleaned });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Could not read that page.";
     return jsonError(message, 502);

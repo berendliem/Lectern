@@ -103,6 +103,14 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
         return;
       }
 
+      // The picker allows several files for the photo case above. Documents
+      // are one per material, and silently reading the first of four would
+      // look like the other three had been saved somewhere.
+      if (files.length > 1) {
+        setError("One document at a time — several files at once only works for photos.");
+        return;
+      }
+
       // `accept` is only a hint — a file picked through "All Files" still
       // arrives here, so route on the extension rather than assuming PDF.
       const kindOfFile = /\.pptx$/i.test(file.name)
