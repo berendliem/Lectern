@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError } from "@/lib/api-utils";
-import { transcribeAudio } from "@/lib/whisper-client";
+import { transcribeAudio } from "@/lib/transcribe";
 
 // Stateless transcription for the live-recording preview: takes a short,
 // self-contained audio segment and returns its text without persisting
