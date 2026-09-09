@@ -16,11 +16,13 @@ import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { averageScore, type InterviewFeedback } from "@/lib/interview";
+import { DebateRunner } from "@/components/interview/DebateRunner";
 import clsx from "@/lib/clsx";
 
 type Turn = {
   id: string;
   order: number;
+  speaker: string | null;
   question: string;
   answer: string | null;
   feedback: string | null;
@@ -39,6 +41,40 @@ function parseAnswered(turns: Turn[]): AnsweredTurn[] {
 }
 
 export function InterviewRunner({
+  sessionId,
+  title,
+  concept,
+  mode,
+  status,
+  initialTurns,
+  totalQuestions,
+}: {
+  sessionId: string;
+  title: string;
+  concept: string;
+  mode: "VIVA" | "PROTEGE" | "DEBATE";
+  status: "ACTIVE" | "COMPLETED";
+  initialTurns: Turn[];
+  totalQuestions: number;
+}) {
+  // A debate is not a question/answer loop, so it gets its own runner before
+  // any of that loop's state is set up. VIVA and PROTEGE stay on the path
+  // below — a protege session is the same loop with a different voice.
+  if (mode === "DEBATE") {
+    return <DebateRunner sessionId={sessionId} concept={concept} initialTurns={initialTurns} status={status} />;
+  }
+  return (
+    <VivaRunner
+      sessionId={sessionId}
+      title={title}
+      status={status}
+      initialTurns={initialTurns}
+      totalQuestions={totalQuestions}
+    />
+  );
+}
+
+function VivaRunner({
   sessionId,
   title,
   status,
