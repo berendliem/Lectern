@@ -1869,6 +1869,9 @@ export const InterviewSessionScalarFieldEnum = {
   status: 'status',
   pageId: 'pageId',
   topicText: 'topicText',
+  mode: 'mode',
+  persona: 'persona',
+  courseTopicId: 'courseTopicId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1884,6 +1887,7 @@ export const InterviewTurnScalarFieldEnum = {
   answer: 'answer',
   answerAudioPath: 'answerAudioPath',
   feedback: 'feedback',
+  speaker: 'speaker',
   createdAt: 'createdAt'
 } as const
 
@@ -2040,6 +2044,13 @@ export type EnumInterviewSourceFieldRefInput<$PrismaModel> = FieldRefInputType<$
  * Reference to a field of type 'InterviewStatus'
  */
 export type EnumInterviewStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InterviewStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'InterviewMode'
+ */
+export type EnumInterviewModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InterviewMode'>
     
 
 

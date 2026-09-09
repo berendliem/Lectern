@@ -33,10 +33,20 @@ export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
 
 export const InterviewSource = {
   LECTURE: 'LECTURE',
-  TOPIC: 'TOPIC'
+  TOPIC: 'TOPIC',
+  COURSE_TOPIC: 'COURSE_TOPIC'
 } as const
 
 export type InterviewSource = (typeof InterviewSource)[keyof typeof InterviewSource]
+
+
+export const InterviewMode = {
+  VIVA: 'VIVA',
+  PROTEGE: 'PROTEGE',
+  DEBATE: 'DEBATE'
+} as const
+
+export type InterviewMode = (typeof InterviewMode)[keyof typeof InterviewMode]
 
 
 export const InterviewStatus = {

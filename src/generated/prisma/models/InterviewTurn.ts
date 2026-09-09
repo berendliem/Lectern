@@ -42,6 +42,7 @@ export type InterviewTurnMinAggregateOutputType = {
   answer: string | null
   answerAudioPath: string | null
   feedback: string | null
+  speaker: string | null
   createdAt: Date | null
 }
 
@@ -53,6 +54,7 @@ export type InterviewTurnMaxAggregateOutputType = {
   answer: string | null
   answerAudioPath: string | null
   feedback: string | null
+  speaker: string | null
   createdAt: Date | null
 }
 
@@ -64,6 +66,7 @@ export type InterviewTurnCountAggregateOutputType = {
   answer: number
   answerAudioPath: number
   feedback: number
+  speaker: number
   createdAt: number
   _all: number
 }
@@ -85,6 +88,7 @@ export type InterviewTurnMinAggregateInputType = {
   answer?: true
   answerAudioPath?: true
   feedback?: true
+  speaker?: true
   createdAt?: true
 }
 
@@ -96,6 +100,7 @@ export type InterviewTurnMaxAggregateInputType = {
   answer?: true
   answerAudioPath?: true
   feedback?: true
+  speaker?: true
   createdAt?: true
 }
 
@@ -107,6 +112,7 @@ export type InterviewTurnCountAggregateInputType = {
   answer?: true
   answerAudioPath?: true
   feedback?: true
+  speaker?: true
   createdAt?: true
   _all?: true
 }
@@ -205,6 +211,7 @@ export type InterviewTurnGroupByOutputType = {
   answer: string | null
   answerAudioPath: string | null
   feedback: string | null
+  speaker: string | null
   createdAt: Date
   _count: InterviewTurnCountAggregateOutputType | null
   _avg: InterviewTurnAvgAggregateOutputType | null
@@ -239,6 +246,7 @@ export type InterviewTurnWhereInput = {
   answer?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   answerAudioPath?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   feedback?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
+  speaker?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InterviewTurn"> | Date | string
   session?: Prisma.XOR<Prisma.InterviewSessionScalarRelationFilter, Prisma.InterviewSessionWhereInput>
 }
@@ -251,6 +259,7 @@ export type InterviewTurnOrderByWithRelationInput = {
   answer?: Prisma.SortOrderInput | Prisma.SortOrder
   answerAudioPath?: Prisma.SortOrderInput | Prisma.SortOrder
   feedback?: Prisma.SortOrderInput | Prisma.SortOrder
+  speaker?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   session?: Prisma.InterviewSessionOrderByWithRelationInput
 }
@@ -266,6 +275,7 @@ export type InterviewTurnWhereUniqueInput = Prisma.AtLeast<{
   answer?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   answerAudioPath?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   feedback?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
+  speaker?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InterviewTurn"> | Date | string
   session?: Prisma.XOR<Prisma.InterviewSessionScalarRelationFilter, Prisma.InterviewSessionWhereInput>
 }, "id">
@@ -278,6 +288,7 @@ export type InterviewTurnOrderByWithAggregationInput = {
   answer?: Prisma.SortOrderInput | Prisma.SortOrder
   answerAudioPath?: Prisma.SortOrderInput | Prisma.SortOrder
   feedback?: Prisma.SortOrderInput | Prisma.SortOrder
+  speaker?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.InterviewTurnCountOrderByAggregateInput
   _avg?: Prisma.InterviewTurnAvgOrderByAggregateInput
@@ -297,6 +308,7 @@ export type InterviewTurnScalarWhereWithAggregatesInput = {
   answer?: Prisma.StringNullableWithAggregatesFilter<"InterviewTurn"> | string | null
   answerAudioPath?: Prisma.StringNullableWithAggregatesFilter<"InterviewTurn"> | string | null
   feedback?: Prisma.StringNullableWithAggregatesFilter<"InterviewTurn"> | string | null
+  speaker?: Prisma.StringNullableWithAggregatesFilter<"InterviewTurn"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InterviewTurn"> | Date | string
 }
 
@@ -307,6 +319,7 @@ export type InterviewTurnCreateInput = {
   answer?: string | null
   answerAudioPath?: string | null
   feedback?: string | null
+  speaker?: string | null
   createdAt?: Date | string
   session: Prisma.InterviewSessionCreateNestedOneWithoutTurnsInput
 }
@@ -319,6 +332,7 @@ export type InterviewTurnUncheckedCreateInput = {
   answer?: string | null
   answerAudioPath?: string | null
   feedback?: string | null
+  speaker?: string | null
   createdAt?: Date | string
 }
 
@@ -329,6 +343,7 @@ export type InterviewTurnUpdateInput = {
   answer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   answerAudioPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  speaker?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   session?: Prisma.InterviewSessionUpdateOneRequiredWithoutTurnsNestedInput
 }
@@ -341,6 +356,7 @@ export type InterviewTurnUncheckedUpdateInput = {
   answer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   answerAudioPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  speaker?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -352,6 +368,7 @@ export type InterviewTurnCreateManyInput = {
   answer?: string | null
   answerAudioPath?: string | null
   feedback?: string | null
+  speaker?: string | null
   createdAt?: Date | string
 }
 
@@ -362,6 +379,7 @@ export type InterviewTurnUpdateManyMutationInput = {
   answer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   answerAudioPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  speaker?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -373,6 +391,7 @@ export type InterviewTurnUncheckedUpdateManyInput = {
   answer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   answerAudioPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  speaker?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -394,6 +413,7 @@ export type InterviewTurnCountOrderByAggregateInput = {
   answer?: Prisma.SortOrder
   answerAudioPath?: Prisma.SortOrder
   feedback?: Prisma.SortOrder
+  speaker?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -409,6 +429,7 @@ export type InterviewTurnMaxOrderByAggregateInput = {
   answer?: Prisma.SortOrder
   answerAudioPath?: Prisma.SortOrder
   feedback?: Prisma.SortOrder
+  speaker?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -420,6 +441,7 @@ export type InterviewTurnMinOrderByAggregateInput = {
   answer?: Prisma.SortOrder
   answerAudioPath?: Prisma.SortOrder
   feedback?: Prisma.SortOrder
+  speaker?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -476,6 +498,7 @@ export type InterviewTurnCreateWithoutSessionInput = {
   answer?: string | null
   answerAudioPath?: string | null
   feedback?: string | null
+  speaker?: string | null
   createdAt?: Date | string
 }
 
@@ -486,6 +509,7 @@ export type InterviewTurnUncheckedCreateWithoutSessionInput = {
   answer?: string | null
   answerAudioPath?: string | null
   feedback?: string | null
+  speaker?: string | null
   createdAt?: Date | string
 }
 
@@ -525,6 +549,7 @@ export type InterviewTurnScalarWhereInput = {
   answer?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   answerAudioPath?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   feedback?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
+  speaker?: Prisma.StringNullableFilter<"InterviewTurn"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InterviewTurn"> | Date | string
 }
 
@@ -535,6 +560,7 @@ export type InterviewTurnCreateManySessionInput = {
   answer?: string | null
   answerAudioPath?: string | null
   feedback?: string | null
+  speaker?: string | null
   createdAt?: Date | string
 }
 
@@ -545,6 +571,7 @@ export type InterviewTurnUpdateWithoutSessionInput = {
   answer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   answerAudioPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  speaker?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -555,6 +582,7 @@ export type InterviewTurnUncheckedUpdateWithoutSessionInput = {
   answer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   answerAudioPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  speaker?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -565,6 +593,7 @@ export type InterviewTurnUncheckedUpdateManyWithoutSessionInput = {
   answer?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   answerAudioPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   feedback?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  speaker?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -578,6 +607,7 @@ export type InterviewTurnSelect<ExtArgs extends runtime.Types.Extensions.Interna
   answer?: boolean
   answerAudioPath?: boolean
   feedback?: boolean
+  speaker?: boolean
   createdAt?: boolean
   session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["interviewTurn"]>
@@ -590,6 +620,7 @@ export type InterviewTurnSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   answer?: boolean
   answerAudioPath?: boolean
   feedback?: boolean
+  speaker?: boolean
   createdAt?: boolean
   session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["interviewTurn"]>
@@ -602,6 +633,7 @@ export type InterviewTurnSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   answer?: boolean
   answerAudioPath?: boolean
   feedback?: boolean
+  speaker?: boolean
   createdAt?: boolean
   session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["interviewTurn"]>
@@ -614,10 +646,11 @@ export type InterviewTurnSelectScalar = {
   answer?: boolean
   answerAudioPath?: boolean
   feedback?: boolean
+  speaker?: boolean
   createdAt?: boolean
 }
 
-export type InterviewTurnOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "order" | "question" | "answer" | "answerAudioPath" | "feedback" | "createdAt", ExtArgs["result"]["interviewTurn"]>
+export type InterviewTurnOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "order" | "question" | "answer" | "answerAudioPath" | "feedback" | "speaker" | "createdAt", ExtArgs["result"]["interviewTurn"]>
 export type InterviewTurnInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
 }
@@ -641,6 +674,11 @@ export type $InterviewTurnPayload<ExtArgs extends runtime.Types.Extensions.Inter
     answer: string | null
     answerAudioPath: string | null
     feedback: string | null
+    /**
+     * Null = the examiner asking. "You" = the student. Anything else is an agent
+     * name in a debate.
+     */
+    speaker: string | null
     createdAt: Date
   }, ExtArgs["result"]["interviewTurn"]>
   composites: {}
@@ -1073,6 +1111,7 @@ export interface InterviewTurnFieldRefs {
   readonly answer: Prisma.FieldRef<"InterviewTurn", 'String'>
   readonly answerAudioPath: Prisma.FieldRef<"InterviewTurn", 'String'>
   readonly feedback: Prisma.FieldRef<"InterviewTurn", 'String'>
+  readonly speaker: Prisma.FieldRef<"InterviewTurn", 'String'>
   readonly createdAt: Prisma.FieldRef<"InterviewTurn", 'DateTime'>
 }
     
