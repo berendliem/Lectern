@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { classifyTopic, coverageThreshold } from "@/lib/coverage";
+import { scoreTopics } from "@/lib/embeddings";
+import { pretestDetailSchema } from "@/lib/validation";
 import { PageDetailHeader } from "@/components/page-detail/PageDetailHeader";
 import { PipelineStatusBanner } from "@/components/page-detail/PipelineStatusBanner";
 import { PageTabs } from "@/components/page-detail/PageTabs";
@@ -12,6 +15,7 @@ import { ConceptMapTab } from "@/components/page-detail/ConceptMapTab";
 import { ActionsTab } from "@/components/page-detail/ActionsTab";
 import { InterviewLaunch } from "@/components/interview/InterviewLaunch";
 import { LectureActions } from "@/components/page-detail/LectureActions";
+import { PretestReveal, type PretestRevealEntry } from "@/components/page/PretestReveal";
 import { isVideoExtension } from "@/lib/audio-storage";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
@@ -37,6 +41,11 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
   const audioExt = page.audioFilePath?.split(".").pop() ?? "";
   const isVideo = isVideoExtension(audioExt);
 
+  // Build the pretest reveal: topics this lecture covers, and student's held answers
+  const pretestRevealEntries = page.folderId
+    ? await buildPretestReveal(page.id, page.folderId)
+    : [];
+
   return (
     <div className="flex max-w-4xl flex-col gap-5">
       <PageDetailHeader
@@ -59,7 +68,9 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
 
       {page.notes && <InterviewLaunch pageId={page.id} pageTitle={page.title} />}
 
-      <LectureActions pageId={page.id} />
+      <PretestReveal entries={pretestRevealEntries} />
+
+      <LectureActions pageId={page.id} pageTitle={page.title} />
 
       <PageTabs
         tabs={[
@@ -126,6 +137,68 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
       />
     </div>
   );
+}
+
+async function buildPretestReveal(pageId: string, folderId: string): Promise<PretestRevealEntry[]> {
+  try {
+    // Fetch all topics for this folder
+    const topics = await db.courseTopic.findMany({
+      where: { folderId },
+      select: { id: true, title: true },
+    });
+
+    if (topics.length === 0) return [];
+
+    // Score topics against this folder's indexed materials
+    let coveredTopicIds: string[];
+    try {
+      const scores = await scoreTopics(
+        folderId,
+        topics.map((t) => t.title)
+      );
+      // Keep only topics whose best match is this page
+      const threshold = coverageThreshold();
+      coveredTopicIds = [];
+      for (let i = 0; i < scores.matches.length; i++) {
+        const match = scores.matches[i];
+        const { covered } = classifyTopic(match, threshold);
+        if (covered && match?.pageId === pageId) {
+          coveredTopicIds.push(topics[i].id);
+        }
+      }
+    } catch (e) {
+      console.error(`[pretest-reveal] scoring topics for ${folderId} failed:`, e);
+      return [];
+    }
+
+    if (coveredTopicIds.length === 0) return [];
+
+    // Read their held pretest answers
+    const held = await db.reviewLog.findMany({
+      where: { kind: "PRETEST", topicId: { in: coveredTopicIds } },
+      orderBy: { reviewedAt: "asc" },
+      select: { detail: true, topic: { select: { title: true } } },
+    });
+
+    const entries = held.flatMap((row) => {
+      let parsed;
+      try {
+        const detail = row.detail ? JSON.parse(row.detail) : null;
+        parsed = pretestDetailSchema.safeParse(detail);
+      } catch {
+        // Invalid JSON or parse error; skip this row
+        return [];
+      }
+      return parsed.success
+        ? [{ topicTitle: row.topic?.title ?? "This topic", ...parsed.data }]
+        : [];
+    });
+
+    return entries;
+  } catch (e) {
+    console.error(`[pretest-reveal] building reveal for page ${pageId} failed:`, e);
+    return [];
+  }
 }
 
 function EmptyState({ message }: { message: string }) {

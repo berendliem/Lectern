@@ -71,3 +71,6 @@ whisper-service/__pycache__
 # into a commit once, which is a semester of notes heading for a remote
 prisma/*.bak
 prisma/dev.db.backup-*
+
+# superpowers subagent-driven-development scratch (ledger, briefs, review packages)
+/.superpowers

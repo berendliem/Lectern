@@ -315,3 +315,54 @@ export const quizResponseSchema = z.object({
     )
     .min(1),
 });
+
+export const debateInterjectSchema = z.object({
+  text: z.string().trim().min(1).max(2000),
+});
+
+/** One agent's utterance. Short by construction: a debate of essays is a reading task. */
+export const debateUtteranceResponseSchema = z.object({
+  utterance: z.string().trim().min(1).max(1500),
+});
+
+/**
+ * Three prediction questions, built before the lecture exists. Multiple choice
+ * so the guess grades itself: `normalizeQuality` maps a correct choice to 4 and
+ * a wrong one to 0, and no second completion is needed for a signal the
+ * scheduler never reads anyway.
+ */
+export const pretestResponseSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        prompt: z.string().trim().min(1).max(600),
+        options: z.array(z.string().trim().min(1).max(300)).length(4),
+        correctIndex: z.number().int().min(0).max(3),
+        explanation: z.string().trim().min(1).max(1000),
+      })
+    )
+    .length(3),
+});
+
+export const pretestSubmitSchema = z.object({
+  answers: z
+    .array(
+      z.object({
+        prompt: z.string().trim().min(1).max(600),
+        options: z.array(z.string().trim().min(1).max(300)).length(4),
+        correctIndex: z.number().int().min(0).max(3),
+        explanation: z.string().trim().min(1).max(1000),
+        chosenIndex: z.number().int().min(0).max(3),
+      })
+    )
+    .length(3),
+});
+
+/** One held pretest question, as it comes back out of `ReviewLog.detail`. */
+export const pretestDetailSchema = z.object({
+  prompt: z.string(),
+  options: z.array(z.string()).length(4),
+  correctIndex: z.number().int().min(0).max(3),
+  chosenIndex: z.number().int().min(0).max(3),
+  explanation: z.string(),
+});

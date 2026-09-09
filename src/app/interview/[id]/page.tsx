@@ -11,7 +11,10 @@ export default async function InterviewSessionPage({ params }: { params: Promise
   const { id } = await params;
   const session = await db.interviewSession.findUnique({
     where: { id },
-    include: { turns: { orderBy: { order: "asc" } } },
+    include: {
+      turns: { orderBy: { order: "asc" } },
+      topic: { select: { title: true } },
+    },
   });
   if (!session) notFound();
 
@@ -24,10 +27,13 @@ export default async function InterviewSessionPage({ params }: { params: Promise
       <InterviewRunner
         sessionId={session.id}
         title={session.title}
+        concept={session.topic?.title ?? session.title}
+        mode={session.mode}
         status={session.status}
         initialTurns={session.turns.map((t) => ({
           id: t.id,
           order: t.order,
+          speaker: t.speaker,
           question: t.question,
           answer: t.answer,
           feedback: t.feedback,

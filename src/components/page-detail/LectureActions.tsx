@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { BookOpen, CalendarPlus, Lightbulb, Loader2, Timer } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { BookOpen, CalendarPlus, Lightbulb, Loader2, MessagesSquare, Timer } from "lucide-react";
 import { BlurtPanel } from "@/components/flashcards/BlurtPanel";
 
 const LINK_CLASSES =
@@ -12,8 +13,10 @@ const LINK_CLASSES =
  * The lecture-tier entry points: every one of these features works better when
  * it starts from what you just studied instead of a blank slate.
  */
-export function LectureActions({ pageId }: { pageId: string }) {
+export function LectureActions({ pageId, pageTitle }: { pageId: string; pageTitle: string }) {
+  const router = useRouter();
   const [scheduling, setScheduling] = useState(false);
+  const [teaching, setTeaching] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
   async function scheduleReview() {
@@ -38,6 +41,29 @@ export function LectureActions({ pageId }: { pageId: string }) {
     }
   }
 
+  async function teachItBack() {
+    setTeaching(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "LECTURE", pageId, title: pageTitle, mode: "PROTEGE" }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setResult(body.error ?? "Could not start session");
+        setTeaching(false);
+        return;
+      }
+      const { session } = await res.json();
+      router.push(`/interview/${session.id}`);
+    } catch {
+      setResult("Could not start session");
+      setTeaching(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
@@ -58,6 +84,14 @@ export function LectureActions({ pageId }: { pageId: string }) {
             <CalendarPlus className="h-3.5 w-3.5" strokeWidth={2.2} />
           )}
           Schedule review
+        </button>
+        <button onClick={teachItBack} disabled={teaching} className={LINK_CLASSES}>
+          {teaching ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.2} />
+          ) : (
+            <MessagesSquare className="h-3.5 w-3.5" strokeWidth={2.2} />
+          )}
+          Teach it back
         </button>
       </div>
       {result && <p className="text-[12.5px] text-muted">{result}</p>}

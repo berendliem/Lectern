@@ -5,6 +5,7 @@ import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON } from "@/lib/llm";
 import { createInterviewSessionSchema, interviewQuestionResponseSchema, type InterviewContext } from "@/lib/interview";
 import { INTERVIEW_QUESTION_SYSTEM_PROMPT, buildFirstQuestionUserPrompt } from "@/lib/prompts/interview";
+import { PROTEGE_QUESTION_SYSTEM_PROMPT, buildProtegeFirstQuestionUserPrompt } from "@/lib/prompts/protege";
 
 const MODEL =
   process.env.OPENROUTER_MODEL_INTERVIEW ?? process.env.OPENROUTER_MODEL_QUIZ ?? "openrouter/free";
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
 
   let pageId: string | null = null;
   let topicText: string | null = null;
+  let courseTopicId: string | null = null;
   let title: string;
   let context: InterviewContext;
 
@@ -43,21 +45,46 @@ export async function POST(req: NextRequest) {
       notesMarkdown: page.notes?.markdown ?? null,
       transcriptText: page.transcript?.rawText ?? null,
     };
-  } else {
+  } else if (input.source === "TOPIC") {
     topicText = input.topicText;
     title = input.title && input.title.trim() ? input.title.trim() : topicText.slice(0, 80);
     context = { title, source: "TOPIC", topicText };
+  } else {
+    const topic = await db.courseTopic.findUnique({
+      where: { id: input.courseTopicId },
+      select: { id: true, title: true },
+    });
+    if (!topic) return jsonError("Topic not found", 404);
+
+    courseTopicId = topic.id;
+    title = input.title?.trim() || topic.title;
+    context = { title, source: "COURSE_TOPIC", topicText: topic.title };
   }
 
   const session = await db.interviewSession.create({
-    data: { title, source: input.source, pageId, topicText },
+    data: {
+      title,
+      source: input.source,
+      pageId,
+      topicText,
+      courseTopicId,
+      mode: input.mode,
+      persona: input.persona ?? null,
+    },
   });
 
+  if (input.mode === "DEBATE") {
+    return NextResponse.json({ session, firstTurn: null });
+  }
+
   try {
+    const usingProtege = input.mode === "PROTEGE";
     const raw = await callLLMJSON({
       model: MODEL,
-      systemPrompt: INTERVIEW_QUESTION_SYSTEM_PROMPT,
-      userPrompt: buildFirstQuestionUserPrompt(context),
+      systemPrompt: usingProtege ? PROTEGE_QUESTION_SYSTEM_PROMPT : INTERVIEW_QUESTION_SYSTEM_PROMPT,
+      userPrompt: usingProtege
+        ? buildProtegeFirstQuestionUserPrompt(context)
+        : buildFirstQuestionUserPrompt(context),
     });
     const parsed = await interviewQuestionResponseSchema.parseAsync(raw);
 

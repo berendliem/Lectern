@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Plus, ScrollText, Sparkles, TriangleAlert, Trash2 } from "lucide-react";
+import { Check, Loader2, Plus, ScrollText, Sparkles, TriangleAlert, Trash2 } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { MASTERY_CLASSES, MASTERY_LABEL, type Mastery } from "@/lib/mastery";
 import type { CoverageState } from "@/lib/coverage";
+import { PretestDialog } from "@/components/course/PretestDialog";
+import { LessonRunner } from "@/components/course/LessonRunner";
 
 export type TopicRow = {
   id: string;
@@ -42,6 +44,11 @@ export function CourseOverview({
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [runningDialog, setRunningDialog] = useState<"pretest" | "lesson" | null>(null);
+  const [debateOpen, setDebateOpen] = useState(false);
+  const [debateSelect, setDebateSelect] = useState<string>("");
+  const [debateSubmitting, setDebateSubmitting] = useState(false);
   const router = useRouter();
 
   async function send(key: string, url: string, init: RequestInit, failure: string) {
@@ -75,6 +82,30 @@ export function CourseOverview({
       { method: "POST" },
       "Could not parse that syllabus."
     );
+  }
+
+  async function startDebate() {
+    if (!debateSelect) return;
+    setDebateSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "COURSE_TOPIC", courseTopicId: debateSelect, mode: "DEBATE" }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "Could not start debate");
+        setDebateSubmitting(false);
+        return;
+      }
+      const { session } = await res.json();
+      router.push(`/interview/${session.id}`);
+    } catch {
+      setError("Could not start debate");
+      setDebateSubmitting(false);
+    }
   }
 
   async function addTopic(e: React.FormEvent) {
@@ -138,6 +169,28 @@ export function CourseOverview({
             <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
             {busy === "parse" ? "Parsing…" : topics.length > 0 ? "Re-parse syllabus" : "Parse syllabus"}
           </button>
+          {topics.length > 0 && (
+            <>
+              <button
+                onClick={() => setDebateOpen(!debateOpen)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2"
+              >
+                Debate
+              </button>
+              {debateOpen && debateSelect && (
+                <button
+                  onClick={startDebate}
+                  disabled={debateSubmitting}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-[13px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2 disabled:opacity-50"
+                >
+                  {debateSubmitting ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.2} />
+                  ) : null}
+                  Start
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -195,6 +248,27 @@ export function CourseOverview({
         </p>
       )}
 
+      {topics.length > 0 && debateOpen && (
+        <div className="flex gap-2">
+          <label htmlFor="debate-topic" className="text-[13px] font-medium text-ink-soft flex items-center">
+            Choose a topic to debate:
+          </label>
+          <select
+            id="debate-topic"
+            value={debateSelect}
+            onChange={(e) => setDebateSelect(e.target.value)}
+            className="flex-1 rounded-lg border border-line-strong bg-surface px-3.5 py-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
+          >
+            <option value="">Select a topic...</option>
+            {topics.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {adding && (
         <form onSubmit={addTopic} className="flex gap-2">
           <input
@@ -219,12 +293,13 @@ export function CourseOverview({
           No topics yet. Upload the syllabus as a material, then parse it — or add topics by hand.
         </div>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {topics.map((topic) => (
-            <li
-              key={topic.id}
-              className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3"
-            >
+        <>
+          <ul className="flex flex-col gap-2">
+            {topics.map((topic) => (
+              <li
+                key={topic.id}
+                className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3"
+              >
               <span
                 className={clsx(
                   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
@@ -278,6 +353,31 @@ export function CourseOverview({
                   {MASTERY_LABEL[topic.mastery]}
                 </span>
               )}
+              <div className="flex items-center gap-1">
+                {!topic.covered ? (
+                  <button
+                    onClick={() => {
+                      setSelectedTopicId(topic.id);
+                      setRunningDialog("pretest");
+                    }}
+                    disabled={busy !== null}
+                    className="rounded-md px-2 py-1 text-[12px] font-medium text-ink-soft border border-line transition-colors hover:border-line-strong hover:bg-surface-2 disabled:opacity-50"
+                  >
+                    Pretest
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setSelectedTopicId(topic.id);
+                      setRunningDialog("lesson");
+                    }}
+                    disabled={busy !== null}
+                    className="rounded-md px-2 py-1 text-[12px] font-medium text-ink-soft border border-line transition-colors hover:border-line-strong hover:bg-surface-2 disabled:opacity-50"
+                  >
+                    Recite
+                  </button>
+                )}
+              </div>
               <button
                 onClick={() =>
                   send(
@@ -293,9 +393,30 @@ export function CourseOverview({
               >
                 <Trash2 className="h-4 w-4" strokeWidth={2} />
               </button>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+
+          {selectedTopicId && runningDialog === "pretest" && (
+            <PretestDialog
+              open={runningDialog === "pretest"}
+              onClose={() => {
+                setRunningDialog(null);
+                setSelectedTopicId(null);
+              }}
+              folderId={folderId}
+              topicId={selectedTopicId}
+            />
+          )}
+
+          {selectedTopicId && runningDialog === "lesson" && (
+            <LessonRunner
+              folderId={folderId}
+              topicId={selectedTopicId}
+              topicTitle={topics.find((t) => t.id === selectedTopicId)?.title ?? ""}
+            />
+          )}
+        </>
       )}
     </div>
   );
