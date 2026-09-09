@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { classifyTopic, coverageThreshold, type CoverageState, type TopicMatch } from "@/lib/coverage";
 import { scoreTopics } from "@/lib/embeddings";
@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 // Per-topic syllabus coverage. Same logic the course page runs inline in
 // buildTopicRows(); this returns it without the UI's hrefs and mastery
 // roll-up, which need card rows the agent has no use for.
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_req: unknown, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const topics = await db.courseTopic.findMany({
     where: { folderId: id },
@@ -22,7 +22,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   let matches: (TopicMatch | null)[];
   let coverage: CoverageState;
   try {
-    const scores = await scoreTopics(id, topics.map((t) => t.title));
+    const scores = await scoreTopics(
+      id,
+      topics.map((t: { title: string }) => t.title)
+    );
     matches = scores.matches;
     // The syllabus itself is excluded from scoring, so a course whose only
     // indexed material is its syllabus has nothing to check against.
@@ -36,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const threshold = coverageThreshold();
   return NextResponse.json({
     coverage,
-    topics: topics.map((topic, i) => {
+    topics: topics.map((topic: { id: string; title: string; week: number | null }, i: number) => {
       const { covered, match } = classifyTopic(matches[i], threshold);
       return {
         id: topic.id,
