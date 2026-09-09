@@ -31,6 +31,9 @@ export type InterviewSessionMinAggregateOutputType = {
   status: $Enums.InterviewStatus | null
   pageId: string | null
   topicText: string | null
+  mode: $Enums.InterviewMode | null
+  persona: string | null
+  courseTopicId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -42,6 +45,9 @@ export type InterviewSessionMaxAggregateOutputType = {
   status: $Enums.InterviewStatus | null
   pageId: string | null
   topicText: string | null
+  mode: $Enums.InterviewMode | null
+  persona: string | null
+  courseTopicId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -53,6 +59,9 @@ export type InterviewSessionCountAggregateOutputType = {
   status: number
   pageId: number
   topicText: number
+  mode: number
+  persona: number
+  courseTopicId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -66,6 +75,9 @@ export type InterviewSessionMinAggregateInputType = {
   status?: true
   pageId?: true
   topicText?: true
+  mode?: true
+  persona?: true
+  courseTopicId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -77,6 +89,9 @@ export type InterviewSessionMaxAggregateInputType = {
   status?: true
   pageId?: true
   topicText?: true
+  mode?: true
+  persona?: true
+  courseTopicId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -88,6 +103,9 @@ export type InterviewSessionCountAggregateInputType = {
   status?: true
   pageId?: true
   topicText?: true
+  mode?: true
+  persona?: true
+  courseTopicId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -172,6 +190,9 @@ export type InterviewSessionGroupByOutputType = {
   status: $Enums.InterviewStatus
   pageId: string | null
   topicText: string | null
+  mode: $Enums.InterviewMode
+  persona: string | null
+  courseTopicId: string | null
   createdAt: Date
   updatedAt: Date
   _count: InterviewSessionCountAggregateOutputType | null
@@ -204,9 +225,13 @@ export type InterviewSessionWhereInput = {
   status?: Prisma.EnumInterviewStatusFilter<"InterviewSession"> | $Enums.InterviewStatus
   pageId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   topicText?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
+  mode?: Prisma.EnumInterviewModeFilter<"InterviewSession"> | $Enums.InterviewMode
+  persona?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
+  courseTopicId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
   page?: Prisma.XOR<Prisma.PageNullableScalarRelationFilter, Prisma.PageWhereInput> | null
+  topic?: Prisma.XOR<Prisma.CourseTopicNullableScalarRelationFilter, Prisma.CourseTopicWhereInput> | null
   turns?: Prisma.InterviewTurnListRelationFilter
 }
 
@@ -217,9 +242,13 @@ export type InterviewSessionOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   pageId?: Prisma.SortOrderInput | Prisma.SortOrder
   topicText?: Prisma.SortOrderInput | Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  persona?: Prisma.SortOrderInput | Prisma.SortOrder
+  courseTopicId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   page?: Prisma.PageOrderByWithRelationInput
+  topic?: Prisma.CourseTopicOrderByWithRelationInput
   turns?: Prisma.InterviewTurnOrderByRelationAggregateInput
 }
 
@@ -233,9 +262,13 @@ export type InterviewSessionWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumInterviewStatusFilter<"InterviewSession"> | $Enums.InterviewStatus
   pageId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   topicText?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
+  mode?: Prisma.EnumInterviewModeFilter<"InterviewSession"> | $Enums.InterviewMode
+  persona?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
+  courseTopicId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
   page?: Prisma.XOR<Prisma.PageNullableScalarRelationFilter, Prisma.PageWhereInput> | null
+  topic?: Prisma.XOR<Prisma.CourseTopicNullableScalarRelationFilter, Prisma.CourseTopicWhereInput> | null
   turns?: Prisma.InterviewTurnListRelationFilter
 }, "id">
 
@@ -246,6 +279,9 @@ export type InterviewSessionOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   pageId?: Prisma.SortOrderInput | Prisma.SortOrder
   topicText?: Prisma.SortOrderInput | Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  persona?: Prisma.SortOrderInput | Prisma.SortOrder
+  courseTopicId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.InterviewSessionCountOrderByAggregateInput
@@ -263,6 +299,9 @@ export type InterviewSessionScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumInterviewStatusWithAggregatesFilter<"InterviewSession"> | $Enums.InterviewStatus
   pageId?: Prisma.StringNullableWithAggregatesFilter<"InterviewSession"> | string | null
   topicText?: Prisma.StringNullableWithAggregatesFilter<"InterviewSession"> | string | null
+  mode?: Prisma.EnumInterviewModeWithAggregatesFilter<"InterviewSession"> | $Enums.InterviewMode
+  persona?: Prisma.StringNullableWithAggregatesFilter<"InterviewSession"> | string | null
+  courseTopicId?: Prisma.StringNullableWithAggregatesFilter<"InterviewSession"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"InterviewSession"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"InterviewSession"> | Date | string
 }
@@ -273,9 +312,12 @@ export type InterviewSessionCreateInput = {
   source: $Enums.InterviewSource
   status?: $Enums.InterviewStatus
   topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   page?: Prisma.PageCreateNestedOneWithoutInterviewSessionsInput
+  topic?: Prisma.CourseTopicCreateNestedOneWithoutInterviewSessionsInput
   turns?: Prisma.InterviewTurnCreateNestedManyWithoutSessionInput
 }
 
@@ -286,6 +328,9 @@ export type InterviewSessionUncheckedCreateInput = {
   status?: $Enums.InterviewStatus
   pageId?: string | null
   topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
+  courseTopicId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   turns?: Prisma.InterviewTurnUncheckedCreateNestedManyWithoutSessionInput
@@ -297,9 +342,12 @@ export type InterviewSessionUpdateInput = {
   source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   page?: Prisma.PageUpdateOneWithoutInterviewSessionsNestedInput
+  topic?: Prisma.CourseTopicUpdateOneWithoutInterviewSessionsNestedInput
   turns?: Prisma.InterviewTurnUpdateManyWithoutSessionNestedInput
 }
 
@@ -310,6 +358,9 @@ export type InterviewSessionUncheckedUpdateInput = {
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  courseTopicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   turns?: Prisma.InterviewTurnUncheckedUpdateManyWithoutSessionNestedInput
@@ -322,6 +373,9 @@ export type InterviewSessionCreateManyInput = {
   status?: $Enums.InterviewStatus
   pageId?: string | null
   topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
+  courseTopicId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -332,6 +386,8 @@ export type InterviewSessionUpdateManyMutationInput = {
   source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -343,6 +399,9 @@ export type InterviewSessionUncheckedUpdateManyInput = {
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  courseTopicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -364,6 +423,9 @@ export type InterviewSessionCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
   topicText?: Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  persona?: Prisma.SortOrder
+  courseTopicId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -375,6 +437,9 @@ export type InterviewSessionMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
   topicText?: Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  persona?: Prisma.SortOrder
+  courseTopicId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -386,6 +451,9 @@ export type InterviewSessionMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   pageId?: Prisma.SortOrder
   topicText?: Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  persona?: Prisma.SortOrder
+  courseTopicId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -393,6 +461,48 @@ export type InterviewSessionMinOrderByAggregateInput = {
 export type InterviewSessionScalarRelationFilter = {
   is?: Prisma.InterviewSessionWhereInput
   isNot?: Prisma.InterviewSessionWhereInput
+}
+
+export type InterviewSessionCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutTopicInput, Prisma.InterviewSessionUncheckedCreateWithoutTopicInput> | Prisma.InterviewSessionCreateWithoutTopicInput[] | Prisma.InterviewSessionUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutTopicInput | Prisma.InterviewSessionCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.InterviewSessionCreateManyTopicInputEnvelope
+  connect?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+}
+
+export type InterviewSessionUncheckedCreateNestedManyWithoutTopicInput = {
+  create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutTopicInput, Prisma.InterviewSessionUncheckedCreateWithoutTopicInput> | Prisma.InterviewSessionCreateWithoutTopicInput[] | Prisma.InterviewSessionUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutTopicInput | Prisma.InterviewSessionCreateOrConnectWithoutTopicInput[]
+  createMany?: Prisma.InterviewSessionCreateManyTopicInputEnvelope
+  connect?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+}
+
+export type InterviewSessionUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutTopicInput, Prisma.InterviewSessionUncheckedCreateWithoutTopicInput> | Prisma.InterviewSessionCreateWithoutTopicInput[] | Prisma.InterviewSessionUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutTopicInput | Prisma.InterviewSessionCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.InterviewSessionUpsertWithWhereUniqueWithoutTopicInput | Prisma.InterviewSessionUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.InterviewSessionCreateManyTopicInputEnvelope
+  set?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+  disconnect?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+  delete?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+  connect?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+  update?: Prisma.InterviewSessionUpdateWithWhereUniqueWithoutTopicInput | Prisma.InterviewSessionUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.InterviewSessionUpdateManyWithWhereWithoutTopicInput | Prisma.InterviewSessionUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.InterviewSessionScalarWhereInput | Prisma.InterviewSessionScalarWhereInput[]
+}
+
+export type InterviewSessionUncheckedUpdateManyWithoutTopicNestedInput = {
+  create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutTopicInput, Prisma.InterviewSessionUncheckedCreateWithoutTopicInput> | Prisma.InterviewSessionCreateWithoutTopicInput[] | Prisma.InterviewSessionUncheckedCreateWithoutTopicInput[]
+  connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutTopicInput | Prisma.InterviewSessionCreateOrConnectWithoutTopicInput[]
+  upsert?: Prisma.InterviewSessionUpsertWithWhereUniqueWithoutTopicInput | Prisma.InterviewSessionUpsertWithWhereUniqueWithoutTopicInput[]
+  createMany?: Prisma.InterviewSessionCreateManyTopicInputEnvelope
+  set?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+  disconnect?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+  delete?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+  connect?: Prisma.InterviewSessionWhereUniqueInput | Prisma.InterviewSessionWhereUniqueInput[]
+  update?: Prisma.InterviewSessionUpdateWithWhereUniqueWithoutTopicInput | Prisma.InterviewSessionUpdateWithWhereUniqueWithoutTopicInput[]
+  updateMany?: Prisma.InterviewSessionUpdateManyWithWhereWithoutTopicInput | Prisma.InterviewSessionUpdateManyWithWhereWithoutTopicInput[]
+  deleteMany?: Prisma.InterviewSessionScalarWhereInput | Prisma.InterviewSessionScalarWhereInput[]
 }
 
 export type InterviewSessionCreateNestedManyWithoutPageInput = {
@@ -445,6 +555,10 @@ export type EnumInterviewStatusFieldUpdateOperationsInput = {
   set?: $Enums.InterviewStatus
 }
 
+export type EnumInterviewModeFieldUpdateOperationsInput = {
+  set?: $Enums.InterviewMode
+}
+
 export type InterviewSessionCreateNestedOneWithoutTurnsInput = {
   create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutTurnsInput, Prisma.InterviewSessionUncheckedCreateWithoutTurnsInput>
   connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutTurnsInput
@@ -459,14 +573,87 @@ export type InterviewSessionUpdateOneRequiredWithoutTurnsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.InterviewSessionUpdateToOneWithWhereWithoutTurnsInput, Prisma.InterviewSessionUpdateWithoutTurnsInput>, Prisma.InterviewSessionUncheckedUpdateWithoutTurnsInput>
 }
 
+export type InterviewSessionCreateWithoutTopicInput = {
+  id?: string
+  title: string
+  source: $Enums.InterviewSource
+  status?: $Enums.InterviewStatus
+  topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  page?: Prisma.PageCreateNestedOneWithoutInterviewSessionsInput
+  turns?: Prisma.InterviewTurnCreateNestedManyWithoutSessionInput
+}
+
+export type InterviewSessionUncheckedCreateWithoutTopicInput = {
+  id?: string
+  title: string
+  source: $Enums.InterviewSource
+  status?: $Enums.InterviewStatus
+  pageId?: string | null
+  topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  turns?: Prisma.InterviewTurnUncheckedCreateNestedManyWithoutSessionInput
+}
+
+export type InterviewSessionCreateOrConnectWithoutTopicInput = {
+  where: Prisma.InterviewSessionWhereUniqueInput
+  create: Prisma.XOR<Prisma.InterviewSessionCreateWithoutTopicInput, Prisma.InterviewSessionUncheckedCreateWithoutTopicInput>
+}
+
+export type InterviewSessionCreateManyTopicInputEnvelope = {
+  data: Prisma.InterviewSessionCreateManyTopicInput | Prisma.InterviewSessionCreateManyTopicInput[]
+}
+
+export type InterviewSessionUpsertWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.InterviewSessionWhereUniqueInput
+  update: Prisma.XOR<Prisma.InterviewSessionUpdateWithoutTopicInput, Prisma.InterviewSessionUncheckedUpdateWithoutTopicInput>
+  create: Prisma.XOR<Prisma.InterviewSessionCreateWithoutTopicInput, Prisma.InterviewSessionUncheckedCreateWithoutTopicInput>
+}
+
+export type InterviewSessionUpdateWithWhereUniqueWithoutTopicInput = {
+  where: Prisma.InterviewSessionWhereUniqueInput
+  data: Prisma.XOR<Prisma.InterviewSessionUpdateWithoutTopicInput, Prisma.InterviewSessionUncheckedUpdateWithoutTopicInput>
+}
+
+export type InterviewSessionUpdateManyWithWhereWithoutTopicInput = {
+  where: Prisma.InterviewSessionScalarWhereInput
+  data: Prisma.XOR<Prisma.InterviewSessionUpdateManyMutationInput, Prisma.InterviewSessionUncheckedUpdateManyWithoutTopicInput>
+}
+
+export type InterviewSessionScalarWhereInput = {
+  AND?: Prisma.InterviewSessionScalarWhereInput | Prisma.InterviewSessionScalarWhereInput[]
+  OR?: Prisma.InterviewSessionScalarWhereInput[]
+  NOT?: Prisma.InterviewSessionScalarWhereInput | Prisma.InterviewSessionScalarWhereInput[]
+  id?: Prisma.StringFilter<"InterviewSession"> | string
+  title?: Prisma.StringFilter<"InterviewSession"> | string
+  source?: Prisma.EnumInterviewSourceFilter<"InterviewSession"> | $Enums.InterviewSource
+  status?: Prisma.EnumInterviewStatusFilter<"InterviewSession"> | $Enums.InterviewStatus
+  pageId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
+  topicText?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
+  mode?: Prisma.EnumInterviewModeFilter<"InterviewSession"> | $Enums.InterviewMode
+  persona?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
+  courseTopicId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
+}
+
 export type InterviewSessionCreateWithoutPageInput = {
   id?: string
   title: string
   source: $Enums.InterviewSource
   status?: $Enums.InterviewStatus
   topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  topic?: Prisma.CourseTopicCreateNestedOneWithoutInterviewSessionsInput
   turns?: Prisma.InterviewTurnCreateNestedManyWithoutSessionInput
 }
 
@@ -476,6 +663,9 @@ export type InterviewSessionUncheckedCreateWithoutPageInput = {
   source: $Enums.InterviewSource
   status?: $Enums.InterviewStatus
   topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
+  courseTopicId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   turns?: Prisma.InterviewTurnUncheckedCreateNestedManyWithoutSessionInput
@@ -506,29 +696,18 @@ export type InterviewSessionUpdateManyWithWhereWithoutPageInput = {
   data: Prisma.XOR<Prisma.InterviewSessionUpdateManyMutationInput, Prisma.InterviewSessionUncheckedUpdateManyWithoutPageInput>
 }
 
-export type InterviewSessionScalarWhereInput = {
-  AND?: Prisma.InterviewSessionScalarWhereInput | Prisma.InterviewSessionScalarWhereInput[]
-  OR?: Prisma.InterviewSessionScalarWhereInput[]
-  NOT?: Prisma.InterviewSessionScalarWhereInput | Prisma.InterviewSessionScalarWhereInput[]
-  id?: Prisma.StringFilter<"InterviewSession"> | string
-  title?: Prisma.StringFilter<"InterviewSession"> | string
-  source?: Prisma.EnumInterviewSourceFilter<"InterviewSession"> | $Enums.InterviewSource
-  status?: Prisma.EnumInterviewStatusFilter<"InterviewSession"> | $Enums.InterviewStatus
-  pageId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
-  topicText?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
-  createdAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
-}
-
 export type InterviewSessionCreateWithoutTurnsInput = {
   id?: string
   title: string
   source: $Enums.InterviewSource
   status?: $Enums.InterviewStatus
   topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   page?: Prisma.PageCreateNestedOneWithoutInterviewSessionsInput
+  topic?: Prisma.CourseTopicCreateNestedOneWithoutInterviewSessionsInput
 }
 
 export type InterviewSessionUncheckedCreateWithoutTurnsInput = {
@@ -538,6 +717,9 @@ export type InterviewSessionUncheckedCreateWithoutTurnsInput = {
   status?: $Enums.InterviewStatus
   pageId?: string | null
   topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
+  courseTopicId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -564,9 +746,12 @@ export type InterviewSessionUpdateWithoutTurnsInput = {
   source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   page?: Prisma.PageUpdateOneWithoutInterviewSessionsNestedInput
+  topic?: Prisma.CourseTopicUpdateOneWithoutInterviewSessionsNestedInput
 }
 
 export type InterviewSessionUncheckedUpdateWithoutTurnsInput = {
@@ -576,6 +761,63 @@ export type InterviewSessionUncheckedUpdateWithoutTurnsInput = {
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  courseTopicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InterviewSessionCreateManyTopicInput = {
+  id?: string
+  title: string
+  source: $Enums.InterviewSource
+  status?: $Enums.InterviewStatus
+  pageId?: string | null
+  topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type InterviewSessionUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
+  status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+  topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  page?: Prisma.PageUpdateOneWithoutInterviewSessionsNestedInput
+  turns?: Prisma.InterviewTurnUpdateManyWithoutSessionNestedInput
+}
+
+export type InterviewSessionUncheckedUpdateWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
+  status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  turns?: Prisma.InterviewTurnUncheckedUpdateManyWithoutSessionNestedInput
+}
+
+export type InterviewSessionUncheckedUpdateManyWithoutTopicInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
+  status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
+  pageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -586,6 +828,9 @@ export type InterviewSessionCreateManyPageInput = {
   source: $Enums.InterviewSource
   status?: $Enums.InterviewStatus
   topicText?: string | null
+  mode?: $Enums.InterviewMode
+  persona?: string | null
+  courseTopicId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -596,8 +841,11 @@ export type InterviewSessionUpdateWithoutPageInput = {
   source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  topic?: Prisma.CourseTopicUpdateOneWithoutInterviewSessionsNestedInput
   turns?: Prisma.InterviewTurnUpdateManyWithoutSessionNestedInput
 }
 
@@ -607,6 +855,9 @@ export type InterviewSessionUncheckedUpdateWithoutPageInput = {
   source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  courseTopicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   turns?: Prisma.InterviewTurnUncheckedUpdateManyWithoutSessionNestedInput
@@ -618,6 +869,9 @@ export type InterviewSessionUncheckedUpdateManyWithoutPageInput = {
   source?: Prisma.EnumInterviewSourceFieldUpdateOperationsInput | $Enums.InterviewSource
   status?: Prisma.EnumInterviewStatusFieldUpdateOperationsInput | $Enums.InterviewStatus
   topicText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  mode?: Prisma.EnumInterviewModeFieldUpdateOperationsInput | $Enums.InterviewMode
+  persona?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  courseTopicId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -660,9 +914,13 @@ export type InterviewSessionSelect<ExtArgs extends runtime.Types.Extensions.Inte
   status?: boolean
   pageId?: boolean
   topicText?: boolean
+  mode?: boolean
+  persona?: boolean
+  courseTopicId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   page?: boolean | Prisma.InterviewSession$pageArgs<ExtArgs>
+  topic?: boolean | Prisma.InterviewSession$topicArgs<ExtArgs>
   turns?: boolean | Prisma.InterviewSession$turnsArgs<ExtArgs>
   _count?: boolean | Prisma.InterviewSessionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["interviewSession"]>
@@ -674,9 +932,13 @@ export type InterviewSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   status?: boolean
   pageId?: boolean
   topicText?: boolean
+  mode?: boolean
+  persona?: boolean
+  courseTopicId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   page?: boolean | Prisma.InterviewSession$pageArgs<ExtArgs>
+  topic?: boolean | Prisma.InterviewSession$topicArgs<ExtArgs>
 }, ExtArgs["result"]["interviewSession"]>
 
 export type InterviewSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -686,9 +948,13 @@ export type InterviewSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   status?: boolean
   pageId?: boolean
   topicText?: boolean
+  mode?: boolean
+  persona?: boolean
+  courseTopicId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   page?: boolean | Prisma.InterviewSession$pageArgs<ExtArgs>
+  topic?: boolean | Prisma.InterviewSession$topicArgs<ExtArgs>
 }, ExtArgs["result"]["interviewSession"]>
 
 export type InterviewSessionSelectScalar = {
@@ -698,27 +964,34 @@ export type InterviewSessionSelectScalar = {
   status?: boolean
   pageId?: boolean
   topicText?: boolean
+  mode?: boolean
+  persona?: boolean
+  courseTopicId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type InterviewSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "source" | "status" | "pageId" | "topicText" | "createdAt" | "updatedAt", ExtArgs["result"]["interviewSession"]>
+export type InterviewSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "source" | "status" | "pageId" | "topicText" | "mode" | "persona" | "courseTopicId" | "createdAt" | "updatedAt", ExtArgs["result"]["interviewSession"]>
 export type InterviewSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   page?: boolean | Prisma.InterviewSession$pageArgs<ExtArgs>
+  topic?: boolean | Prisma.InterviewSession$topicArgs<ExtArgs>
   turns?: boolean | Prisma.InterviewSession$turnsArgs<ExtArgs>
   _count?: boolean | Prisma.InterviewSessionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type InterviewSessionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   page?: boolean | Prisma.InterviewSession$pageArgs<ExtArgs>
+  topic?: boolean | Prisma.InterviewSession$topicArgs<ExtArgs>
 }
 export type InterviewSessionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   page?: boolean | Prisma.InterviewSession$pageArgs<ExtArgs>
+  topic?: boolean | Prisma.InterviewSession$topicArgs<ExtArgs>
 }
 
 export type $InterviewSessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "InterviewSession"
   objects: {
     page: Prisma.$PagePayload<ExtArgs> | null
+    topic: Prisma.$CourseTopicPayload<ExtArgs> | null
     turns: Prisma.$InterviewTurnPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -728,6 +1001,17 @@ export type $InterviewSessionPayload<ExtArgs extends runtime.Types.Extensions.In
     status: $Enums.InterviewStatus
     pageId: string | null
     topicText: string | null
+    mode: $Enums.InterviewMode
+    /**
+     * Free text: the agent's brief. Null on a plain viva.
+     */
+    persona: string | null
+    /**
+     * The syllabus topic a course-scoped session argues about or recites. Debate
+     * and recitation write ledger events against it, so without this column their
+     * events land with no target and the scheduler cannot see them.
+     */
+    courseTopicId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["interviewSession"]>
@@ -1125,6 +1409,7 @@ readonly fields: InterviewSessionFieldRefs;
 export interface Prisma__InterviewSessionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   page<T extends Prisma.InterviewSession$pageArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSession$pageArgs<ExtArgs>>): Prisma.Prisma__PageClient<runtime.Types.Result.GetResult<Prisma.$PagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  topic<T extends Prisma.InterviewSession$topicArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSession$topicArgs<ExtArgs>>): Prisma.Prisma__CourseTopicClient<runtime.Types.Result.GetResult<Prisma.$CourseTopicPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   turns<T extends Prisma.InterviewSession$turnsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSession$turnsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InterviewTurnPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1161,6 +1446,9 @@ export interface InterviewSessionFieldRefs {
   readonly status: Prisma.FieldRef<"InterviewSession", 'InterviewStatus'>
   readonly pageId: Prisma.FieldRef<"InterviewSession", 'String'>
   readonly topicText: Prisma.FieldRef<"InterviewSession", 'String'>
+  readonly mode: Prisma.FieldRef<"InterviewSession", 'InterviewMode'>
+  readonly persona: Prisma.FieldRef<"InterviewSession", 'String'>
+  readonly courseTopicId: Prisma.FieldRef<"InterviewSession", 'String'>
   readonly createdAt: Prisma.FieldRef<"InterviewSession", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"InterviewSession", 'DateTime'>
 }
@@ -1578,6 +1866,25 @@ export type InterviewSession$pageArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   include?: Prisma.PageInclude<ExtArgs> | null
   where?: Prisma.PageWhereInput
+}
+
+/**
+ * InterviewSession.topic
+ */
+export type InterviewSession$topicArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CourseTopic
+   */
+  select?: Prisma.CourseTopicSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CourseTopic
+   */
+  omit?: Prisma.CourseTopicOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CourseTopicInclude<ExtArgs> | null
+  where?: Prisma.CourseTopicWhereInput
 }
 
 /**
