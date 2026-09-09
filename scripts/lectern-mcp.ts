@@ -216,6 +216,14 @@ server.registerTool(
   },
   async ({ pageId, items }) => {
     try {
+      const { page } = await lecternFetch<{
+        page: { folder: { id: string } };
+      }>(`/api/pages/${encodeURIComponent(pageId)}`);
+
+      // The route has no folder check of its own — enforce the course scope here,
+      // so a pageId from another course reads as not-found rather than leaking data.
+      if (page.folder.id !== folderId) return text("Not found in this course.");
+
       const { items: saved } = await lecternFetch<{ items: unknown[] }>(
         `/api/pages/${encodeURIComponent(pageId)}/action-items`,
         {
