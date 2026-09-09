@@ -43,7 +43,7 @@ Three things to know:
    cp .env.example .env
    ```
 
-   Edit `.env` and set `OPENROUTER_API_KEY` to your key from [openrouter.ai/keys](https://openrouter.ai/keys). The default models (`OPENROUTER_MODEL_SUMMARY`, `OPENROUTER_MODEL_FLASHCARDS`, `OPENROUTER_MODEL_QUIZ`, `OPENROUTER_MODEL_CHAT`) are all `openrouter/free`, which lets OpenRouter pick a current free model rather than pinning one that may be retired. Name a specific model in `.env` if you want a consistent one; `https://openrouter.ai/models?order=top-weekly` filtered to `:free` shows what's available.
+   Edit `.env` and set `OPENROUTER_API_KEY` to your key from [openrouter.ai/keys](https://openrouter.ai/keys). The default models (`OPENROUTER_MODEL_SUMMARY`, `OPENROUTER_MODEL_FLASHCARDS`, `OPENROUTER_MODEL_QUIZ`, `OPENROUTER_MODEL_CHAT`) are all `openrouter/free`, which Lectern sends as a fallback chain of current free chat models (`src/lib/openrouter.ts`) rather than pinning one that may be retired — the bare router is not used, because its pool includes models that are not chat models at all. Name a specific model in `.env` if you want a consistent one; `https://openrouter.ai/models?order=top-weekly` filtered to `:free` shows what's available.
 
 2. **Initialize the database**
 

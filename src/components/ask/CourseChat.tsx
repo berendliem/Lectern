@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { BrainCircuit, FileText, Loader2, Presentation, Send } from "lucide-react";
 import clsx from "@/lib/clsx";
+import { ChatBubble } from "./ChatBubble";
 
 type Citation = { label: string; pageId: string | null; materialId: string | null };
 type Message = { role: "user" | "assistant"; content: string; citations?: Citation[] };
@@ -105,16 +106,7 @@ export function CourseChat({ folderId }: { folderId: string }) {
             key={i}
             className={clsx("flex flex-col gap-1.5", m.role === "user" ? "items-end" : "items-start")}
           >
-            <div
-              className={clsx(
-                "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[13.5px] leading-6",
-                m.role === "user"
-                  ? "rounded-br-md bg-ink text-surface"
-                  : "rounded-bl-md bg-surface-3 text-ink"
-              )}
-            >
-              {m.content}
-            </div>
+            <ChatBubble role={m.role} content={m.content} />
             {m.citations && m.citations.length > 0 && (
               <div className="flex max-w-[85%] flex-wrap gap-1.5">
                 {m.citations.map((c) =>
