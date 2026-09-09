@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
-import { searchCourse } from "@/lib/embeddings";
+import { searchCourse, type CourseHit } from "@/lib/embeddings";
 import { dropUnbackedChecks, lessonOutlineResponseSchema, lessonScenesResponseSchema, openOnRecall } from "@/lib/lesson";
 import {
   LESSON_OUTLINE_SYSTEM_PROMPT,
@@ -31,7 +31,12 @@ export async function POST(
   const topic = await db.courseTopic.findUnique({ where: { id: topicId } });
   if (!topic || topic.folderId !== id) return jsonError("Topic not found", 404);
 
-  const hits = await searchCourse(id, topic.title, GROUNDING_K);
+  let hits: CourseHit[] = [];
+  try {
+    hits = await searchCourse(id, topic.title, GROUNDING_K);
+  } catch (e) {
+    console.error(`[lesson] semantic retrieval failed for topic ${topicId}, continuing ungrounded:`, e);
+  }
   const grounding = hits.map((hit) => ({ title: hit.title, text: hit.text }));
 
   let beats;

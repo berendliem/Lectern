@@ -50,9 +50,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ turns: [], done: true, maxExchanges: MAX_DEBATE_EXCHANGES });
   }
 
-  const grounding = (await searchCourse(session.topic.folderId, session.topic.title, GROUNDING_K)).map(
-    (hit) => ({ title: hit.title, text: hit.text })
-  );
+  let grounding: { title: string; text: string }[] = [];
+  try {
+    const hits = await searchCourse(session.topic.folderId, session.topic.title, GROUNDING_K);
+    grounding = hits.map((hit) => ({ title: hit.title, text: hit.text }));
+  } catch (e) {
+    console.error(
+      `[debate/advance] semantic retrieval failed for debate session ${id}, continuing ungrounded:`,
+      e
+    );
+  }
 
   const texts = new Map<number, string>(
     session.turns.map((t) => [t.order, t.speaker === STUDENT_SPEAKER ? (t.answer ?? "") : t.question])
