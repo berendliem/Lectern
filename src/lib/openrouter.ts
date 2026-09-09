@@ -13,6 +13,32 @@ type ContentPart =
 
 type ApiMessage = { role: ChatMessage["role"]; content: string | ContentPart[] };
 
+/**
+ * The default every stage falls back to. It is a router, not a model: OpenRouter
+ * picks whatever free model it likes, and that pool includes models that are not
+ * chat models at all — nvidia/nemotron-3.5-content-safety:free answers any prompt
+ * with "User Safety: safe", which then lands in the chat bubble as the answer.
+ */
+const FREE_ROUTER = "openrouter/free";
+
+/**
+ * Sent as OpenRouter's `models` fallback chain in place of the router: it tries
+ * these in order and falls through on an unavailable or retired model, which is
+ * the property the router was there for, without the non-chat models. All three
+ * are free-tier, and all three take response_format, so the JSON stages keep
+ * working wherever the chain lands.
+ */
+const FREE_CHAT_MODELS = [
+  "nvidia/nemotron-3-super-120b-a12b:free",
+  "nex-agi/nex-n2.5-pro:free",
+  "dots-studio/dots-3-note-preview:free",
+];
+
+/** Exported for the test; `model` and `models` are mutually exclusive upstream. */
+export function modelField(model: string): { model: string } | { models: string[] } {
+  return model === FREE_ROUTER ? { models: FREE_CHAT_MODELS } : { model };
+}
+
 async function callOpenRouter(opts: {
   model: string;
   messages: ApiMessage[];
@@ -32,7 +58,7 @@ async function callOpenRouter(opts: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: opts.model,
+        ...modelField(opts.model),
         messages: opts.messages,
         ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
       }),
