@@ -243,13 +243,23 @@ server.registerTool(
   "schedule_reviews",
   {
     description:
-      "Put spaced-repetition review sessions on the student's real calendar — one event per upcoming day that already has cards due, over the next 7 days. You choose whether to schedule; the times come from the student's own settings. Omit pageId to cover the whole library.",
+      "Put spaced-repetition review sessions on the student's real calendar — one event per upcoming day that already has cards due, over the next 7 days. You choose whether to schedule; the times come from the student's own settings. Omit pageId to schedule review sessions for cards due across all the student's courses, not just this one.",
     inputSchema: {
       pageId: z.string().min(1).optional().describe("Scope to one lecture's cards"),
     },
   },
   async ({ pageId }) => {
     try {
+      if (pageId) {
+        const { page } = await lecternFetch<{
+          page: { folder: { id: string } };
+        }>(`/api/pages/${encodeURIComponent(pageId)}`);
+
+        // The route has no folder check of its own — enforce the course scope here,
+        // so a pageId from another course reads as not-found rather than leaking data.
+        if (page.folder.id !== folderId) return text("Not found in this course.");
+      }
+
       const { createdDays } = await lecternFetch<{ createdDays: string[] }>(
         "/api/integrations/calendar/schedule-reviews",
         {
