@@ -277,6 +277,22 @@ export const actionItemsResponseSchema = z.object({
     .max(40),
 });
 
+/**
+ * Action items supplied by a caller rather than extracted from a transcript —
+ * the study-plan agent's write path. Same three kinds the extractor produces.
+ */
+export const createActionItemsSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        kind: z.enum(["ACTION", "DECISION", "QUESTION"]),
+        text: z.string().min(1).max(500),
+      })
+    )
+    .min(1)
+    .max(50),
+});
+
 export const summaryResponseSchema = z.object({
   markdown: z.string().min(1),
   keyTerms: z.array(z.object({ term: z.string().min(1), definition: z.string().min(1) })),
