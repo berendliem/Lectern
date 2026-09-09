@@ -152,7 +152,7 @@ export function LessonRunner({ folderId, topicId, topicTitle }: { folderId: stri
       }
 
       const data = await res.json();
-      window.location.href = `/interview/${data.session.id}`;
+      window.open(`/interview/${data.session.id}`, "_blank", "noopener,noreferrer");
     } catch {
       setError("Network error talking to the local server.");
     }
@@ -309,7 +309,7 @@ export function LessonRunner({ folderId, topicId, topicTitle }: { folderId: stri
               Let&rsquo;s have a dialogue about <span className="font-medium">{topicTitle}</span>. I&rsquo;ll guide you through your thinking.
             </p>
             <Button onClick={handleTeachStart} className="self-start">
-              Start dialogue
+              Start dialogue (opens in new tab)
             </Button>
           </div>
         )}
@@ -348,10 +348,9 @@ export function LessonRunner({ folderId, topicId, topicTitle }: { folderId: stri
         {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
       </div>
 
-      {(recallResult || (scene.kind === "EXPLAIN" && !scene.prompt) || (scene.kind === "TEACH") || quizResult) && (
+      {(recallResult || scene.kind === "EXPLAIN" || scene.kind === "TEACH" || quizResult) && (
         <Button
           onClick={handleNext}
-          disabled={false}
           className="self-end"
         >
           {isLastScene ? "Lesson complete" : "Next scene"}
