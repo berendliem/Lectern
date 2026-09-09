@@ -108,12 +108,13 @@ course by asking for one, and cannot widen its own scope mid-run.
 already cap context at, so one tool call cannot hand the agent half a megabyte
 of transcript.
 
-Both writes are reversible in one click: an action item has a delete, a calendar
-event can be deleted in the user's calendar. They therefore execute directly,
-with no propose-then-apply gate. `schedule_reviews` deliberately exposes no
-free-form title or time — it wraps the existing route, which places one event
-per day that has cards due at `REVIEW_EVENT_HOUR`. The agent decides *whether*
-to schedule, not where the events land.
+These writes are reversible in different ways: a calendar event can be deleted
+in the user's calendar, and an agent-created action item can be marked done but
+not removed. They therefore execute directly, with no propose-then-apply gate.
+`schedule_reviews` deliberately exposes no free-form title or time — it wraps the
+existing route, which places one event per day that has cards due at
+`REVIEW_EVENT_HOUR`. The agent decides *whether* to schedule, not where the
+events land.
 
 ## 6. HTTP surface changes
 
