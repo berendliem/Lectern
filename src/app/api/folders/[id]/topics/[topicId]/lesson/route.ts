@@ -76,9 +76,16 @@ export async function POST(
     return jsonError(message, 502);
   }
 
-  // Drop first, hoist second: hoisting before dropping could leave a
-  // four-scene lesson at three, and openOnRecall must see the final list.
-  const scenes = openOnRecall(dropUnbackedChecks(parsed.scenes, quizQuestion !== null));
+  let scenes;
+  try {
+    // Drop first, hoist second: hoisting before dropping could leave a
+    // four-scene lesson at three, and openOnRecall must see the final list.
+    scenes = openOnRecall(dropUnbackedChecks(parsed.scenes, quizQuestion !== null));
+  } catch (e) {
+    const message =
+      e instanceof ZodError ? RETRY_MESSAGE : e instanceof Error ? e.message : "Processing the lesson structure failed";
+    return jsonError(message, 502);
+  }
 
   return NextResponse.json({
     topic: { id: topic.id, title: topic.title },
