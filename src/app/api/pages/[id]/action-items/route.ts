@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
-import { jsonError } from "@/lib/api-utils";
+import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON } from "@/lib/llm";
 import { ACTION_ITEMS_SYSTEM_PROMPT, buildActionItemsUserPrompt } from "@/lib/prompts/action-items";
-import { actionItemsResponseSchema } from "@/lib/validation";
+import { actionItemsResponseSchema, createActionItemsSchema } from "@/lib/validation";
 
 // Same cap the chat route uses: keeps one request from shipping a
 // half-megabyte transcript to the model.
@@ -19,7 +19,25 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({ items });
 }
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // With a body, the caller already knows what the items are; without one,
+  // POST still means "extract them from the transcript", as it always has.
+  const body = await req.json().catch(() => null);
+  if (body && typeof body === "object" && "items" in body) {
+    const validated = await withValidation(createActionItemsSchema, body);
+    if ("error" in validated) return validated.error;
+
+    const { id: pageId } = await params;
+    const target = await db.page.findUnique({ where: { id: pageId }, select: { id: true } });
+    if (!target) return jsonError("Page not found", 404);
+
+    await db.actionItem.createMany({
+      data: validated.data.items.map((item) => ({ pageId, kind: item.kind, text: item.text })),
+    });
+    const items = await db.actionItem.findMany({ where: { pageId }, orderBy: { createdAt: "asc" } });
+    return NextResponse.json({ items });
+  }
+
   const { id } = await params;
   const page = await db.page.findUnique({ where: { id }, include: { transcript: true } });
   if (!page) return jsonError("Page not found", 404);

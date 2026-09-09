@@ -196,6 +196,69 @@ server.registerTool(
   }
 );
 
+server.registerTool(
+  "create_action_items",
+  {
+    description:
+      "Record concrete next steps against one lecture, so they appear on that lecture's page. Use ACTION for something to do, QUESTION for something to ask. One call per lecture; keep each item to one sentence.",
+    inputSchema: {
+      pageId: z.string().min(1).describe("The lecture the steps belong to"),
+      items: z
+        .array(
+          z.object({
+            kind: z.enum(["ACTION", "DECISION", "QUESTION"]),
+            text: z.string().min(1).max(500),
+          })
+        )
+        .min(1)
+        .max(20),
+    },
+  },
+  async ({ pageId, items }) => {
+    try {
+      const { items: saved } = await lecternFetch<{ items: unknown[] }>(
+        `/api/pages/${encodeURIComponent(pageId)}/action-items`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ items }),
+        }
+      );
+      return text(`Created ${items.length} item(s); this lecture now has ${saved.length}.`);
+    } catch (e) {
+      return failure(e);
+    }
+  }
+);
+
+server.registerTool(
+  "schedule_reviews",
+  {
+    description:
+      "Put spaced-repetition review sessions on the student's real calendar — one event per upcoming day that already has cards due, over the next 7 days. You choose whether to schedule; the times come from the student's own settings. Omit pageId to cover the whole library.",
+    inputSchema: {
+      pageId: z.string().min(1).optional().describe("Scope to one lecture's cards"),
+    },
+  },
+  async ({ pageId }) => {
+    try {
+      const { createdDays } = await lecternFetch<{ createdDays: string[] }>(
+        "/api/integrations/calendar/schedule-reviews",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(pageId ? { pageId } : {}),
+        }
+      );
+      return text(`Scheduled review sessions on: ${createdDays.join(", ")}`);
+    } catch (e) {
+      // No calendar MCP configured, or nothing due — both come back as the
+      // route's own message, which is what the plan should say happened.
+      return failure(e);
+    }
+  }
+);
+
 // Top-level await needs ESM output; this repo's package.json has no "type":
 // "module", so tsx transforms .ts scripts to CJS (see scripts/reindex.ts's
 // same avoidance). An async IIFE keeps the brief's connect call unchanged.
