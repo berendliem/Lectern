@@ -291,3 +291,12 @@ export const quizResponseSchema = z.object({
     )
     .min(1),
 });
+
+export const debateInterjectSchema = z.object({
+  text: z.string().trim().min(1).max(2000),
+});
+
+/** One agent's utterance. Short by construction: a debate of essays is a reading task. */
+export const debateUtteranceResponseSchema = z.object({
+  utterance: z.string().trim().min(1).max(1500),
+});
