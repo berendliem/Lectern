@@ -66,5 +66,7 @@ export function claudeArgs(opts: {
     "--output-format",
     "stream-json",
     "--include-partial-messages",
+    // The CLI requires --verbose when --print is combined with --output-format stream-json.
+    "--verbose",
   ];
 }

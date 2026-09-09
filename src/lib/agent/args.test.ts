@@ -20,6 +20,8 @@ test("it runs in print mode and streams json", () => {
   assert.ok(args.includes("-p"));
   assert.equal(args[args.indexOf("--output-format") + 1], "stream-json");
   assert.ok(args.includes("--include-partial-messages"));
+  // The CLI requires --verbose when --print is combined with --output-format stream-json.
+  assert.ok(args.includes("--verbose"));
 });
 
 test("the prompt is an argument value, never interpolated into a shell string", () => {
