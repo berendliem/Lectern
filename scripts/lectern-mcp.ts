@@ -87,10 +87,15 @@ server.registerTool(
       const { page } = await lecternFetch<{
         page: {
           title: string;
+          folder: { id: string };
           notes: { markdown: string } | null;
           transcript: { rawText: string; cleanText: string | null } | null;
         };
       }>(`/api/pages/${encodeURIComponent(pageId)}`);
+
+      // The route has no folder check of its own — enforce the course scope here,
+      // so a pageId from another course reads as not-found rather than leaking data.
+      if (page.folder.id !== folderId) return text("Not found in this course.");
 
       const body =
         part === "notes" ? page.notes?.markdown : (page.transcript?.cleanText ?? page.transcript?.rawText);
@@ -196,4 +201,7 @@ server.registerTool(
 // same avoidance). An async IIFE keeps the brief's connect call unchanged.
 void (async () => {
   await server.connect(new StdioServerTransport());
-})();
+})().catch((e) => {
+  console.error("lectern-mcp: failed to connect:", e instanceof Error ? e.message : e);
+  process.exitCode = 1;
+});
