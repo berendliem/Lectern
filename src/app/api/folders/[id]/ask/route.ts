@@ -92,7 +92,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     ? blocks.join("\n\n---\n\n")
     : `(Nothing in ${folder.name} matched this question.)`;
 
-  const systemPrompt = `You are a study assistant for the course "${folder.name}". Answer using only the course excerpts below. When you use a fact, name the lecture or material it came from. Be concise and concrete. If the course material does not cover the question, say so plainly — you may then add general knowledge, clearly labeled as outside this course.\n\nCOURSE EXCERPTS:\n${context}`;
+  const systemPrompt = `You are a study assistant for the course "${folder.name}". Answer using only the course excerpts below. When you use a fact, name the lecture or material it came from. Be concise and concrete. Format with plain markdown only — no HTML tags, and prefer short lists over wide tables. If the course material does not cover the question, say so plainly — you may then add general knowledge, clearly labeled as outside this course.\n\nCOURSE EXCERPTS:\n${context}`;
 
   const chatMessages: ChatMessage[] = [{ role: "system", content: systemPrompt }, ...messages];
 

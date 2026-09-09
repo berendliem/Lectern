@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Loader2, MessageCircleQuestion, Send } from "lucide-react";
-import clsx from "@/lib/clsx";
+import { ChatBubble } from "@/components/ask/ChatBubble";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -80,17 +80,12 @@ export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: 
           </div>
         )}
         {messages.map((m, i) => (
-          <div
+          <ChatBubble
             key={i}
-            className={clsx(
-              "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-[13.5px] leading-6",
-              m.role === "user"
-                ? "self-end rounded-br-md bg-ink text-surface"
-                : "self-start rounded-bl-md bg-surface-3 text-ink"
-            )}
-          >
-            {m.content}
-          </div>
+            role={m.role}
+            content={m.content}
+            className={m.role === "user" ? "self-end" : "self-start"}
+          />
         ))}
         {sending && (
           <div className="flex items-center gap-2 self-start rounded-2xl rounded-bl-md bg-surface-3 px-3.5 py-2 text-[13px] text-muted">

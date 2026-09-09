@@ -94,7 +94,7 @@ export function StudyPlanPanel({ folderId }: { folderId: string }) {
       {error && <p className="text-[13px] text-red-600">{error}</p>}
 
       {plan && (
-        <div className="prose prose-sm max-w-none text-ink">
+        <div className="prose prose-sm max-w-none text-ink dark:prose-invert">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{plan}</ReactMarkdown>
         </div>
       )}
