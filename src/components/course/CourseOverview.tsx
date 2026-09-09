@@ -9,6 +9,7 @@ import { MASTERY_CLASSES, MASTERY_LABEL, type Mastery } from "@/lib/mastery";
 import type { CoverageState } from "@/lib/coverage";
 import { PretestDialog } from "@/components/course/PretestDialog";
 import { LessonRunner } from "@/components/course/LessonRunner";
+import { StudyPlanPanel } from "@/components/course/StudyPlanPanel";
 
 export type TopicRow = {
   id: string;
@@ -193,6 +194,8 @@ export function CourseOverview({
           )}
         </div>
       </div>
+
+      <StudyPlanPanel folderId={folderId} />
 
       {topics.length > 0 && (
         <div className="flex flex-col gap-2">
