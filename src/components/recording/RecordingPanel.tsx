@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
 import { uploadAudio, transcribePage } from "@/components/recording/upload";
@@ -54,6 +54,20 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
   const [saveState, setSaveState] = useState<"idle" | "uploading" | "transcribing">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const router = useRouter();
+  // Arriving from a class row on home: start the mic straight away, then drop
+  // the flag from the URL so a reload or back-navigation does not start again.
+  // The permission prompt happens here, on the lecture page, not on home.
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStarted.current) return;
+    if (searchParams.get("record") !== "1") return;
+    if (status !== "idle") return;
+    autoStarted.current = true;
+    void startRecording();
+    router.replace(pathname);
+  }, [searchParams, pathname, router, startRecording, status]);
   const previewUrl = useMemo(() => (audioBlob ? URL.createObjectURL(audioBlob) : null), [audioBlob]);
   // "audio/webm;codecs=opus" -> "webm". Good enough for a filename.
   const downloadName = `recording.${audioBlob?.type.split(";")[0].split("/")[1] ?? "webm"}`;
