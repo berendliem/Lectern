@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Loader2, Sparkles } from "lucide-react";
-import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
-import { uploadAudio, transcribePage } from "@/components/recording/upload";
+import { useRecording } from "@/components/recording/RecordingProvider";
+import type { RecorderStatus } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
 
 function formatElapsed(seconds: number): string {
@@ -13,51 +13,44 @@ function formatElapsed(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function RecordingPanel({ pageId }: { pageId: string }) {
-  const [liveTranscript, setLiveTranscript] = useState("");
-  const [liveBusy, setLiveBusy] = useState(false);
+export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitle: string }) {
+  const {
+    session,
+    status,
+    elapsedSeconds,
+    level,
+    audioBlob,
+    error,
+    liveTranscript,
+    liveBusy,
+    saving,
+    saveError,
+    start,
+    pause,
+    resume,
+    stop,
+    discard,
+    save,
+  } = useRecording();
+
+  const mine = session?.pageId === pageId;
+  const elsewhere = session !== null && !mine;
+  const busy = saving;
+  // A session belonging to another lecture must not leak into this panel's
+  // timer, level meter, or preview.
+  const shown: RecorderStatus = mine ? status : "idle";
+  const previewUrl = useMemo(
+    () => (mine && audioBlob ? URL.createObjectURL(audioBlob) : null),
+    [mine, audioBlob]
+  );
+
   const [explanation, setExplanation] = useState<string | null>(null);
   const [explaining, setExplaining] = useState(false);
   const [explainError, setExplainError] = useState<string | null>(null);
   const liveEndRef = useRef<HTMLDivElement>(null);
 
-  const handleLiveSegment = useCallback(async (blob: Blob) => {
-    setLiveBusy(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", blob, "segment.webm");
-      const res = await fetch("/api/live-transcribe", { method: "POST", body: formData });
-      if (res.ok) {
-        const { text } = await res.json();
-        if (text?.trim()) {
-          setLiveTranscript((t) => (t ? `${t} ${text.trim()}` : text.trim()));
-          liveEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        }
-      }
-    } finally {
-      setLiveBusy(false);
-    }
-  }, []);
-
-  const {
-    status,
-    elapsedSeconds,
-    audioBlob,
-    level,
-    error,
-    startRecording,
-    stopRecording,
-    pauseRecording,
-    resumeRecording,
-    reset,
-  } = useMediaRecorder({ onLiveSegment: handleLiveSegment });
-  const [saveState, setSaveState] = useState<"idle" | "uploading" | "transcribing">("idle");
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const router = useRouter();
-  const previewUrl = useMemo(() => (audioBlob ? URL.createObjectURL(audioBlob) : null), [audioBlob]);
   // "audio/webm;codecs=opus" -> "webm". Good enough for a filename.
   const downloadName = `recording.${audioBlob?.type.split(";")[0].split("/")[1] ?? "webm"}`;
-  const busy = saveState !== "idle";
 
   async function handleExplain() {
     const context = liveTranscript.slice(-2000);
@@ -79,35 +72,28 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
     }
   }
 
-  async function handleSave() {
-    if (!audioBlob) return;
-    setSaveState("uploading");
-    setUploadError(null);
-    const result = await uploadAudio(pageId, audioBlob, "recording.webm", elapsedSeconds);
-    if (!result.ok) {
-      setSaveState("idle");
-      setUploadError(result.error);
-      return;
-    }
-    router.refresh();
-    setSaveState("transcribing");
-    const transcribed = await transcribePage(pageId);
-    setSaveState("idle");
-    if (!transcribed.ok) setUploadError(transcribed.error);
-    reset();
-    setLiveTranscript("");
-    setExplanation(null);
-    router.refresh();
+  if (elsewhere && session) {
+    return (
+      <div className="flex flex-col gap-2 rounded-xl border border-line/80 bg-surface p-6 text-sm text-muted">
+        <p>
+          A recording is running for{" "}
+          <Link href={`/pages/${session.pageId}`} className="font-medium text-brand-ink underline">
+            {session.pageTitle}
+          </Link>
+          . Stop it before recording here — one microphone, one recording.
+        </p>
+      </div>
+    );
   }
 
-  const inSession = status === "recording" || status === "paused";
+  const inSession = shown === "recording" || shown === "paused";
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-line/80 bg-surface p-6">
       <div className="flex flex-col items-center gap-3">
-        <div className="font-mono text-3xl tabular-nums text-ink">{formatElapsed(elapsedSeconds)}</div>
+        <div className="font-mono text-3xl tabular-nums text-ink">{formatElapsed(mine ? elapsedSeconds : 0)}</div>
 
-        {status === "recording" && (
+        {shown === "recording" && (
           <div className="h-2 w-48 overflow-hidden rounded-full bg-surface-3">
             <div
               className="h-full rounded-full bg-red-500 transition-all"
@@ -117,36 +103,32 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
         )}
 
         <div className="flex flex-wrap items-center justify-center gap-2">
-          {status === "idle" && <Button onClick={startRecording}>Start recording</Button>}
-          {status === "recording" && (
+          {shown === "idle" && <Button onClick={() => start({ id: pageId, title: pageTitle })}>Start recording</Button>}
+          {shown === "recording" && (
             <>
-              <Button variant="secondary" onClick={pauseRecording}>
+              <Button variant="secondary" onClick={pause}>
                 Pause
               </Button>
-              <Button variant="danger" onClick={stopRecording}>
+              <Button variant="danger" onClick={stop}>
                 Stop
               </Button>
             </>
           )}
-          {status === "paused" && (
+          {shown === "paused" && (
             <>
-              <Button onClick={resumeRecording}>Resume</Button>
-              <Button variant="danger" onClick={stopRecording}>
+              <Button onClick={resume}>Resume</Button>
+              <Button variant="danger" onClick={stop}>
                 Stop
               </Button>
             </>
           )}
-          {status === "stopped" && audioBlob && previewUrl && (
+          {shown === "stopped" && audioBlob && previewUrl && (
             <>
               <audio controls src={previewUrl} className="h-9" />
-              <Button onClick={handleSave} disabled={busy}>
-                {saveState === "uploading"
-                  ? "Saving…"
-                  : saveState === "transcribing"
-                    ? "Transcribing…"
-                    : "Save & transcribe"}
+              <Button onClick={save} disabled={busy}>
+                {saving ? "Saving…" : "Save & transcribe"}
               </Button>
-              <Button variant="secondary" onClick={reset} disabled={busy}>
+              <Button variant="secondary" onClick={discard} disabled={busy}>
                 Discard
               </Button>
             </>
@@ -154,9 +136,9 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {uploadError && (
+        {saveError && (
           <div className="flex flex-col items-center gap-1 text-sm text-red-600">
-            <p>{uploadError}</p>
+            <p>{saveError}</p>
             {/* The recording exists only in this tab until it uploads. If the save
                 failed, hand it to the user as a file before the tab takes it away —
                 they can re-upload it from the course page. */}
@@ -169,7 +151,7 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
         )}
       </div>
 
-      {(inSession || (status === "stopped" && liveTranscript)) && (
+      {(inSession || (shown === "stopped" && liveTranscript)) && (
         <div className="flex flex-col gap-2 border-t border-line pt-4">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-2">

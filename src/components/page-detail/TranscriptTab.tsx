@@ -14,6 +14,7 @@ import type { Chapter, TranscriptSegment } from "@/types";
 
 export function TranscriptTab({
   pageId,
+  pageTitle,
   hasAudio,
   isVideo,
   transcript,
@@ -22,6 +23,7 @@ export function TranscriptTab({
   segments,
 }: {
   pageId: string;
+  pageTitle: string;
   hasAudio: boolean;
   isVideo: boolean;
   transcript: string | null;
@@ -68,7 +70,7 @@ export function TranscriptTab({
 
       {!hasAudio && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <RecordingPanel pageId={pageId} />
+          <RecordingPanel pageId={pageId} pageTitle={pageTitle} />
           <AudioUploadDropzone pageId={pageId} />
         </div>
       )}
