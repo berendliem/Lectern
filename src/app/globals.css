@@ -39,6 +39,11 @@
      notice. Neither is load-bearing alone. */
   --gold: #d5a95c;
   --bronze: #8a6320;
+
+  /* The sentence being read aloud. A wash, not a fill: the body text keeps its
+     own colour on top of it, so it has to stay light enough to leave that text
+     well clear of 4.5 : 1. */
+  --read-aloud: rgba(213, 169, 92, 0.34);
 }
 
 .dark {
@@ -67,6 +72,10 @@
 
   --gold: #d5a95c;
   --bronze: #e5c489;
+
+  /* Gold at this opacity vanishes on the dark ground; the mid navy reads as a
+     wash there the way the gold does on parchment. */
+  --read-aloud: rgba(47, 88, 150, 0.55);
 }
 
 @theme inline {
@@ -132,4 +141,9 @@ body {
 
 .shadow-brand {
   box-shadow: 0 8px 24px -10px rgba(0, 27, 66, 0.4);
+}
+
+/* Painted by ReadAloudBar over a Range, so the notes markup is never touched. */
+::highlight(read-aloud) {
+  background-color: var(--read-aloud);
 }
