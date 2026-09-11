@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { ShortAnswerQuestion } from "@/components/quiz/ShortAnswerQuestion";
 import { MultipleChoiceQuestion } from "@/components/quiz/MultipleChoiceQuestion";
 import { ClozeQuestion } from "@/components/quiz/ClozeQuestion";
@@ -62,18 +62,26 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
         Question {index + 1} of {questions.length}
       </p>
 
-      {question.type === "SHORT_ANSWER" ? (
-        <ShortAnswerQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
-      ) : question.type === "CLOZE" ? (
-        <ClozeQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
-      ) : (
-        <MultipleChoiceQuestion
-          prompt={question.prompt}
-          options={question.options ?? []}
-          onSubmit={handleSubmit}
-          disabled={submitting || !!feedback}
-        />
-      )}
+      {/*
+        Keyed on the question, so moving to the next one remounts the input
+        rather than reusing it. Without this, two questions of the same type in
+        a row share a component instance — and its useState — so the answer
+        typed for one appears already filled in for the next.
+      */}
+      <Fragment key={question.id}>
+        {question.type === "SHORT_ANSWER" ? (
+          <ShortAnswerQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
+        ) : question.type === "CLOZE" ? (
+          <ClozeQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
+        ) : (
+          <MultipleChoiceQuestion
+            prompt={question.prompt}
+            options={question.options ?? []}
+            onSubmit={handleSubmit}
+            disabled={submitting || !!feedback}
+          />
+        )}
+      </Fragment>
 
       {feedback && (
         <div

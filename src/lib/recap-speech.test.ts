@@ -18,7 +18,15 @@ test("no text is lost or duplicated", () => {
   assert.equal(splitForSpeech(script).join(" "), script);
 });
 
-test("a sentence longer than the budget is still spoken whole", () => {
+test("a run-on sentence is split rather than left to be cut off mid-word", () => {
+  const runOn = `${"word ".repeat(120).trim()}.`;
+  const chunks = splitForSpeech(runOn);
+  assert.ok(chunks.length > 1, "an over-long sentence must not go out as one utterance");
+  for (const chunk of chunks) assert.ok(chunk.length <= 200, `chunk too long: ${chunk.length}`);
+  assert.equal(chunks.join(" "), runOn);
+});
+
+test("a single unbreakable word is emitted rather than dropped", () => {
   const long = `${"a".repeat(400)}.`;
   assert.deepEqual(splitForSpeech(long), [long]);
 });

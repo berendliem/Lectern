@@ -21,14 +21,21 @@ export function DrillMissesButton({ pageId, missedCount }: { pageId: string; mis
   async function drill() {
     setRunning(true);
     setError(null);
-    const res = await fetch(`/api/pages/${pageId}/generate-quiz?misses=1`, { method: "POST" });
-    setRunning(false);
-    if (!res.ok) {
-      const body = await res.json().catch(() => null);
-      setError(body?.error ?? "Could not write the drill questions. Try again.");
-      return;
+    try {
+      const res = await fetch(`/api/pages/${pageId}/generate-quiz?misses=1`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error ?? "Could not write the drill questions. Try again.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      // A dropped connection rejects the fetch outright. Without this the
+      // button would spin for ever with nothing said.
+      setError("Could not reach Lectern. Check it is still running, then try again.");
+    } finally {
+      setRunning(false);
     }
-    router.refresh();
   }
 
   return (
@@ -45,7 +52,11 @@ export function DrillMissesButton({ pageId, missedCount }: { pageId: string; mis
         Adds new questions on the {missedCount === 1 ? "concept" : "concepts"} you got wrong. Nothing existing is
         removed.
       </p>
-      {error && <p className="text-[13px] text-red-600">{error}</p>}
+      {error && (
+        <p role="alert" className="text-[13px] text-red-600">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

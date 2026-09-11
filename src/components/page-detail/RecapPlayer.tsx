@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Headphones, Loader2, Pause, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { splitForSpeech } from "@/lib/recap-speech";
@@ -30,20 +30,39 @@ export function RecapPlayer({ pageId }: { pageId: string }) {
   // garbage-collect an utterance mid-sentence if nothing else holds it.
   const queued = useRef<SpeechSynthesisUtterance[]>([]);
 
+  /**
+   * Cancelling speech fires `error` on whatever was mid-sentence — the spec
+   * calls it `canceled`, and it arrives by the same path a genuine failure
+   * would. Letting those handlers survive a deliberate Stop means the student
+   * is told the browser gave up on a recap they themselves ended, so the
+   * handlers come off before the queue is thrown away.
+   */
+  const silenceQueue = useCallback(() => {
+    if (!hasSpeech()) return;
+    for (const u of queued.current) {
+      u.onend = null;
+      u.onerror = null;
+    }
+    queued.current = [];
+    window.speechSynthesis.cancel();
+  }, []);
+
   // Speech is a global the component does not own: leaving the page mid-recap
   // must stop the voice, not let it follow the student around the app.
-  useEffect(() => {
-    return () => {
-      if (hasSpeech()) window.speechSynthesis.cancel();
-    };
-  }, []);
+  useEffect(() => silenceQueue, [silenceQueue]);
 
   function speak(text: string) {
     const synth = window.speechSynthesis;
-    synth.cancel();
+    silenceQueue();
 
     const chunks = splitForSpeech(text);
-    if (chunks.length === 0) return;
+    if (chunks.length === 0) {
+      // Returning quietly here would leave the button spinning on "Writing the
+      // recap…" with nothing to wait for.
+      setError("The recap came back empty. Try again.");
+      setPhase("idle");
+      return;
+    }
 
     queued.current = chunks.map((chunk, i) => {
       const utterance = new SpeechSynthesisUtterance(chunk);
@@ -70,16 +89,30 @@ export function RecapPlayer({ pageId }: { pageId: string }) {
     }
     setPhase("writing");
     setError(null);
-    const res = await fetch(`/api/pages/${pageId}/recap`, { method: "POST" });
-    if (!res.ok) {
-      const body = await res.json().catch(() => null);
-      setError(body?.error ?? "Could not write the recap. Try again.");
+    try {
+      const res = await fetch(`/api/pages/${pageId}/recap`, { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error ?? "Could not write the recap. Try again.");
+        setPhase("idle");
+        return;
+      }
+      const body = (await res.json()) as { script?: unknown };
+      // Checked rather than asserted: a cast would hand `undefined` to the
+      // splitter and report a network problem for what is a malformed reply.
+      if (typeof body.script !== "string" || body.script.trim() === "") {
+        setError("The recap came back empty. Try again.");
+        setPhase("idle");
+        return;
+      }
+      setScript(body.script);
+      speak(body.script);
+    } catch {
+      // A rejected fetch or an unreadable body must not leave the button
+      // spinning with no way back.
+      setError("Could not reach Lectern. Check it is still running, then try again.");
       setPhase("idle");
-      return;
     }
-    const { script: text } = (await res.json()) as { script: string };
-    setScript(text);
-    speak(text);
   }
 
   function pause() {
@@ -93,8 +126,7 @@ export function RecapPlayer({ pageId }: { pageId: string }) {
   }
 
   function stop() {
-    window.speechSynthesis.cancel();
-    queued.current = [];
+    silenceQueue();
     setPhase("idle");
   }
 
@@ -143,7 +175,26 @@ export function RecapPlayer({ pageId }: { pageId: string }) {
       <p className="text-[13px] text-muted-2">
         About ninety seconds, read by your browser&apos;s voice. Written fresh each session — it is not saved.
       </p>
-      {error && <p className="text-[13px] text-red-600">{error}</p>}
+      {/*
+        The recap plays with no visual change beyond the button, so a listener
+        using a screen reader needs the phase spoken as it happens.
+      */}
+      <p aria-live="polite" className="sr-only">
+        {phase === "writing"
+          ? "Writing the recap"
+          : phase === "speaking"
+            ? "Playing the recap"
+            : phase === "paused"
+              ? "Recap paused"
+              : phase === "done"
+                ? "Recap finished"
+                : ""}
+      </p>
+      {error && (
+        <p role="alert" className="text-[13px] text-red-600">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

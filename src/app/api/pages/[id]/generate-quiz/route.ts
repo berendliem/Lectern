@@ -40,7 +40,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return jsonError("Nothing to drill yet — answer some quiz questions wrongly first", 422);
   }
 
-  await db.page.update({ where: { id }, data: { status: "GENERATING_GUIDE", errorMessage: null } });
+  // Drilling is an optional extra on top of a finished page, so it stays out
+  // of the pipeline status the banner reads. Moving a READY page to
+  // GENERATING_GUIDE and then to ERROR would hide a working quiz behind an
+  // error banner because a bonus step failed.
+  if (!drillMisses) {
+    await db.page.update({ where: { id }, data: { status: "GENERATING_GUIDE", errorMessage: null } });
+  }
 
   const model = process.env.OPENROUTER_MODEL_QUIZ ?? "openrouter/free";
 
@@ -66,6 +72,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       })),
     });
 
+    if (drillMisses) return NextResponse.json({ page });
+
     const flashcardCount = await db.flashcard.count({ where: { pageId: id } });
     const updated = await db.page.update({
       where: { id },
@@ -80,7 +88,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         : e instanceof Error
           ? e.message
           : "Quiz generation failed";
-    await db.page.update({ where: { id }, data: { status: "ERROR", errorMessage: message } });
+    if (!drillMisses) {
+      await db.page.update({ where: { id }, data: { status: "ERROR", errorMessage: message } });
+    }
     return jsonError(message, 502);
   }
 }

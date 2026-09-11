@@ -40,8 +40,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { filePath, title } = await downloadAudio(url, workDir);
     const buffer = await readFile(filePath);
 
-    // Replace any previously stored audio for this page, as an upload does.
-    await deleteAudioFile(page.audioFilePath);
+    // Write the replacement before removing what it replaces: a save that
+    // fails after the delete would leave the page pointing at audio that is no
+    // longer there, having destroyed the recording it already had.
     const relativePath = await saveAudioFile(id, buffer, "m4a");
 
     const updated = await db.page.update({
@@ -56,6 +57,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         ...(page.title.trim() === "" && title ? { title } : {}),
       },
     });
+
+    // Only now, with the row committed. Audio is stored under the page's own
+    // id, so a same-extension replacement writes the very path the old file
+    // occupied — deleting it then would delete what was just saved.
+    if (page.audioFilePath && page.audioFilePath !== relativePath) {
+      await deleteAudioFile(page.audioFilePath);
+    }
 
     return NextResponse.json({ page: updated });
   } catch (e) {

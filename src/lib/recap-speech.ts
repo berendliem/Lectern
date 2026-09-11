@@ -18,14 +18,40 @@ export function splitForSpeech(script: string): string[] {
 
   const chunks: string[] = [];
   for (const sentence of sentences) {
-    const last = chunks[chunks.length - 1];
-    // A sentence longer than the budget still goes out whole: a synthesizer
-    // reading half a clause is worse than one reading a long one.
-    if (last && last.length + sentence.length + 1 <= MAX_CHUNK) {
-      chunks[chunks.length - 1] = `${last} ${sentence}`;
-    } else {
-      chunks.push(sentence);
+    for (const piece of capLength(sentence)) {
+      const last = chunks[chunks.length - 1];
+      if (last && last.length + piece.length + 1 <= MAX_CHUNK) {
+        chunks[chunks.length - 1] = `${last} ${piece}`;
+      } else {
+        chunks.push(piece);
+      }
     }
   }
   return chunks;
+}
+
+/**
+ * Breaking a sentence mid-clause costs prosody — the synthesizer reads each
+ * piece as a finished statement. Letting one run past the budget costs the
+ * words themselves, because that is the truncation this module exists to
+ * avoid. Losing the cadence beats losing the content, so an over-long sentence
+ * is split at word boundaries as a last resort.
+ */
+function capLength(sentence: string): string[] {
+  if (sentence.length <= MAX_CHUNK) return [sentence];
+
+  const pieces: string[] = [];
+  let current = "";
+  for (const word of sentence.split(" ")) {
+    if (current === "") {
+      current = word;
+    } else if (current.length + word.length + 1 <= MAX_CHUNK) {
+      current = `${current} ${word}`;
+    } else {
+      pieces.push(current);
+      current = word;
+    }
+  }
+  if (current !== "") pieces.push(current);
+  return pieces;
 }

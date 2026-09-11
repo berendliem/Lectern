@@ -25,26 +25,34 @@ export function UrlImport({ pageId }: { pageId: string }) {
 
     setState("fetching");
     setError(null);
-    const res = await fetch(`/api/pages/${pageId}/audio/from-url`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url }),
-    });
+    try {
+      const res = await fetch(`/api/pages/${pageId}/audio/from-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
 
-    if (!res.ok) {
-      const body = await res.json().catch(() => null);
-      setError(body?.error ?? "Could not fetch that link.");
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error ?? "Could not fetch that link.");
+        return;
+      }
+
+      setUrl("");
+      setState("transcribing");
+      const transcribed = await transcribePage(pageId);
+      if (!transcribed.ok) setError(transcribed.error);
+      // Refreshed once, at the end. The parent only renders this form while
+      // the page has no audio, so refreshing as soon as the audio landed would
+      // unmount it mid-transcribe and take any error message with it.
+      router.refresh();
+    } catch {
+      // A long download on a flaky connection rejects rather than answering.
+      // Leaving the form disabled with no message would strand the student.
+      setError("The connection dropped before the audio arrived. Try the link again.");
+    } finally {
       setState("idle");
-      return;
     }
-
-    setUrl("");
-    router.refresh();
-    setState("transcribing");
-    const transcribed = await transcribePage(pageId);
-    setState("idle");
-    if (!transcribed.ok) setError(transcribed.error);
-    router.refresh();
   }
 
   return (
@@ -69,7 +77,11 @@ export function UrlImport({ pageId }: { pageId: string }) {
         Downloads just the audio and replaces whatever audio this page already has. A long lecture takes a while, and
         there is no progress to watch yet.
       </p>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

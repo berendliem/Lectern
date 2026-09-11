@@ -1,14 +1,103 @@
 import { execFile } from "node:child_process";
+import net from "node:net";
 import path from "node:path";
 import { promisify } from "node:util";
 
 const run = promisify(execFile);
 
-/** Hosts the server must never be talked into fetching on the student's behalf. */
-const BLOCKED_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]", "::1"]);
-const PRIVATE_IPV4 = /^(10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
-
 export class MediaUrlError extends Error {}
+
+/** Name-based hosts that always mean "somewhere on this machine or this LAN". */
+const BLOCKED_HOSTNAMES = new Set(["localhost"]);
+const BLOCKED_SUFFIXES = [".local", ".localhost", ".internal", ".home.arpa"];
+
+/**
+ * Address ranges that are not the public internet: loopback, the RFC1918
+ * networks, carrier-grade NAT, and — the one that matters most — 169.254.0.0/16,
+ * where cloud instances keep their credentials endpoint.
+ */
+function isPrivateIPv4(bytes: number[]): boolean {
+  const [a, b] = bytes;
+  if (a === 0 || a === 10 || a === 127) return true; // "this network", private, loopback
+  if (a === 169 && b === 254) return true; // link-local, incl. the metadata endpoint
+  if (a === 172 && b >= 16 && b <= 31) return true; // RFC1918
+  if (a === 192 && b === 168) return true; // RFC1918
+  if (a === 100 && b >= 64 && b <= 127) return true; // carrier-grade NAT
+  if (a === 255 && bytes.every((n) => n === 255)) return true; // broadcast
+  return false;
+}
+
+function ipv4ToBytes(host: string): number[] | null {
+  if (!net.isIPv4(host)) return null;
+  return host.split(".").map(Number);
+}
+
+/**
+ * IPv6 text to its sixteen bytes. The WHATWG URL parser hands back a
+ * canonical, compressed, lowercase form, so this only has to understand `::`
+ * compression and the dotted-quad tail — but it handles both, because the cost
+ * of being wrong here is the check itself being bypassed.
+ */
+function ipv6ToBytes(host: string): number[] | null {
+  if (!net.isIPv6(host)) return null;
+
+  let text = host;
+  const bytes: number[] = [];
+
+  // A trailing `a.b.c.d` becomes the last four bytes.
+  const tail = text.match(/:((?:\d{1,3}\.){3}\d{1,3})$/);
+  let trailing: number[] = [];
+  if (tail) {
+    const quad = ipv4ToBytes(tail[1]);
+    if (!quad) return null;
+    trailing = quad;
+    text = text.slice(0, text.length - tail[1].length);
+  }
+
+  const [head, rest] = text.split("::");
+  const toGroups = (part: string) =>
+    part
+      .split(":")
+      .filter((g) => g.length > 0)
+      .map((g) => parseInt(g, 16));
+
+  const left = toGroups(head ?? "");
+  const right = rest === undefined ? [] : toGroups(rest);
+
+  const push = (groups: number[]) => {
+    for (const g of groups) bytes.push((g >> 8) & 0xff, g & 0xff);
+  };
+
+  push(left);
+  if (rest !== undefined) {
+    const filled = left.length * 2 + right.length * 2 + trailing.length;
+    for (let i = filled; i < 16; i += 1) bytes.push(0);
+  }
+  push(right);
+  bytes.push(...trailing);
+
+  return bytes.length === 16 ? bytes : null;
+}
+
+function isPrivateIPv6(bytes: number[]): boolean {
+  const zeros = (from: number, to: number) => bytes.slice(from, to).every((b) => b === 0);
+
+  // ::1 loopback and :: unspecified.
+  if (zeros(0, 15) && bytes[15] <= 1) return true;
+  // ::ffff:a.b.c.d — an IPv4 address wearing an IPv6 costume. The socket layer
+  // treats it as the IPv4 address, so it has to be judged as one.
+  if (zeros(0, 10) && bytes[10] === 0xff && bytes[11] === 0xff) return isPrivateIPv4(bytes.slice(12));
+  // 64:ff9b::/96, the well-known NAT64 prefix, likewise wraps an IPv4 address.
+  if (bytes[0] === 0x00 && bytes[1] === 0x64 && bytes[2] === 0xff && bytes[3] === 0x9b && zeros(4, 12)) {
+    return isPrivateIPv4(bytes.slice(12));
+  }
+  // ::a.b.c.d, the deprecated IPv4-compatible form.
+  if (zeros(0, 12)) return true;
+  if (bytes[0] === 0xfe && (bytes[1] & 0xc0) === 0x80) return true; // fe80::/10 link-local
+  if ((bytes[0] & 0xfe) === 0xfc) return true; // fc00::/7 unique-local
+  if (bytes[0] === 0x01 && zeros(1, 8)) return true; // 100::/64 discard-only
+  return false;
+}
 
 /**
  * The URL arrives from a text box and is handed to a downloader that runs on
@@ -16,9 +105,16 @@ export class MediaUrlError extends Error {}
  * check, pasting `file:///etc/passwd` or an address on the home network asks
  * this machine to go and read it.
  *
- * ponytail: validates the URL the student typed, not where it ends up. A
- * redirect into a private address is still followed by yt-dlp. Resolve the
- * host and re-check per hop if Lectern ever runs anywhere but localhost.
+ * The address is judged as an address, not as text: `http://[::ffff:169.254.169.254]/`
+ * normalizes to the hostname `[::ffff:a9fe:a9fe]`, which no amount of string
+ * matching on "169.254." would ever catch, and which the socket layer treats
+ * as the link-local metadata endpoint.
+ *
+ * ponytail: this is lexical — it judges the URL the student typed, not where
+ * it ends up. yt-dlp follows redirects without asking again, and a hostname
+ * that resolves to a public address here can resolve to a private one when
+ * yt-dlp looks it up a moment later. Closing either needs a resolve-and-pin
+ * fetcher; worth it only if Lectern ever runs anywhere but localhost.
  */
 export function assertFetchableMediaUrl(raw: string): URL {
   let url: URL;
@@ -33,7 +129,18 @@ export function assertFetchableMediaUrl(raw: string): URL {
   }
 
   const host = url.hostname.toLowerCase();
-  if (BLOCKED_HOSTNAMES.has(host) || PRIVATE_IPV4.test(host) || host.endsWith(".local")) {
+  // The parser keeps IPv6 literals in their brackets; the address inside is
+  // what has to be judged.
+  const bare = host.startsWith("[") && host.endsWith("]") ? host.slice(1, -1) : host;
+
+  const bytes = ipv4ToBytes(bare) ?? ipv6ToBytes(bare);
+  const blocked = bytes
+    ? bytes.length === 4
+      ? isPrivateIPv4(bytes)
+      : isPrivateIPv6(bytes)
+    : BLOCKED_HOSTNAMES.has(host) || BLOCKED_SUFFIXES.some((s) => host.endsWith(s));
+
+  if (blocked) {
     throw new MediaUrlError("That address is on this machine or your local network, so it will not be fetched");
   }
 
