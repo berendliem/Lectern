@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
       orderBy: { nextReviewAt: "asc" },
       take: limit,
       include: {
-        page: { select: { id: true, title: true } },
-        material: { select: { id: true, title: true } },
+        page: { select: { id: true, title: true, folder: { select: { name: true } } } },
+        material: { select: { id: true, title: true, folder: { select: { name: true } } } },
       },
     }),
     db.flashcard.count({ where }),
