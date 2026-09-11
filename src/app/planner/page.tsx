@@ -163,7 +163,7 @@ export default async function PlannerPage() {
         <h2 className="mb-4 text-sm font-semibold text-ink">Calendar, next {SYNC_WINDOW_DAYS} days</h2>
         {!calendarConfigured ? (
           <p className="text-[13px] text-muted-2">
-            <Link href="/integrations" className="font-medium text-brand-ink hover:underline">
+            <Link href="/integrations" className="font-semibold text-brand-ink hover:underline">
               Connect Google Calendar
             </Link>{" "}
             to see your classes, deadlines and exams here.
@@ -174,7 +174,7 @@ export default async function PlannerPage() {
           <ol className="flex flex-col gap-4">
             {eventGroups.map((g) => (
               <li key={g.key}>
-                <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-wide text-muted-2">{g.label}</p>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-2">{g.label}</p>
                 <ul className="flex flex-col gap-1.5">
                   {g.events.map((e) => (
                     <li key={e.id} className="flex items-center gap-3 text-[13px]">
