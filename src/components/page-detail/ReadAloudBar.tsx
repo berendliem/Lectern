@@ -45,13 +45,22 @@ function highlightCtor(): (new (...ranges: Range[]) => object) | undefined {
 /** Neither of the two facts below changes after load, so there is nothing to subscribe to. */
 const noSubscription = () => () => {};
 
-function readPrefs(): { voiceURI: string | null; rate: number } {
+/**
+ * voiceURI is not unique: macOS ships Samantha and Hubert both claiming
+ * "Samantha", so selecting one by URI alone hands back whichever comes first.
+ * Name and language together separate them.
+ */
+function voiceKey(voice: SpeechSynthesisVoice): string {
+  return `${voice.name}|${voice.lang}|${voice.voiceURI}`;
+}
+
+function readPrefs(): { voiceId: string | null; rate: number } {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
     if (raw) {
-      const saved = JSON.parse(raw) as { voiceURI?: string; rate?: number };
+      const saved = JSON.parse(raw) as { voiceId?: string; rate?: number };
       return {
-        voiceURI: typeof saved.voiceURI === "string" ? saved.voiceURI : null,
+        voiceId: typeof saved.voiceId === "string" ? saved.voiceId : null,
         // Off-menu rates reach speechSynthesis but leave the picker blank, so
         // a hand-edited or stale value falls back rather than showing through.
         rate: typeof saved.rate === "number" && RATES.includes(saved.rate) ? saved.rate : 1,
@@ -60,7 +69,7 @@ function readPrefs(): { voiceURI: string | null; rate: number } {
   } catch {
     // No storage (server render, private mode) or a corrupt value: use defaults.
   }
-  return { voiceURI: null, rate: 1 };
+  return { voiceId: null, rate: 1 };
 }
 
 function caretFromPoint(x: number, y: number): { node: Node; offset: number } | null {
@@ -98,7 +107,7 @@ export function ReadAloudBar({
 
   const initialPrefs = useState(readPrefs)[0];
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-  const [voiceURI, setVoiceURI] = useState<string | null>(initialPrefs.voiceURI);
+  const [voiceId, setVoiceId] = useState<string | null>(initialPrefs.voiceId);
   const [rate, setRate] = useState(initialPrefs.rate);
   const [status, setStatus] = useState<Status>("idle");
   const [index, setIndex] = useState(0);
@@ -130,11 +139,11 @@ export function ReadAloudBar({
 
   useEffect(() => {
     try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ voiceURI, rate }));
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ voiceId, rate }));
     } catch {
       // Private browsing, quota — the session still works without persistence.
     }
-  }, [voiceURI, rate]);
+  }, [voiceId, rate]);
 
   // Split on localService, because the two halves are not interchangeable: a
   // network voice synthesizes by sending the sentence to the browser vendor's
@@ -144,9 +153,12 @@ export function ReadAloudBar({
     const prefix = lang.slice(0, 2).toLowerCase();
     const matching = voices.filter((v) => v.lang.slice(0, 2).toLowerCase() === prefix);
     const list = matching.length > 0 ? matching : voices;
+    // Collapse true duplicates — same name, language and URI is the same voice
+    // listed twice, and two identical options are only a confusing choice.
+    const unique = [...new Map(list.map((v) => [voiceKey(v), v])).values()];
     return {
-      localVoices: list.filter((v) => v.localService),
-      networkVoices: list.filter((v) => !v.localService),
+      localVoices: unique.filter((v) => v.localService),
+      networkVoices: unique.filter((v) => !v.localService),
     };
   }, [voices, lang]);
 
@@ -236,7 +248,7 @@ export function ReadAloudBar({
     window.speechSynthesis.resume();
     // No stored choice falls back to an on-device voice rather than to the
     // browser's default, which on Chrome can be a network one.
-    const voice = voices.find((v) => v.voiceURI === voiceURI) ?? localVoices[0];
+    const voice = voices.find((v) => voiceKey(v) === voiceId) ?? localVoices[0];
 
     const speakAt = (i: number) => {
       if (run !== runRef.current) return;
@@ -327,7 +339,7 @@ export function ReadAloudBar({
   useEffect(() => {
     if (statusRef.current === "playing") speakFromRef.current(indexRef.current);
     else if (statusRef.current === "paused") prefsDirtyRef.current = true;
-  }, [voiceURI, rate]);
+  }, [voiceId, rate]);
 
   // The notes changed underneath us: the text nodes the ranges point at are gone.
   useEffect(() => {
@@ -408,8 +420,8 @@ export function ReadAloudBar({
       <div className="ml-auto flex items-center gap-2">
         {localVoices.length + networkVoices.length > 0 && (
           <select
-            value={voiceURI ?? ""}
-            onChange={(e) => setVoiceURI(e.target.value || null)}
+            value={voiceId ?? ""}
+            onChange={(e) => setVoiceId(e.target.value || null)}
             aria-label="Voice"
             className="max-w-[11rem] rounded-lg border border-line bg-surface px-2 py-1 text-[12.5px] text-ink-soft outline-none"
           >
@@ -417,7 +429,7 @@ export function ReadAloudBar({
             {localVoices.length > 0 && (
               <optgroup label="On this device">
                 {localVoices.map((v) => (
-                  <option key={v.voiceURI} value={v.voiceURI}>
+                  <option key={voiceKey(v)} value={voiceKey(v)}>
                     {v.name}
                   </option>
                 ))}
@@ -426,7 +438,7 @@ export function ReadAloudBar({
             {networkVoices.length > 0 && (
               <optgroup label="Network — sends the notes to the voice provider">
                 {networkVoices.map((v) => (
-                  <option key={v.voiceURI} value={v.voiceURI}>
+                  <option key={voiceKey(v)} value={voiceKey(v)}>
                     {v.name}
                   </option>
                 ))}
