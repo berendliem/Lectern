@@ -4,14 +4,41 @@ import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
 import { assertSingleParent } from "@/lib/cards";
 import { callLLMJSON } from "@/lib/llm";
-import { QUIZ_SYSTEM_PROMPT, buildQuizUserPrompt } from "@/lib/prompts/quiz";
+import { QUIZ_SYSTEM_PROMPT, buildQuizUserPrompt, buildMissesQuizUserPrompt } from "@/lib/prompts/quiz";
 import { quizResponseSchema } from "@/lib/validation";
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+/**
+ * The questions this page has been answered wrongly on, most recent first, one
+ * entry per question however many times it was missed — a question failed five
+ * times is one shaky concept, not five.
+ */
+async function missedQuestions(pageId: string) {
+  const attempts = await db.quizAttempt.findMany({
+    where: { isCorrect: false, question: { pageId } },
+    include: { question: { select: { id: true, prompt: true, correctAnswer: true } } },
+    orderBy: { attemptedAt: "desc" },
+  });
+
+  const seen = new Set<string>();
+  return attempts
+    .filter((a) => !seen.has(a.question.id) && seen.add(a.question.id))
+    .map((a) => ({ prompt: a.question.prompt, correctAnswer: a.question.correctAnswer }));
+}
+
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const page = await db.page.findUnique({ where: { id }, include: { notes: true } });
   if (!page) return jsonError("Page not found", 404);
   if (!page.notes) return jsonError("This page has no notes to generate a quiz from yet", 422);
+
+  // Drilling misses adds to the quiz. The plain regenerate replaces it, and
+  // replacing cascades to the attempts on the questions it removes, so the two
+  // paths must not be confused.
+  const drillMisses = req.nextUrl.searchParams.get("misses") === "1";
+  const misses = drillMisses ? await missedQuestions(id) : [];
+  if (drillMisses && misses.length === 0) {
+    return jsonError("Nothing to drill yet — answer some quiz questions wrongly first", 422);
+  }
 
   await db.page.update({ where: { id }, data: { status: "GENERATING_GUIDE", errorMessage: null } });
 
@@ -21,11 +48,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     const raw = await callLLMJSON({
       model,
       systemPrompt: QUIZ_SYSTEM_PROMPT,
-      userPrompt: buildQuizUserPrompt(page.notes.markdown),
+      userPrompt: drillMisses
+        ? buildMissesQuizUserPrompt(page.notes.markdown, misses)
+        : buildQuizUserPrompt(page.notes.markdown),
     });
     const parsed = await quizResponseSchema.parseAsync(raw);
 
-    await db.quizQuestion.deleteMany({ where: { pageId: id } });
+    if (!drillMisses) await db.quizQuestion.deleteMany({ where: { pageId: id } });
     await db.quizQuestion.createMany({
       data: parsed.questions.map((q) => ({
         ...assertSingleParent({ pageId: id }),

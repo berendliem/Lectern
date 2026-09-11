@@ -21,6 +21,10 @@ enum PageStatus {
 enum QuestionType {
   SHORT_ANSWER
   MULTIPLE_CHOICE
+  /// A sentence with one term removed. `prompt` carries the sentence with the
+  /// gap marked `{{term}}`; `correctAnswer` carries the term on its own, and is
+  /// graded by the same token overlap a short answer gets.
+  CLOZE
 }
 
 enum InterviewSource {

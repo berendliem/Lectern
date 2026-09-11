@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { ShortAnswerQuestion } from "@/components/quiz/ShortAnswerQuestion";
 import { MultipleChoiceQuestion } from "@/components/quiz/MultipleChoiceQuestion";
+import { ClozeQuestion } from "@/components/quiz/ClozeQuestion";
 import { QuizResultsSummary } from "@/components/quiz/QuizResultsSummary";
 import { Button } from "@/components/ui/Button";
 
 export type QuizQuestionForRunner = {
   id: string;
-  type: "SHORT_ANSWER" | "MULTIPLE_CHOICE";
+  type: "SHORT_ANSWER" | "MULTIPLE_CHOICE" | "CLOZE";
   prompt: string;
   options: string[] | null;
 };
@@ -63,6 +64,8 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
 
       {question.type === "SHORT_ANSWER" ? (
         <ShortAnswerQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
+      ) : question.type === "CLOZE" ? (
+        <ClozeQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
       ) : (
         <MultipleChoiceQuestion
           prompt={question.prompt}
