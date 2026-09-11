@@ -2,12 +2,12 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { BrainCircuit, FileText, Loader2, Send } from "lucide-react";
+import { BrainCircuit, FileText, Loader2, Presentation, Send } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { ChatBubble } from "./ChatBubble";
 
-type Source = { pageId: string; title: string };
-type Message = { role: "user" | "assistant"; content: string; sources?: Source[] };
+type Citation = { label: string; pageId: string | null; materialId: string | null };
+type Message = { role: "user" | "assistant"; content: string; citations?: Citation[] };
 
 const SUGGESTIONS = [
   "What are the main themes across all my lectures?",
@@ -40,8 +40,8 @@ export function LibraryChat() {
         body: JSON.stringify({ messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })) }),
       });
       if (res.ok) {
-        const { reply, sources } = await res.json();
-        setMessages((m) => [...m, { role: "assistant", content: reply, sources }]);
+        const { reply, citations } = await res.json();
+        setMessages((m) => [...m, { role: "assistant", content: reply, citations }]);
         setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
       } else {
         const b = await res.json().catch(() => ({}));
@@ -90,18 +90,28 @@ export function LibraryChat() {
         {messages.map((m, i) => (
           <div key={i} className={clsx("flex flex-col gap-1.5", m.role === "user" ? "items-end" : "items-start")}>
             <ChatBubble role={m.role} content={m.content} />
-            {m.sources && m.sources.length > 0 && (
+            {m.citations && m.citations.length > 0 && (
               <div className="flex max-w-[85%] flex-wrap gap-1.5">
-                {m.sources.map((s) => (
-                  <Link
-                    key={s.pageId}
-                    href={`/pages/${s.pageId}`}
-                    className="flex items-center gap-1 rounded-full border border-brand-border bg-brand-soft/40 px-2.5 py-1 text-[11.5px] font-medium text-brand-ink transition-colors hover:bg-brand-soft"
-                  >
-                    <FileText className="h-3 w-3" strokeWidth={2.2} />
-                    {s.title}
-                  </Link>
-                ))}
+                {m.citations.map((c) =>
+                  c.pageId ? (
+                    <Link
+                      key={c.pageId ?? c.materialId ?? c.label}
+                      href={`/pages/${c.pageId}`}
+                      className="flex items-center gap-1 rounded-full border border-brand-border bg-brand-soft/40 px-2.5 py-1 text-[11.5px] font-medium text-brand-ink transition-colors hover:bg-brand-soft"
+                    >
+                      <FileText className="h-3 w-3" strokeWidth={2.2} />
+                      {c.label}
+                    </Link>
+                  ) : (
+                    <span
+                      key={c.pageId ?? c.materialId ?? c.label}
+                      className="flex items-center gap-1 rounded-full border border-line bg-surface-2 px-2.5 py-1 text-[11.5px] font-medium text-ink-soft"
+                    >
+                      <Presentation className="h-3 w-3" strokeWidth={2.2} />
+                      {c.label}
+                    </span>
+                  )
+                )}
               </div>
             )}
           </div>

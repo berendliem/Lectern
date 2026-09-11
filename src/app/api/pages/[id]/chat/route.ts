@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
+import { retrieve } from "@/lib/retrieval";
 import { chatRequestSchema } from "@/lib/validation";
 
 const MAX_CONTEXT_CHARS = 24_000;
@@ -21,13 +22,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return jsonError("This page has no transcript or notes to chat about yet", 422);
   }
 
-  const context = [
-    page.notes ? `NOTES:\n${page.notes.markdown}` : "",
-    page.transcript ? `TRANSCRIPT:\n${page.transcript.rawText}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n")
-    .slice(0, MAX_CONTEXT_CHARS);
+  const lastUser = [...result.data.messages].reverse().find((m) => m.role === "user");
+  const { hits, mode } = await retrieve({
+    scope: { kind: "page", pageId: id },
+    query: lastUser?.content ?? "",
+  });
+
+  // A lecture that predates the vector index, or whose embedder changed and has
+  // not been through `npm run reindex`, has no chunks to retrieve. Falling back
+  // to the whole-lecture slice keeps it working exactly as it did before.
+  const context =
+    mode === "semantic" && hits.length > 0
+      ? hits.map((h) => `### ${h.title}\n${h.text}`).join("\n\n---\n\n")
+      : [
+          page.notes ? `NOTES:\n${page.notes.markdown}` : "",
+          page.transcript ? `TRANSCRIPT:\n${page.transcript.rawText}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n\n")
+          .slice(0, MAX_CONTEXT_CHARS);
 
   const systemPrompt = `You are a study assistant for the lecture "${page.title}". Answer the student's questions using the lecture material below. Be concise and concrete. If the material doesn't cover something, say so plainly instead of inventing an answer — you may then add general knowledge, clearly labeled as outside the lecture.\n\n${context}`;
 

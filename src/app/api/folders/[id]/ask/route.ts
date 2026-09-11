@@ -3,19 +3,19 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { chatRequestSchema } from "@/lib/validation";
-import { searchCourse } from "@/lib/embeddings";
 import { searchPages } from "@/lib/fts";
-import { formatCitation, type Citation } from "@/lib/citations";
+import { dedupeCitations, formatCitation, type Citation } from "@/lib/citations";
 import { reasoningModel } from "@/lib/llm";
+import { retrieve, CONTEXT_CHARS } from "@/lib/retrieval";
+import { packContext } from "@/lib/retrieval-math";
 
-const K = 8;
-// Caps how much of one FTS-matched lecture's raw (unchunked) text goes into
-// the prompt. Semantic hits need no such cap here: Chunk rows are already
+// Caps how much of one FTS-matched page's raw (unchunked) text is even
+// considered per source, before packContext trims whole blocks down to
+// CONTEXT_CHARS below. Semantic hits need no such cap: Chunk rows are already
 // capped at write time (CHUNK_CHARS in src/lib/embeddings.ts), so slicing
 // them again here could never truncate anything.
 const FTS_PAGE_CHARS = 2_800;
-
-type Retrieval = "semantic" | "fts" | "unindexed";
+const FTS_FALLBACK_PAGES = 8;
 
 async function ftsFallback(
   courseId: string,
@@ -29,13 +29,28 @@ async function ftsFallback(
         include: { notes: true, transcript: true },
       })
     : [];
-  const blocks: string[] = [];
-  const citations: Citation[] = [];
-  for (const page of pages) {
+  const byId = new Map(pages.map((p) => [p.id, p]));
+  // Walk in ftsHits' bm25-ranked order, not `pages`' db-returned order — now
+  // that packContext below trims whole blocks once the budget is spent, which
+  // block survives depends on this order.
+  const candidates: { text: string; title: string; pageId: string | null; materialId: string | null }[] = [];
+  for (const hit of ftsHits) {
+    const page = byId.get(hit.pageId);
+    if (!page) continue;
     const text = page.notes?.markdown ?? page.transcript?.rawText ?? "";
     if (!text.trim()) continue;
-    blocks.push(`### ${page.title}\n${text.slice(0, FTS_PAGE_CHARS)}`);
-    citations.push({ label: page.title, pageId: page.id, materialId: null });
+    candidates.push({
+      text: text.slice(0, FTS_PAGE_CHARS),
+      title: page.title,
+      pageId: page.id,
+      materialId: null,
+    });
+  }
+  const blocks: string[] = [];
+  const citations: Citation[] = [];
+  for (const kept of packContext(candidates, k, CONTEXT_CHARS)) {
+    blocks.push(`### ${kept.title}\n${kept.text}`);
+    citations.push({ label: kept.title, pageId: kept.pageId, materialId: kept.materialId });
   }
   return { blocks, citations };
 }
@@ -53,40 +68,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return jsonError("No question to answer", 422);
 
-  let retrieval: Retrieval = "semantic";
+  const { hits, mode } = await retrieve({
+    scope: { kind: "course", folderId: id },
+    query: lastUser.content,
+  });
   let blocks: string[] = [];
   let citations: Citation[] = [];
 
-  try {
-    const hits = await searchCourse(id, lastUser.content, K);
-    if (hits.length === 0) {
-      // Brute-force cosine over the whole course: an empty result here means
-      // precisely "this course has no chunks for the active embedder" (most
-      // likely it predates Phase 2, or the embedder changed) — never "nothing
-      // was relevant enough". That's a clean, distinct signal from a failure.
-      retrieval = "unindexed";
-      ({ blocks, citations } = await ftsFallback(id, lastUser.content, K));
-    } else {
-      blocks = hits.map((h) => `### ${h.title}\n${h.text}`);
-      citations = hits.map(formatCitation);
-    }
-  } catch (e) {
-    // Every rung of the embedding chain failed. Fall back to full-text search
-    // scoped to this course: retrieval quality drops, the feature does not break.
-    console.error(`[ask] semantic retrieval failed for course ${id}, falling back to FTS:`, e);
-    retrieval = "fts";
-    ({ blocks, citations } = await ftsFallback(id, lastUser.content, K));
+  if (hits.length > 0) {
+    blocks = hits.map((h) => `### ${h.title}\n${h.text}`);
+    citations = hits.map(formatCitation);
+  } else {
+    // Either this course has no chunks for the active embedder, or embedding
+    // failed. `mode` already records which; both fall back to full-text search
+    // scoped to this course.
+    ({ blocks, citations } = await ftsFallback(id, lastUser.content, FTS_FALLBACK_PAGES));
   }
 
-  // De-duplicate citations: several chunks from one lecture or material cite
-  // it once. Key on the id, not the label — two materials can share a title.
-  const seen = new Set<string>();
-  citations = citations.filter((c) => {
-    const key = c.pageId ?? c.materialId ?? c.label;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  // Several chunks from one lecture or material collapse to a single citation.
+  citations = dedupeCitations(citations);
 
   const context = blocks.length
     ? blocks.join("\n\n---\n\n")
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       messages: chatMessages,
       stage: "reasoning",
     });
-    return NextResponse.json({ reply, citations, retrieval });
+    return NextResponse.json({ reply, citations, retrieval: mode });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ask failed";
     return jsonError(message, 502);

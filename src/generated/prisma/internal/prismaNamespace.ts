@@ -400,7 +400,8 @@ export const ModelName = {
   ActionItem: 'ActionItem',
   Tag: 'Tag',
   TagsOnPages: 'TagsOnPages',
-  Chunk: 'Chunk'
+  Chunk: 'Chunk',
+  RetrievalLog: 'RetrievalLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -416,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "folder" | "material" | "courseTopic" | "page" | "transcript" | "notes" | "flashcard" | "reviewLog" | "quizQuestion" | "quizAttempt" | "interviewSession" | "interviewTurn" | "dictionaryTerm" | "actionItem" | "tag" | "tagsOnPages" | "chunk"
+    modelProps: "folder" | "material" | "courseTopic" | "page" | "transcript" | "notes" | "flashcard" | "reviewLog" | "quizQuestion" | "quizAttempt" | "interviewSession" | "interviewTurn" | "dictionaryTerm" | "actionItem" | "tag" | "tagsOnPages" | "chunk" | "retrievalLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1678,6 +1679,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RetrievalLog: {
+      payload: Prisma.$RetrievalLogPayload<ExtArgs>
+      fields: Prisma.RetrievalLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RetrievalLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RetrievalLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>
+        }
+        findFirst: {
+          args: Prisma.RetrievalLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RetrievalLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>
+        }
+        findMany: {
+          args: Prisma.RetrievalLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>[]
+        }
+        create: {
+          args: Prisma.RetrievalLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>
+        }
+        createMany: {
+          args: Prisma.RetrievalLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RetrievalLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>[]
+        }
+        delete: {
+          args: Prisma.RetrievalLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>
+        }
+        update: {
+          args: Prisma.RetrievalLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.RetrievalLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RetrievalLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RetrievalLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.RetrievalLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RetrievalLogPayload>
+        }
+        aggregate: {
+          args: Prisma.RetrievalLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRetrievalLog>
+        }
+        groupBy: {
+          args: Prisma.RetrievalLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RetrievalLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RetrievalLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RetrievalLogCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1948,6 +2023,21 @@ export const ChunkScalarFieldEnum = {
 export type ChunkScalarFieldEnum = (typeof ChunkScalarFieldEnum)[keyof typeof ChunkScalarFieldEnum]
 
 
+export const RetrievalLogScalarFieldEnum = {
+  id: 'id',
+  query: 'query',
+  scope: 'scope',
+  mode: 'mode',
+  hitCount: 'hitCount',
+  spread: 'spread',
+  topScore: 'topScore',
+  sourceIds: 'sourceIds',
+  createdAt: 'createdAt'
+} as const
+
+export type RetrievalLogScalarFieldEnum = (typeof RetrievalLogScalarFieldEnum)[keyof typeof RetrievalLogScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2201,6 +2291,7 @@ export type GlobalOmitConfig = {
   tag?: Prisma.TagOmit
   tagsOnPages?: Prisma.TagsOnPagesOmit
   chunk?: Prisma.ChunkOmit
+  retrievalLog?: Prisma.RetrievalLogOmit
 }
 
 /* Types for Logging */
