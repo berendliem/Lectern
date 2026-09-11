@@ -52,10 +52,12 @@ export function TranscriptTab({
   }
 
   async function cleanup() {
+    let ok = false;
     await run({ key: cleanKey, label: "Cleaning up the transcript…", href: `/pages/${pageId}` }, async () => {
       await postTask(`/api/pages/${pageId}/cleanup-transcript`, "Transcript cleanup failed. Try again.");
+      ok = true;
     });
-    if (task(cleanKey)?.status !== "error") setView("clean");
+    if (ok) setView("clean");
     router.refresh();
   }
 

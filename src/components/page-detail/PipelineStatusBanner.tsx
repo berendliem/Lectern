@@ -51,7 +51,7 @@ export function PipelineStatusBanner({
 
   const stageTasks = STAGES.map((stage) => task(STAGE_KEY(pageId, stage.id)));
   const runningStage =
-    STAGES.find((stage) => task(STAGE_KEY(pageId, stage.id))?.status === "running")?.id ?? null;
+    STAGES.find((stage, i) => stageTasks[i]?.status === "running")?.id ?? null;
   const taskError = stageTasks.find((t) => t?.status === "error")?.error ?? null;
 
   async function runRemaining() {
@@ -63,7 +63,9 @@ export function PipelineStatusBanner({
           try {
             await postTask(
               `/api/pages/${pageId}/${stage.id}`,
-              `${stage.label} generation failed. You can retry from here.`
+              `${stage.label} generation failed. You can retry from here.`,
+              undefined,
+              "Lost connection to the local server mid-step. You can retry from here."
             );
           } catch (e) {
             failed = true;

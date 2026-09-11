@@ -85,12 +85,17 @@ export function tasksReducer(state: TaskState, action: TaskAction): TaskState {
  * POST a generation route and turn a non-2xx into a throw, so TaskProvider
  * records the server's own message as the task error.
  */
-export async function postTask(url: string, fallback: string, init?: RequestInit): Promise<unknown> {
+export async function postTask(
+  url: string,
+  fallback: string,
+  init?: RequestInit,
+  networkFallback?: string
+): Promise<unknown> {
   let res: Response;
   try {
     res = await fetch(url, { method: "POST", ...init });
   } catch {
-    throw new Error("Lost connection to the local server mid-step. You can retry from here.");
+    throw new Error(networkFallback ?? fallback);
   }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((body as { error?: string }).error ?? fallback);

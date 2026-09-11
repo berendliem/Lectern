@@ -49,12 +49,12 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
     setError(null);
     await run(
       { key: taskKey, label: "Extracting action items…", href: `/pages/${pageId}` },
-      async ({ emit }) => {
+      async () => {
         const body = (await postTask(
           `/api/pages/${pageId}/action-items`,
           "Could not extract action items. Try again."
         )) as { items?: ActionItem[] };
-        emit(body.items ?? []);
+        setItems(body.items ?? []);
       }
     );
   }
@@ -90,9 +90,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
     );
   }
 
-  const taskItems = generateTask?.data as ActionItem[] | undefined;
-  const shownItems = taskItems ?? items;
-  const hasItems = (shownItems?.length ?? 0) > 0;
+  const hasItems = (items?.length ?? 0) > 0;
   const shownError = generateTask?.error ?? error;
 
   return (
@@ -113,7 +111,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
       </div>
       {shownError && <p className="text-sm text-red-600">{shownError}</p>}
 
-      {shownItems === null ? (
+      {items === null ? (
         <p className="text-sm text-muted-2">Loading…</p>
       ) : !hasItems ? (
         <div className="rounded-lg border border-dashed border-line-strong px-4 py-10 text-center text-sm text-muted-2">
@@ -123,7 +121,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
         </div>
       ) : (
         GROUPS.map(({ kind, label, icon: Icon }) => {
-          const group = shownItems.filter((i) => i.kind === kind);
+          const group = items.filter((i) => i.kind === kind);
           if (group.length === 0) return null;
           return (
             <section key={kind}>

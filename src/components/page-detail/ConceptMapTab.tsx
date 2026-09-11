@@ -77,7 +77,9 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
       async ({ emit }) => {
         const body = (await postTask(
           `/api/pages/${pageId}/concept-map`,
-          "Could not build a concept map from this lecture."
+          "Could not generate the concept map. Try again.",
+          undefined,
+          "Network error — please try again."
         )) as { conceptMap?: ConceptMap };
         emit(body.conceptMap);
       }

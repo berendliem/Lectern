@@ -103,26 +103,33 @@ export function NotesTab({
   async function applyEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!instruction.trim() || busy) return;
-    const before = markdown;
+    // A plain `let` reassigned only inside the closure below narrows to `never`
+    // at the read site (a real TS 5.9 control-flow gap, not a bug in this code —
+    // confirmed with an isolated repro); a boxed property sidesteps it.
+    const result: { applied: { markdown: string; previousMarkdown: string | null } | null } = {
+      applied: null,
+    };
     await run(
       { key: editKey, label: "Applying your edit to the notes…", href: `/pages/${pageId}` },
-      async ({ emit }) => {
-        const body = (await postTask(`/api/pages/${pageId}/edit-notes`, "Could not apply that edit.", {
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            instruction: instruction.trim(),
-            ...(selectedText ? { selectedText } : {}),
-          }),
-        })) as { markdown?: string };
-        if (!body.markdown) throw new Error("Could not apply that edit.");
-        emit(body.markdown);
+      async () => {
+        const body = (await postTask(
+          `/api/pages/${pageId}/edit-notes`,
+          "Editing the notes failed. Try again.",
+          {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              instruction: instruction.trim(),
+              ...(selectedText ? { selectedText } : {}),
+            }),
+          }
+        )) as { markdown?: string; previousMarkdown?: string | null };
+        if (!body.markdown) throw new Error("Editing the notes failed. Try again.");
+        result.applied = { markdown: body.markdown, previousMarkdown: body.previousMarkdown ?? null };
       }
     );
-    const applied = task(editKey);
-    const next = applied?.status === "error" ? null : ((applied?.data as string | undefined) ?? null);
-    if (next && next !== before) {
-      setPreviousMarkdown(before);
-      setMarkdown(next);
+    if (result.applied) {
+      setPreviousMarkdown(result.applied.previousMarkdown);
+      setMarkdown(result.applied.markdown);
       setInstruction("");
       setSelectedText(null);
       router.refresh();
