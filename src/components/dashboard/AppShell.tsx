@@ -7,6 +7,7 @@ import { SearchBox } from "@/components/search/SearchBox";
 import { CommandPalette } from "@/components/command/CommandPalette";
 import { ThemeToggle } from "@/components/dashboard/ThemeToggle";
 import { TaskProvider } from "@/components/tasks/TaskProvider";
+import { TaskChip } from "@/components/tasks/TaskChip";
 import clsx from "@/lib/clsx";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -41,6 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
             <SearchBox />
             <div className="ml-auto flex items-center gap-2">
+              <TaskChip />
               <button
                 onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
                 className="hidden items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-[12.5px] font-medium text-muted transition-colors hover:border-line-strong hover:bg-surface-2 sm:flex"
