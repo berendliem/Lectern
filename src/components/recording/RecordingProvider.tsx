@@ -88,8 +88,8 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       }
       setSaveError(null);
       setLiveTranscript("");
-      setSession({ pageId: page.id, pageTitle: page.title });
-      await recorder.startRecording();
+      const started = await recorder.startRecording();
+      if (started) setSession({ pageId: page.id, pageTitle: page.title });
     },
     [recorder, session]
   );

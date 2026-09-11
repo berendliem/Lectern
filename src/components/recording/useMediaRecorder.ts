@@ -118,7 +118,7 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
     tick();
   }, []);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = useCallback(async (): Promise<boolean> => {
     setError(null);
     setAudioBlob(null);
     chunksRef.current = [];
@@ -144,8 +144,10 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
       setElapsedSeconds(0);
       timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
       setStatus("recording");
+      return true;
     } catch {
       setError("Microphone access was denied or is unavailable.");
+      return false;
     }
   }, [startLevelMeter, stopLevelMeter, startSegmentLoop]);
 
