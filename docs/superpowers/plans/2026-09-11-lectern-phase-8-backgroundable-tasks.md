@@ -647,12 +647,17 @@ All five sites do "POST, read the body, throw the server's message". Append it o
  * POST a generation route and turn a non-2xx into a throw, so TaskProvider
  * records the server's own message as the task error.
  */
-export async function postTask(url: string, fallback: string, init?: RequestInit): Promise<unknown> {
+export async function postTask(
+  url: string,
+  fallback: string,
+  init?: RequestInit,
+  networkFallback?: string
+): Promise<unknown> {
   let res: Response;
   try {
     res = await fetch(url, { method: "POST", ...init });
   } catch {
-    throw new Error("Lost connection to the local server mid-step. You can retry from here.");
+    throw new Error(networkFallback ?? fallback);
   }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((body as { error?: string }).error ?? fallback);
@@ -735,14 +740,12 @@ async function generate() {
 }
 ```
 
-Render the list from the task when it has data, falling back to the fetched list:
-
-```tsx
-const taskItems = generateTask?.data as ActionItem[] | undefined;
-const shownItems = taskItems ?? items;
-```
-
-Use `shownItems` everywhere the component rendered from `items`; keep `setItems` for `toggle()`'s optimistic update and its re-sync; render `generateTask?.error ?? error` where the component rendered `error`.
+The run's `fn` calls `setItems(body.items ?? [])` directly — do **not** render from
+`generateTask?.data`. Task data is permanent once a run finishes, so a component
+that prefers it stops rendering `toggle()`'s `setItems` updates and the checkboxes
+freeze after the first Extract. `items` stays the single source of truth: the
+mount-time fetch seeds it, the run replaces it, `toggle()` updates it. Render
+`generateTask?.error ?? error` where the component rendered `error`.
 
 - [ ] **Step 4: Convert `ConceptMapTab`**
 
@@ -793,10 +796,14 @@ async function detectChapters() {
 }
 
 async function cleanup() {
+  // `task(...)` closes over this render's state snapshot, so it CANNOT report
+  // what the run just did. Capture the outcome inside fn instead.
+  let ok = false;
   await run({ key: cleanKey, label: "Cleaning up the transcript…", href: `/pages/${pageId}` }, async () => {
     await postTask(`/api/pages/${pageId}/cleanup-transcript`, "Transcript cleanup failed. Try again.");
+    ok = true;
   });
-  if (task(cleanKey)?.status !== "error") setView("clean");
+  if (ok) setView("clean");
   router.refresh();
 }
 ```
@@ -815,27 +822,45 @@ const busy = editTask?.status === "running";
 
 async function applyEdit(e: React.FormEvent) {
   e.preventDefault();
-  const before = markdown;
+  if (!instruction.trim() || busy) return;
+  // Boxed, not a bare `let`: TypeScript narrows a let assigned only inside a
+  // callback to `never` after the await. And never read task(...) back here —
+  // it closes over this render's snapshot and cannot see the finished run.
+  const result: { applied: { markdown: string; previousMarkdown: string | null } | null } = { applied: null };
   await run(
     { key: editKey, label: "Applying your edit to the notes…", href: `/pages/${pageId}` },
-    async ({ emit }) => {
-      const body = (await postTask(`/api/pages/${pageId}/edit-notes`, "Could not apply that edit.", {
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instruction, selectedText }),
-      })) as { markdown?: string };
-      if (!body.markdown) throw new Error("Could not apply that edit.");
-      emit(body.markdown);
+    async () => {
+      const body = (await postTask(
+        `/api/pages/${pageId}/edit-notes`,
+        "Editing the notes failed. Try again.",
+        {
+          headers: { "Content-Type": "application/json" },
+          // The route's schema has selectedText as .optional(), not
+          // .nullable() — sending null fails validation.
+          body: JSON.stringify({
+            instruction: instruction.trim(),
+            ...(selectedText ? { selectedText } : {}),
+          }),
+        },
+        "Editing the notes failed. Try again."
+      )) as { markdown?: string; previousMarkdown?: string | null };
+      if (!body.markdown) throw new Error("Editing the notes failed. Try again.");
+      result.applied = { markdown: body.markdown, previousMarkdown: body.previousMarkdown ?? null };
     }
   );
-  const applied = task(editKey);
-  const next = applied?.status === "error" ? null : ((applied?.data as string | undefined) ?? null);
-  if (next && next !== before) {
-    setPreviousMarkdown(before);
-    setMarkdown(next);
+  if (result.applied) {
+    // The server's record of the prior text, not the client's copy of it.
+    setPreviousMarkdown(result.applied.previousMarkdown);
+    setMarkdown(result.applied.markdown);
     setInstruction("");
+    setSelectedText(null);
+    router.refresh();
   }
 }
 ```
+
+`undo()` keeps its own local busy flag: deriving `busy` from the task alone
+removes the setter `undo()` needs.
 
 Render `editTask?.error ?? error` where `error` was rendered. Leave `transcribing` (the voice-note path) and `undo()` alone — both are short and local.
 
@@ -1179,10 +1204,17 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   const [liveBusy, setLiveBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  // save() is a callback both the bar and the panel hold; the ref keeps it
-  // reading the current session rather than the one it closed over.
-  const sessionRef = useRef<RecordingSession | null>(null);
-  sessionRef.current = session;
+  // Do NOT mirror `session` into a ref during render: it is a react-hooks lint
+  // error here, and it pairs a current pageId with a stale audioBlob — the
+  // mismatch that files a recording against the wrong lecture. save() reads
+  // `session` from its own closure, so the pair is always consistent. A
+  // separate ref written from a useEffect on [session] answers only "is this
+  // still the current session?", which the save tail needs before it calls
+  // recorder.reset() (not a state updater, so no functional-setter guard).
+  const currentSessionRef = useRef<RecordingSession | null>(null);
+  useEffect(() => {
+    currentSessionRef.current = session;
+  }, [session]);
 
   const handleLiveSegment = useCallback(async (blob: Blob) => {
     setLiveBusy(true);
@@ -1203,12 +1235,18 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
 
   const start = useCallback(
     async (page: { id: string; title: string }) => {
+      // One recording at a time, app-wide (spec §3). Starting a second one
+      // overwrites the recorder's refs, resets the shared chunk array so the
+      // old take bleeds into the new one, and leaks the first stream's tracks
+      // with the microphone still open. Refuse, quietly.
+      const unsavedTake = recorder.status === "stopped" && recorder.audioBlob !== null;
+      if (session || recorder.status === "recording" || recorder.status === "paused" || unsavedTake) return;
       setSaveError(null);
       setLiveTranscript("");
       setSession({ pageId: page.id, pageTitle: page.title });
       await recorder.startRecording();
     },
-    [recorder]
+    [recorder, session]
   );
 
   const discard = useCallback(() => {
@@ -1219,10 +1257,11 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   }, [recorder]);
 
   const save = useCallback(async () => {
-    const current = sessionRef.current;
+    if (saving) return;
+    const startedSession = session;
     const blob = recorder.audioBlob;
-    if (!current || !blob) return;
-    const { pageId } = current;
+    if (!startedSession || !blob) return;
+    const { pageId } = startedSession;
     setSaving(true);
     setSaveError(null);
 
@@ -1245,11 +1284,14 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     );
 
     setSaving(false);
+    // A new session may have started while transcription ran; this tail must
+    // not reset a recording it did not start.
+    if (currentSessionRef.current !== startedSession) return;
     recorder.reset();
-    setSession(null);
+    setSession((prev) => (prev === startedSession ? null : prev));
     setLiveTranscript("");
     router.refresh();
-  }, [recorder, router, run]);
+  }, [recorder, router, run, session, saving]);
 
   const value = useMemo<RecordingContextValue>(
     () => ({
