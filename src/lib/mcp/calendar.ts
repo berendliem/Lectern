@@ -39,7 +39,10 @@ export async function listUpcomingEventsText(days: number): Promise<string> {
  * the model as the only legal values for `course`; anything else is dropped
  * per event, so one bad guess costs one row rather than the whole listing.
  */
-export async function parseEventsList(listingText: string, courseNames: string[]): Promise<ParsedEvent[]> {
+export async function parseEventsList(
+  listingText: string,
+  courseNames: string[]
+): Promise<{ events: ParsedEvent[]; rejected: number }> {
   const raw = await callLLMJSON({
     model: process.env.OPENROUTER_MODEL_SUMMARY ?? "openrouter/free",
     stage: "summary",
@@ -56,7 +59,7 @@ export async function parseEventsList(listingText: string, courseNames: string[]
     else rejected += 1;
   }
   if (rejected > 0) console.warn(`[calendar] dropped ${rejected} event(s) the classifier returned malformed`);
-  return events;
+  return { events, rejected };
 }
 
 /** Creates a calendar event; returns the server's confirmation text. */

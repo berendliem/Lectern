@@ -22,13 +22,17 @@ export async function isCalendarConfigured(): Promise<boolean> {
 }
 
 export async function syncCalendarEvents(now: Date = new Date()): Promise<{ synced: number; syncedAt: Date }> {
-  if (!(await isCalendarConfigured())) throw new CalendarNotConfiguredError();
+  // Not isCalendarConfigured(): that helper swallows a broken mcp.config.json
+  // into "not configured". Here the contract is narrower — missing server
+  // key is 409, any other failure to even read the config is a real 502.
+  const servers = await loadMcpServers();
+  if (!(CALENDAR_SERVER in servers)) throw new CalendarNotConfiguredError();
 
   const folders = await db.folder.findMany({ select: { id: true, name: true } });
   const folderIdByName = new Map(folders.map((f) => [f.name, f.id]));
 
   const text = await listUpcomingEventsText(SYNC_WINDOW_DAYS);
-  const parsed = await parseEventsList(text, folders.map((f) => f.name));
+  const { events: parsed, rejected } = await parseEventsList(text, folders.map((f) => f.name));
 
   const windowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const windowEnd = new Date(windowStart.getTime() + SYNC_WINDOW_DAYS * DAY_MS);
@@ -43,9 +47,13 @@ export async function syncCalendarEvents(now: Date = new Date()): Promise<{ sync
   const syncedAt = now;
   const keys: string[] = [];
   const writes = [];
+  let unparseable = 0;
   for (const e of parsed) {
     const when = parseEventStart(e.start);
-    if (!when) continue;
+    if (!when) {
+      unparseable += 1;
+      continue;
+    }
     if (when.start < windowStart || when.start >= windowEnd) continue;
     const end = e.end ? (parseEventStart(e.end)?.start ?? null) : null;
     const externalKey = externalKeyFor(e.title, e.start);
@@ -69,6 +77,16 @@ export async function syncCalendarEvents(now: Date = new Date()): Promise<{ sync
         update: { ...fields, folderId },
       })
     );
+  }
+
+  // A bad classifier run (everything rejected or unparseable) looks exactly
+  // like an empty calendar: keys is []. Pruning on that would wipe the whole
+  // window instead of leaving it for the next sync to retry.
+  if (keys.length === 0 && rejected + unparseable > 0) {
+    console.warn(
+      `[calendar] sync produced no usable events (${rejected} rejected, ${unparseable} unparseable); skipping the window prune`
+    );
+    return { synced: 0, syncedAt };
   }
 
   await db.$transaction([
