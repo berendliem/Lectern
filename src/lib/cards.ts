@@ -34,14 +34,26 @@ export function courseScopeFilter(folderId: string) {
 }
 
 export type CardSource =
-  | { kind: "lecture"; id: string; title: string }
-  | { kind: "material"; id: string; title: string };
+  | { kind: "lecture"; id: string; title: string; course: string | null }
+  | { kind: "material"; id: string; title: string; course: string | null };
 
 export function cardSource(row: {
-  page: { id: string; title: string } | null;
-  material: { id: string; title: string } | null;
+  page: { id: string; title: string; folder?: { name: string } | null } | null;
+  material: { id: string; title: string; folder?: { name: string } | null } | null;
 }): CardSource | null {
-  if (row.page) return { kind: "lecture", id: row.page.id, title: row.page.title };
-  if (row.material) return { kind: "material", id: row.material.id, title: row.material.title };
+  if (row.page)
+    return {
+      kind: "lecture",
+      id: row.page.id,
+      title: row.page.title,
+      course: row.page.folder?.name ?? null,
+    };
+  if (row.material)
+    return {
+      kind: "material",
+      id: row.material.id,
+      title: row.material.title,
+      course: row.material.folder?.name ?? null,
+    };
   return null;
 }
