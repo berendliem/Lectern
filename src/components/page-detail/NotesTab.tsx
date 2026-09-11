@@ -187,7 +187,7 @@ export function NotesTab({
           <button
             type="button"
             onClick={() => (recording ? recorder.stopRecording() : recorder.startRecording())}
-            disabled={busy || transcribing || micHolder !== null}
+            disabled={busy || transcribing || (!recording && micHolder !== null)}
             className={
               recording
                 ? "rounded-lg bg-red-100 p-1.5 text-red-600"
@@ -228,7 +228,7 @@ export function NotesTab({
             </button>
           </div>
         )}
-        {micHolder && (
+        {micHolder && !recording && (
           <p className="text-[12.5px] text-muted">
             The mic is recording{" "}
             <Link href={`/pages/${micHolder.pageId}`} className="font-medium text-brand-ink underline">
