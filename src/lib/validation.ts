@@ -341,6 +341,15 @@ export const quizResponseSchema = z.object({
     .min(1),
 });
 
+/**
+ * A link to fetch a lecture's audio from. Only the shape is checked here —
+ * whether it is safe for this machine to go and fetch is decided by
+ * assertFetchableMediaUrl, which owns that judgement.
+ */
+export const mediaUrlSchema = z.object({
+  url: z.string().trim().min(1).max(2048),
+});
+
 export const debateInterjectSchema = z.object({
   text: z.string().trim().min(1).max(2000),
 });

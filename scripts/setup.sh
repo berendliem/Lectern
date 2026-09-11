@@ -11,6 +11,7 @@ warn() { printf '\033[1;33m[setup]\033[0m %s\n' "$*"; }
 command -v node >/dev/null || { warn "Node.js 20+ is required (https://nodejs.org)"; exit 1; }
 command -v python3 >/dev/null || { warn "Python 3.10+ is required"; exit 1; }
 command -v ffmpeg >/dev/null || warn "ffmpeg not found — transcription won't work until it's installed, and the on-device provider can't read the webm Chrome records (macOS: brew install ffmpeg, Ubuntu: sudo apt install ffmpeg)"
+command -v yt-dlp >/dev/null || warn "yt-dlp not found — pasting a link to a recording won't work until it's installed (macOS: brew install yt-dlp, Ubuntu: sudo apt install yt-dlp). Recording and uploading a file work without it."
 command -v claude >/dev/null || warn "The 'claude' CLI is not on your PATH — the course study-plan agent needs it. Install Claude Code and sign in (https://claude.com/claude-code); everything else works without it."
 
 # --- web app -----------------------------------------------------------------
