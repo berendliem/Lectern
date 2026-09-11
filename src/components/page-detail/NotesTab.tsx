@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Mic, Square, Undo2, Wand2, X } from "lucide-react";
 import { NotesView } from "@/components/page-detail/NotesView";
+import { RecapPlayer } from "@/components/page-detail/RecapPlayer";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
 import type { KeyTerm } from "@/types";
@@ -218,6 +219,8 @@ export function NotesTab({
       <div ref={notesRef} onMouseUp={captureSelection}>
         <NotesView markdown={markdown} keyTerms={keyTerms} />
       </div>
+
+      <RecapPlayer pageId={pageId} />
     </div>
   );
 }
