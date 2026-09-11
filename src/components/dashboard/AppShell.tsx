@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/dashboard/ThemeToggle";
 import { TaskProvider } from "@/components/tasks/TaskProvider";
 import { TaskChip } from "@/components/tasks/TaskChip";
 import { RecordingProvider } from "@/components/recording/RecordingProvider";
+import { RecordingBar } from "@/components/recording/RecordingBar";
 import clsx from "@/lib/clsx";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <ThemeToggle />
               </div>
             </header>
+            <RecordingBar />
             <main className="flex-1 overflow-y-auto">
               <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-8">{children}</div>
             </main>

@@ -1,17 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, Sparkles } from "lucide-react";
 import { useRecording } from "@/components/recording/RecordingProvider";
 import type { RecorderStatus } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
-
-function formatElapsed(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+import { formatElapsed } from "@/lib/format";
 
 export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitle: string }) {
   const {
@@ -48,6 +43,10 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
   const [explaining, setExplaining] = useState(false);
   const [explainError, setExplainError] = useState<string | null>(null);
   const liveEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    liveEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [liveTranscript]);
 
   // "audio/webm;codecs=opus" -> "webm". Good enough for a filename.
   const downloadName = `recording.${audioBlob?.type.split(";")[0].split("/")[1] ?? "webm"}`;
