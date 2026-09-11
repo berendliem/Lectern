@@ -47,7 +47,11 @@ export function CoursePicker({
           </Button>
         ))}
         {folders.length === 0 && <p className="text-[13px] text-muted-2">No courses yet.</p>}
-        {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
+        {error && (
+          <p role="alert" className="text-[13px] font-semibold text-red-700">
+            {error}
+          </p>
+        )}
       </div>
     </Modal>
   );

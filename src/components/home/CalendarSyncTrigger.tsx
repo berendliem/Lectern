@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 
 const SKIP_KEY = "lectern:calendar-unconfigured";
 
+// Dev strict mode double-invokes the effect; `cancelled` only stops acting
+// on the response, not the second fetch. This guard makes the fetch itself
+// singular across both invocations.
+let inFlight: Promise<void> | null = null;
+
 /**
  * Fires one sync when the server said the newest row is stale, then refreshes
  * the page so the server component re-reads. A 409 (not configured) is
@@ -20,8 +25,9 @@ export function CalendarSyncTrigger({ stale }: { stale: boolean }) {
     } catch {
       // Storage may be unavailable; a sync attempt is harmless.
     }
+    if (inFlight) return;
     let cancelled = false;
-    fetch("/api/integrations/calendar/sync", { method: "POST" })
+    inFlight = fetch("/api/integrations/calendar/sync", { method: "POST" })
       .then((res) => {
         if (cancelled) return;
         if (res.status === 409) {
@@ -35,7 +41,10 @@ export function CalendarSyncTrigger({ stale }: { stale: boolean }) {
         if (res.ok) router.refresh();
         else console.warn("[calendar] background sync failed", res.status);
       })
-      .catch((e) => console.warn("[calendar] background sync failed", e));
+      .catch((e) => console.warn("[calendar] background sync failed", e))
+      .finally(() => {
+        inFlight = null;
+      });
     return () => {
       cancelled = true;
     };

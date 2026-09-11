@@ -58,7 +58,7 @@ export function UpNext({
   if (!configured) {
     return (
       <p className="text-[13px] text-muted-2">
-        <Link href="/integrations" className="font-medium text-brand-ink hover:underline">
+        <Link href="/integrations" className="font-semibold text-brand-ink hover:underline">
           Connect Google Calendar
         </Link>{" "}
         to see exams and classes here.
@@ -129,7 +129,7 @@ export function UpNext({
                       <button
                         type="button"
                         onClick={() => setPickerFor(e.id)}
-                        className="text-[11px] font-medium text-muted-2 hover:text-brand-ink"
+                        className="text-[11px] font-semibold text-muted-2 hover:text-brand-ink"
                       >
                         Add to course
                       </button>
@@ -145,22 +145,30 @@ export function UpNext({
                       Record
                     </Button>
                   )}
-                  {rowError[e.id] && <span className="text-[12px] font-medium text-red-700">{rowError[e.id]}</span>}
+                  {rowError[e.id] && (
+                    <span role="alert" className="text-[11px] font-semibold text-red-700">
+                      {rowError[e.id]}
+                    </span>
+                  )}
                 </li>
               );
             })
           )}
         </ol>
       )}
-      <div className="flex items-center justify-between text-[12px] text-muted-2">
+      <div className="flex items-center justify-between text-[11px] text-muted-2">
         <span>
           {lastSyncedAt ? `Last synced ${sinceLabel(lastSyncedAt, now)}` : "Not synced yet"} ·{" "}
-          <button type="button" onClick={retry} disabled={retrying} className="font-medium hover:text-brand-ink">
+          <button type="button" onClick={retry} disabled={retrying} className="font-semibold hover:text-brand-ink">
             {retrying ? "Syncing…" : "Retry"}
           </button>
-          {retryError && <span className="ml-2 text-red-700">{retryError}</span>}
+          {retryError && (
+            <span role="alert" className="ml-2 text-red-700">
+              {retryError}
+            </span>
+          )}
         </span>
-        <Link href="/planner" className="font-medium hover:text-brand-ink">
+        <Link href="/planner" className="font-semibold hover:text-brand-ink">
           Planner ›
         </Link>
       </div>

@@ -23,6 +23,7 @@ function greeting(now: Date): string {
 
 export default async function DashboardPage() {
   const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   const [folders, cards, logs, dueCount, exams, upcoming, lastSync, calendarConfigured] = await Promise.all([
     db.folder.findMany({
@@ -54,8 +55,8 @@ export default async function DashboardPage() {
     db.calendarEvent.findMany({
       where: {
         start: {
-          gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-          lt: new Date(now.getTime() + HOME_WINDOW_DAYS * 24 * 60 * 60 * 1000),
+          gte: startOfToday,
+          lt: new Date(startOfToday.getTime() + HOME_WINDOW_DAYS * 24 * 60 * 60 * 1000),
         },
         OR: [{ kind: { not: "OTHER" } }, { folderId: { not: null } }],
       },
