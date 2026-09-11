@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Rendered math, from the Markdown wrapper. KaTeX ships its own metrics-tuned
+   fonts; without this stylesheet formulas fall back to unspaced plain text. */
+@import "katex/dist/katex.min.css";
 @plugin "@tailwindcss/typography";
 
 /* Dark mode is a class on <html>, set before first paint by the inline script

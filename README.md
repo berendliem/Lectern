@@ -28,6 +28,7 @@ That's it — the first run sets everything up (npm deps, `.env` files, database
 Three things to know:
 
 - **ffmpeg** must be on your PATH (macOS: `brew install ffmpeg`, Ubuntu: `sudo apt install ffmpeg`).
+- **yt-dlp** (optional): only needed to attach a lecture by pasting a link (macOS: `brew install yt-dlp`, Ubuntu: `sudo apt install yt-dlp`). Recording and uploading a file work without it.
 - **The `claude` CLI** (optional): only the study-plan agent needs it. [Install Claude Code](https://claude.com/claude-code) and sign in.
 - **An LLM for the AI steps**: put an [OpenRouter](https://openrouter.ai/keys) key in `.env` (`OPENROUTER_API_KEY`) — free-tier models work — **or** go fully local with [Ollama](https://ollama.com): `ollama pull qwen3:8b` and set `LLM_PROVIDER="ollama"` in `.env` (see "Optional: fully local summaries" below).
 
@@ -97,12 +98,15 @@ Open http://localhost:3000.
 ## Using it
 
 1. Click **New Page**, give it a title.
-2. On the page's **Transcript** tab, either record live (mic) or upload an existing audio file.
+2. On the page's **Transcript** tab, record live (mic), upload an existing audio file, or paste a link to a recording — a class on YouTube, a lecture-capture URL, an mp3 on a department page — and Lectern pulls down just the audio track (needs `yt-dlp`).
 3. Click **Transcribe audio** in the status banner once audio is saved.
 4. Click **Generate notes** once transcribed — this calls OpenRouter to produce structured Markdown notes + key terms.
-5. Click **Generate flashcards & quiz** once notes exist — this generates Feynman-style flashcards (explain-it-back prompts, not term/definition pairs) and a mixed short-answer/multiple-choice quiz.
+5. Click **Generate flashcards & quiz** once notes exist — this generates Feynman-style flashcards (explain-it-back prompts, not term/definition pairs) and a quiz mixing short-answer, multiple-choice, and fill-in-the-blank questions.
 6. Study via **Review** (spaced-repetition flashcard session, SM-2 scheduling) or the page's **Quiz** tab (self-test with instant grading), or open the **Chat** tab to ask the assistant anything about the lecture.
    - On the **Transcript** tab, pages with audio get a synced player: click any transcript line to jump the audio there, and the line being spoken is highlighted as it plays (with a 1×–2× speed toggle).
+   - Under the quiz, **Drill my misses** writes new questions on the concepts you got wrong, asked from a different angle so you're recalling the idea rather than the answer you were just shown. It adds to the quiz; nothing existing is removed.
+   - On the **Notes** tab, **Listen to a recap** turns the lecture into a ninety-second spoken summary read aloud by your browser's own voice — for the walk to class. It's written fresh each time and not saved.
+   - Formulae and code survive the trip: notes, chat replies, and study plans render LaTeX (`$x^2$`, `$$…$$`) as typeset maths and fenced blocks as code, so a STEM lecture doesn't come back as raw backslashes.
    - The **Concept map** tab draws an AI-generated map of the lecture's key concepts and how they relate — hover a concept to spotlight its connections.
 7. Organize with folders (sidebar) and tags (page header); **Search** looks across transcripts, notes, and flashcards.
 8. **Export** a page to Markdown or PDF from the page header.

@@ -327,9 +327,27 @@ export const quizResponseSchema = z.object({
           options: z.array(z.string().min(1)).min(2),
           explanation: z.string().optional(),
         }),
+        z.object({
+          type: z.literal("CLOZE"),
+          // The gap marker is what makes this a cloze rather than a short
+          // answer with a word missing, so a prompt without one is a malformed
+          // response and gets retried like any other.
+          prompt: z.string().min(1).regex(/\{\{[\s\S]+?\}\}/, "a cloze prompt must mark its gap with {{...}}"),
+          correctAnswer: z.string().min(1),
+          explanation: z.string().optional(),
+        }),
       ])
     )
     .min(1),
+});
+
+/**
+ * A link to fetch a lecture's audio from. Only the shape is checked here —
+ * whether it is safe for this machine to go and fetch is decided by
+ * assertFetchableMediaUrl, which owns that judgement.
+ */
+export const mediaUrlSchema = z.object({
+  url: z.string().trim().min(1).max(2048),
 });
 
 export const debateInterjectSchema = z.object({

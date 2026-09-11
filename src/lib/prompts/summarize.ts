@@ -13,6 +13,7 @@ Guidelines for "markdown":
 - Use "### " subheadings to break the lecture into its main sections/topics, each prefixed with one fitting emoji.
 - Use bullet points for facts, definitions, and examples. Keep bullets concise. Bold the key term in a bullet where it helps scanning.
 - When the lecture compares things (two processes, pros/cons, before/after, categories with properties), present that as a Markdown table instead of bullets.
+- Write any mathematics, chemistry, or formulae as LaTeX: $...$ inline, $$ alone on the lines above and below a displayed equation. Write code as a fenced block with its language. Never flatten either into prose.
 - Do not invent information that wasn't in the transcript.
 - Do not include a "Key Terms" section in the markdown itself; key terms go only in the keyTerms array.
 
@@ -30,6 +31,7 @@ export const SUMMARIZE_MAP_SYSTEM_PROMPT = `You condense one portion of a longer
 Rules:
 - Output plain Markdown bullet points only — no headings, no preamble, no commentary.
 - Preserve every distinct fact, definition, example, formula, number, and named term from this portion. Densify, don't drop.
+- Keep formulae as LaTeX ($...$ inline, $$ on its own line above and below a displayed equation) and code in fenced blocks, so the final pass still has them.
 - Keep the original order of ideas.
 - Do not invent information that wasn't in the transcript portion.
 

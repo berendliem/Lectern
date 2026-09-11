@@ -195,7 +195,15 @@ export function ReadAloudBar({
   function build(): Sentence[] {
     const root = proseRef.current;
     if (!root) return [];
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    // Speak what a screen reader would. KaTeX renders each formula twice, as
+    // MathML for assistive tech and as aria-hidden HTML for the eye, and keeps
+    // the raw TeX in an <annotation>; reading all three says every formula
+    // three times over.
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, (node) =>
+      node.parentElement?.closest('[aria-hidden="true"], annotation')
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT
+    );
     const nodes: Text[] = [];
     // Where a new block begins. React renders no whitespace between elements,
     // so without this the last word of one list item and the first of the next
