@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Mic, Square, Undo2, Wand2, X } from "lucide-react";
 import { NotesView } from "@/components/page-detail/NotesView";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
+import { useMicHeldByLecture } from "@/components/recording/RecordingProvider";
 import { Button } from "@/components/ui/Button";
 import { useTasks } from "@/components/tasks/TaskProvider";
 import { postTask } from "@/lib/tasks";
@@ -36,6 +38,9 @@ export function NotesTab({
   const notesRef = useRef<HTMLDivElement>(null);
 
   const recorder = useMediaRecorder();
+  // Dictation and the lecture recorder are two `getUserMedia()` calls on one
+  // device: while a lecture is being recorded, this entry point stands down.
+  const micHolder = useMicHeldByLecture();
   const { run, task } = useTasks();
   const editKey = `page:${pageId}:edit-notes`;
   const editTask = task(editKey);
@@ -182,7 +187,7 @@ export function NotesTab({
           <button
             type="button"
             onClick={() => (recording ? recorder.stopRecording() : recorder.startRecording())}
-            disabled={busy || transcribing}
+            disabled={busy || transcribing || micHolder !== null}
             className={
               recording
                 ? "rounded-lg bg-red-100 p-1.5 text-red-600"
@@ -222,6 +227,15 @@ export function NotesTab({
               <X className="h-3.5 w-3.5" strokeWidth={2.2} />
             </button>
           </div>
+        )}
+        {micHolder && (
+          <p className="text-[12.5px] text-muted">
+            The mic is recording{" "}
+            <Link href={`/pages/${micHolder.pageId}`} className="font-medium text-brand-ink underline">
+              {micHolder.pageTitle}
+            </Link>
+            . Dictation would cut that recording off, so type the instruction instead.
+          </p>
         )}
         {recorder.error && <p className="text-[12.5px] text-red-600">{recorder.error}</p>}
         {(editTask?.error ?? error) && (

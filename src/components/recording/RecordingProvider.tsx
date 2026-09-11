@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMediaRecorder, type RecorderStatus } from "@/components/recording/useMediaRecorder";
 import { transcribePage, uploadAudio } from "@/components/recording/upload";
 import { useTasks } from "@/components/tasks/TaskProvider";
+import { formatElapsed } from "@/lib/format";
 
 export type RecordingSession = { pageId: string; pageTitle: string };
 
@@ -49,6 +50,22 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   const currentSessionRef = useRef<RecordingSession | null>(null);
   useEffect(() => {
     currentSessionRef.current = session;
+  }, [session]);
+
+  // A reload or a tab close takes the take with it: the recorder's chunks and
+  // the assembled blob live in this tab and nowhere else, and nothing has
+  // reached the server until `save()` finishes. Registered only while a session
+  // exists, so browsing the rest of the app is never interrupted.
+  useEffect(() => {
+    if (!session) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Legacy browsers cancel on a non-empty returnValue rather than on
+      // preventDefault(); the text itself is not shown any more.
+      e.returnValue = "A lecture recording is still unsaved.";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
   }, [session]);
 
   const handleLiveSegment = useCallback(async (blob: Blob) => {
@@ -99,6 +116,10 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     setLiveTranscript("");
     setSaveError(null);
+    // A save whose upload never comes back leaves `saving` set for good, and
+    // every other control is gated on it. Discard is the escape hatch, so it
+    // owns clearing the flag: the take is gone either way.
+    setSaving(false);
   }, [recorder]);
 
   const save = useCallback(async () => {
@@ -115,44 +136,50 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     setSaving(true);
     setSaveError(null);
 
+    // Discard stays live during a save, and a `start()` can land here too. Once
+    // this take is no longer the one on screen, nothing from this call belongs
+    // there — not an error about audio the user threw away, and not a `reset()`
+    // that would blank a recording already in progress.
+    const stillMine = () => currentSessionRef.current === startedSession;
+
     const uploaded = await uploadAudio(pageId, blob, "recording.webm", recorder.elapsedSeconds);
     if (!uploaded.ok) {
       // The blob stays in the provider so the panel can still offer it as a
       // download — this is the user's only copy of the lecture.
       setSaving(false);
-      setSaveError(uploaded.error);
+      if (stillMine()) setSaveError(uploaded.error);
       return;
     }
     router.refresh();
 
-    // `run` never rethrows, so the outcome has to come back on a local: reading
-    // it from `task(key)` afterwards would read this render's stale snapshot.
-    let transcribeError: string | null = null;
-    await run(
+    const outcome = await run(
       { key: `page:${pageId}:transcribe`, label: "Transcribing the recording…", href: `/pages/${pageId}` },
       async () => {
         const transcribed = await transcribePage(pageId);
-        if (!transcribed.ok) {
-          transcribeError = transcribed.error;
-          throw new Error(transcribed.error);
-        }
+        if (!transcribed.ok) throw new Error(transcribed.error);
       }
     );
 
     setSaving(false);
-    if (transcribeError) {
+    // `ran: false` means a transcribe for this lecture was already in flight, so
+    // this take's audio — which only reached the server a moment ago — was never
+    // handed to it. Reporting that other run's "done" as ours would drop the
+    // blob and leave the lecture with audio and no transcript, silently.
+    const failure = !outcome.ran
+      ? "Uploaded, but not transcribed: a transcription was already running for this lecture. Transcribe it again from the banner on the lecture page."
+      : outcome.status === "error"
+        ? (outcome.error ?? "Transcription failed. You can retry it.")
+        : null;
+    if (failure) {
       // The audio is on the server, but hold the session and the blob anyway:
-      // the user gets the error, the download, and a session to retry from.
-      setSaveError(transcribeError);
+      // the user gets the message, the download, and a session to retry from.
+      if (stillMine()) setSaveError(failure);
       return;
     }
 
     router.refresh();
 
-    // Release the take only if it is still the one on screen. A `start()` during
-    // the awaits above would have moved the session on, and `reset()` then blanks
-    // the blob and the status of a recording still in progress.
-    if (currentSessionRef.current !== startedSession) return;
+    if (!stillMine()) return;
     recorder.reset();
     setSession((prev) => (prev === startedSession ? null : prev));
     setLiveTranscript("");
@@ -181,6 +208,33 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   );
 
   return <RecordingContext.Provider value={value}>{children}</RecordingContext.Provider>;
+}
+
+/**
+ * The session currently holding the microphone, or null when it is free.
+ *
+ * A second `getUserMedia()` does not queue: on Safari it revokes the first
+ * capture and the lecture goes silent with nothing on screen to say so. The
+ * lecture recorder now follows the user around the app, so every other mic
+ * entry point — dictation, the copilot, spoken interview answers — has to stand
+ * down while a take is live. Returns the session so the caller can link to it.
+ */
+export function useMicHeldByLecture(): RecordingSession | null {
+  const { session, status } = useRecording();
+  // A stopped-but-unsaved take has already released its tracks; it is the only
+  // session state that does not hold the device.
+  return session && (status === "recording" || status === "paused") ? session : null;
+}
+
+/**
+ * Names what a discard destroys before it happens, per AGENTS.md: the take is
+ * the only copy of that stretch of the lecture, and no undo brings it back.
+ * Shared by the shell bar and the panel so the two cannot drift apart.
+ */
+export function confirmDiscard(session: RecordingSession, elapsedSeconds: number): boolean {
+  return window.confirm(
+    `Discard the recording for "${session.pageTitle}"? Its ${formatElapsed(elapsedSeconds)} of audio has not been saved anywhere — this permanently deletes the only copy.`
+  );
 }
 
 export function useRecording(): RecordingContextValue {

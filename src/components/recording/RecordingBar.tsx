@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Mic, Pause, Play, Square } from "lucide-react";
-import { useRecording } from "@/components/recording/RecordingProvider";
+import { confirmDiscard, useRecording } from "@/components/recording/RecordingProvider";
 import { Button } from "@/components/ui/Button";
 import { formatElapsed } from "@/lib/format";
 
@@ -59,7 +59,16 @@ export function RecordingBar() {
             <Button size="sm" onClick={save} disabled={saving}>
               {saving ? "Saving…" : "Save & transcribe"}
             </Button>
-            <Button size="sm" variant="secondary" onClick={discard} disabled={saving}>
+            {/* Never gated on `saving`: while a save is in flight this is the
+                one control that still works, and it is what frees the user from
+                a hung upload. */}
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                if (confirmDiscard(session, elapsedSeconds)) discard();
+              }}
+            >
               Discard
             </Button>
           </>

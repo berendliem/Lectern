@@ -94,6 +94,56 @@ test("dismiss drops the task", () => {
   assert.deepEqual(state.tasks, []);
 });
 
+test("clear drops a failed task so it stops shadowing the next attempt", () => {
+  const failed = tasksReducer(started(), {
+    type: "fail",
+    key: "page:p1:summarize",
+    message: "The model returned nothing usable.",
+  });
+  const cleared = tasksReducer(failed, { type: "clear", keys: ["page:p1:summarize"] });
+  assert.deepEqual(cleared.tasks, []);
+});
+
+test("clear drops finished tasks and keeps running ones", () => {
+  let state = started("page:p1:transcribe");
+  state = tasksReducer(state, { type: "finish", key: "page:p1:transcribe" });
+  state = tasksReducer(state, {
+    type: "start",
+    key: "page:p1:summarize",
+    label: "Summarizing into notes…",
+    now: 2_000,
+  });
+  const cleared = tasksReducer(state, {
+    type: "clear",
+    keys: ["page:p1:transcribe", "page:p1:summarize"],
+  });
+  assert.equal(findTask(cleared, "page:p1:transcribe"), undefined);
+  assert.equal(findTask(cleared, "page:p1:summarize")?.status, "running");
+});
+
+test("clear leaves the state identical when it matches nothing", () => {
+  const state = started();
+  assert.equal(tasksReducer(state, { type: "clear", keys: [] }), state);
+  assert.equal(tasksReducer(state, { type: "clear", keys: ["page:p1:quiz"] }), state);
+});
+
+test("a failed key restarted by a retry reports running, not the old error", () => {
+  const failed = tasksReducer(started(), {
+    type: "fail",
+    key: "page:p1:summarize",
+    message: "Lost connection to the local server mid-step.",
+  });
+  const retried = tasksReducer(failed, {
+    type: "start",
+    key: "page:p1:summarize",
+    label: "Summarizing into notes…",
+    now: 4_000,
+  });
+  const task = findTask(retried, "page:p1:summarize");
+  assert.equal(task?.status, "running");
+  assert.equal(task?.error, undefined);
+});
+
 test("actions for an unknown key are ignored", () => {
   const state = started();
   assert.equal(tasksReducer(state, { type: "step", key: "nope", text: "x" }), state);

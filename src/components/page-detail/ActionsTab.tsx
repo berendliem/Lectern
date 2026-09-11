@@ -61,6 +61,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
 
   async function toggle(item: ActionItem) {
     const next = !item.done;
+    setError(null);
     setItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, done: next } : i)) ?? null);
     const res = await fetch(`/api/action-items/${item.id}`, {
       method: "PATCH",
@@ -91,7 +92,9 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
   }
 
   const hasItems = (items?.length ?? 0) > 0;
-  const shownError = generateTask?.error ?? error;
+  // Local first: `error` is cleared at the start of every action here, so when
+  // it is set it is newer than any task failure the user has already seen.
+  const shownError = error ?? generateTask?.error;
 
   return (
     <div className="flex flex-col gap-4">

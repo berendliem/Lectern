@@ -25,7 +25,13 @@ const ICONS: Record<string, typeof FileText> = {
   OTHER: FileText,
 };
 
-export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
+export function MaterialList({
+  folderId,
+  materials,
+}: {
+  folderId: string;
+  materials: MaterialSummary[];
+}) {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -68,7 +74,12 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
     }
   }
 
-  async function generate(id: string, kind: "flashcards" | "quiz", existing: number) {
+  async function generate(
+    id: string,
+    title: string,
+    kind: "flashcards" | "quiz",
+    existing: number
+  ) {
     // The generate routes delete what is already there before writing. For a
     // material with cards that means the scheduling those cards carry —
     // intervals, ease, the review history behind them — goes with them, and
@@ -85,7 +96,13 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
     }
 
     await run(
-      { key: `material:${id}:${kind}`, label: `Generating ${kind} from a material…` },
+      {
+        key: `material:${id}:${kind}`,
+        // Two materials generating at once are two identical chips otherwise,
+        // neither of them clickable.
+        label: `Generating ${kind} from "${title}"…`,
+        href: `/folders/${folderId}`,
+      },
       async () => {
         await postTask(
           `/api/materials/${id}/generate-${kind}`,
@@ -170,7 +187,9 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                   </p>
                 </button>
                 <button
-                  onClick={() => generate(material.id, "flashcards", material.flashcardCount)}
+                  onClick={() =>
+                    generate(material.id, material.title, "flashcards", material.flashcardCount)
+                  }
                   disabled={generating !== null}
                   className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
                 >
@@ -181,7 +200,7 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                       : "Flashcards"}
                 </button>
                 <button
-                  onClick={() => generate(material.id, "quiz", material.quizCount)}
+                  onClick={() => generate(material.id, material.title, "quiz", material.quizCount)}
                   disabled={generating !== null}
                   className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
                 >

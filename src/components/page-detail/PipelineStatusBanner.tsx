@@ -37,7 +37,7 @@ export function PipelineStatusBanner({
   hasFlashcards,
   hasQuiz,
 }: Props) {
-  const { run, task } = useTasks();
+  const { run, task, clear } = useTasks();
   const router = useRouter();
 
   const done: Record<StageId, boolean> = {
@@ -52,30 +52,33 @@ export function PipelineStatusBanner({
   const stageTasks = STAGES.map((stage) => task(STAGE_KEY(pageId, stage.id)));
   const runningStage =
     STAGES.find((stage, i) => stageTasks[i]?.status === "running")?.id ?? null;
-  const taskError = stageTasks.find((t) => t?.status === "error")?.error ?? null;
+  // A stage whose output now exists produced it somehow, so its old failure is
+  // history — reporting it would shadow both the real state and the server's
+  // own `errorMessage`.
+  const taskError =
+    stageTasks.find((t, i) => !done[STAGES[i].id] && t?.status === "error")?.error ?? null;
 
   async function runRemaining() {
+    // Every other action in the app clears its error state as it starts; task
+    // errors have to be cleared the same way, or the banner keeps reporting the
+    // last attempt's failure after this one succeeds.
+    clear(remaining.map((stage) => STAGE_KEY(pageId, stage.id)));
     for (const stage of remaining) {
-      let failed = false;
-      await run(
+      const outcome = await run(
         { key: STAGE_KEY(pageId, stage.id), label: stage.runningLabel, href: `/pages/${pageId}` },
         async () => {
-          try {
-            await postTask(
-              `/api/pages/${pageId}/${stage.id}`,
-              `${stage.label} generation failed. You can retry from here.`,
-              undefined,
-              "Lost connection to the local server mid-step. You can retry from here."
-            );
-          } catch (e) {
-            failed = true;
-            throw e;
-          }
+          await postTask(
+            `/api/pages/${pageId}/${stage.id}`,
+            `${stage.label} generation failed. You can retry from here.`,
+            undefined,
+            "Lost connection to the local server mid-step. You can retry from here."
+          );
         }
       );
       router.refresh();
-      // Later stages read what earlier ones wrote, so a failure stops the chain.
-      if (failed) return;
+      // Later stages read what earlier ones wrote, so a failure stops the chain
+      // — including one reported by a run this click merely joined.
+      if (outcome.status === "error") return;
     }
   }
 

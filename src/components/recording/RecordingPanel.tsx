@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Loader2, Sparkles } from "lucide-react";
-import { useRecording } from "@/components/recording/RecordingProvider";
+import { confirmDiscard, useRecording } from "@/components/recording/RecordingProvider";
 import type { RecorderStatus } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
 import { formatElapsed } from "@/lib/format";
@@ -127,7 +127,14 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
               <Button onClick={save} disabled={busy}>
                 {saving ? "Saving…" : "Save & transcribe"}
               </Button>
-              <Button variant="secondary" onClick={discard} disabled={busy}>
+              {/* Ungated on purpose: a save that never returns must not be able
+                  to strand the take behind two disabled buttons. */}
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (session && confirmDiscard(session, elapsedSeconds)) discard();
+                }}
+              >
                 Discard
               </Button>
             </>
@@ -135,14 +142,15 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
         </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {saveError && (
-          <div className="flex flex-col items-center gap-1 text-sm text-red-600">
-            <p>{saveError}</p>
-            {/* The recording exists only in this tab until it uploads. If the save
-                failed, hand it to the user as a file before the tab takes it away —
-                they can re-upload it from the course page. */}
+        {(saveError || previewUrl) && (
+          <div className="flex flex-col items-center gap-1 text-sm">
+            {saveError && <p className="text-red-600">{saveError}</p>}
+            {/* The recording exists only in this tab until it uploads, so this
+                is offered for as long as the blob is here — not only once a save
+                has already failed. A save that hangs never sets `saveError`, and
+                that is exactly when the user most needs the file. */}
             {previewUrl && (
-              <a href={previewUrl} download={downloadName} className="font-medium underline">
+              <a href={previewUrl} download={downloadName} className="font-medium text-muted underline hover:text-ink-soft">
                 Download the recording
               </a>
             )}

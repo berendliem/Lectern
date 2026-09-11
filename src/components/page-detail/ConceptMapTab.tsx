@@ -81,6 +81,9 @@ export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMate
           undefined,
           "Network error — please try again."
         )) as { conceptMap?: ConceptMap };
+        // Emitting nothing would finish the task "done" while the tab shows its
+        // empty state and no explanation — the failure has to be reported.
+        if (!body.conceptMap) throw new Error("Could not generate the concept map. Try again.");
         emit(body.conceptMap);
       }
     );

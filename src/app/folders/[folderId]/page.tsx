@@ -184,6 +184,7 @@ export default async function FolderPage({
                     <MaterialUploadButton folderId={folder.id} />
                   </div>
                   <MaterialList
+                    folderId={folder.id}
                     materials={materials.map((m) => ({
                       id: m.id,
                       kind: m.kind,

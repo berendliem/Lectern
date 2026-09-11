@@ -53,7 +53,7 @@ export function CourseOverview({
   const [debateSelect, setDebateSelect] = useState<string>("");
   const [debateSubmitting, setDebateSubmitting] = useState(false);
   const router = useRouter();
-  const { run, task } = useTasks();
+  const { run, task, clear } = useTasks();
   const syllabusKey = `folder:${folderId}:parse-syllabus`;
   const parsingSyllabus = task(syllabusKey)?.status === "running";
 
@@ -82,6 +82,8 @@ export function CourseOverview({
       topics.length === 0 ||
       window.confirm("Re-parsing replaces this course's topic list, including any edits. Continue?");
     if (!confirmed) return;
+    setError(null);
+    clear([syllabusKey]);
     await run(
       { key: syllabusKey, label: "Reading the syllabus…", href: `/folders/${folderId}` },
       async () => {
@@ -233,8 +235,11 @@ export function CourseOverview({
         </div>
       )}
 
-      {(task(syllabusKey)?.error ?? error) && (
-        <p className="text-[13px] font-medium text-red-700">{task(syllabusKey)?.error ?? error}</p>
+      {/* Local first: every action here clears `error` as it starts, so a local
+          message is always the most recent thing that happened. A syllabus task
+          error is only reported while nothing newer has. */}
+      {(error ?? task(syllabusKey)?.error) && (
+        <p className="text-[13px] font-medium text-red-700">{error ?? task(syllabusKey)?.error}</p>
       )}
 
       {/* What this course got wrong and has not since got right. Each entry closes

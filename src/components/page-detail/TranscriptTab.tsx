@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BookMarked, Loader2, Sparkles } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { RecordingPanel } from "@/components/recording/RecordingPanel";
+import { useRecording } from "@/components/recording/RecordingProvider";
 import { AudioUploadDropzone } from "@/components/recording/AudioUploadDropzone";
 import { TranscriptView } from "@/components/page-detail/TranscriptView";
 import { SyncedTranscriptPlayer } from "@/components/page-detail/SyncedTranscriptPlayer";
@@ -33,7 +34,8 @@ export function TranscriptTab({
 }) {
   const router = useRouter();
   const [view, setView] = useState<"clean" | "raw">(cleanText ? "clean" : "raw");
-  const { run, task } = useTasks();
+  const { run, task, clear } = useTasks();
+  const { session, audioBlob } = useRecording();
   const chapterKey = `page:${pageId}:chapters`;
   const cleanKey = `page:${pageId}:cleanup`;
   const chaptering = task(chapterKey)?.status === "running";
@@ -47,6 +49,7 @@ export function TranscriptTab({
   const showClean = view === "clean" && !!cleanText;
 
   async function detectChapters() {
+    clear([chapterKey]);
     await run({ key: chapterKey, label: "Detecting chapters…", href: `/pages/${pageId}` }, async () => {
       await postTask(`/api/pages/${pageId}/chapters`, "Chapter detection failed. Try again.");
     });
@@ -54,6 +57,9 @@ export function TranscriptTab({
   }
 
   async function cleanup() {
+    // Both readouts below share one line, so an action starts by dropping its
+    // own last failure — the same way every local error state is cleared.
+    clear([cleanKey]);
     let ok = false;
     await run({ key: cleanKey, label: "Cleaning up the transcript…", href: `/pages/${pageId}` }, async () => {
       await postTask(`/api/pages/${pageId}/cleanup-transcript`, "Transcript cleanup failed. Try again.");
@@ -68,10 +74,15 @@ export function TranscriptTab({
       {hasAudio && isVideo && <video controls src={src} className="max-h-80 w-full rounded-xl bg-black" />}
       {hasAudio && !isVideo && (!synced || showClean) && <audio controls src={src} className="w-full" />}
 
-      {!hasAudio && (
+      {/* The panel also has to be here when audio already exists but this
+          lecture still holds an unsaved take: on the transcribe-failure path the
+          upload succeeded and `hasAudio` flipped, and the shell bar sends the
+          user here to download or re-save the recording. Without this the link
+          lands on a page with no panel on it. */}
+      {(!hasAudio || (session?.pageId === pageId && audioBlob !== null)) && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <RecordingPanel pageId={pageId} pageTitle={pageTitle} />
-          <AudioUploadDropzone pageId={pageId} />
+          {!hasAudio && <AudioUploadDropzone pageId={pageId} />}
         </div>
       )}
 

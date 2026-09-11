@@ -27,7 +27,8 @@ export type TaskAction =
   | { type: "emit"; key: string; data: unknown }
   | { type: "finish"; key: string }
   | { type: "fail"; key: string; message: string }
-  | { type: "dismiss"; key: string };
+  | { type: "dismiss"; key: string }
+  | { type: "clear"; keys: string[] };
 
 export const EMPTY_TASKS: TaskState = { tasks: [] };
 
@@ -78,6 +79,14 @@ export function tasksReducer(state: TaskState, action: TaskAction): TaskState {
       }));
     case "dismiss":
       return { tasks: state.tasks.filter((task) => task.key !== action.key) };
+    case "clear": {
+      // Drops the settled record of a key an action is about to run, so a
+      // failure the user has already moved past stops shadowing what happens
+      // next. A running task is never stale, so it is left alone.
+      const keys = new Set(action.keys);
+      const tasks = state.tasks.filter((task) => !keys.has(task.key) || task.status === "running");
+      return tasks.length === state.tasks.length ? state : { tasks };
+    }
   }
 }
 

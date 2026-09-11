@@ -85,15 +85,26 @@ export function TaskChip() {
                   )}
                   {task.error && <p className="text-[11.5px] text-red-600">{task.error}</p>}
                 </div>
-                {task.status !== "running" && (
-                  <button
-                    onClick={() => dismiss(task.key)}
-                    className="rounded p-0.5 text-muted-2 hover:bg-surface-3 hover:text-ink-soft"
-                    aria-label={`Dismiss ${task.label}`}
-                  >
-                    <X className="h-3.5 w-3.5" strokeWidth={2.2} />
-                  </button>
-                )}
+                {/* A running task is dismissable too: a stream whose response
+                    stops arriving without closing never settles, and without
+                    this the chip and the button that started it stay stuck for
+                    the rest of the session. It stops tracking, nothing more. */}
+                <button
+                  onClick={() => dismiss(task.key)}
+                  className="rounded p-0.5 text-muted-2 hover:bg-surface-3 hover:text-ink-soft"
+                  aria-label={
+                    task.status === "running"
+                      ? `Stop tracking ${task.label}`
+                      : `Dismiss ${task.label}`
+                  }
+                  title={
+                    task.status === "running"
+                      ? "Stop tracking this. The work already sent to the server keeps going and still saves its result."
+                      : undefined
+                  }
+                >
+                  <X className="h-3.5 w-3.5" strokeWidth={2.2} />
+                </button>
               </li>
             ))}
           </ul>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Info, Radio, Save, Square } from "lucide-react";
 import { useRollingRecorder } from "@/components/copilot/useRollingRecorder";
+import { useMicHeldByLecture } from "@/components/recording/RecordingProvider";
 import { TranscriptPanel } from "@/components/copilot/TranscriptPanel";
 import { SuggestionsPanel } from "@/components/copilot/SuggestionsPanel";
 import { SaveSessionModal } from "@/components/copilot/SaveSessionModal";
@@ -84,6 +86,7 @@ export function LiveCopilot() {
 
   const recorder = useRollingRecorder(handleClip);
   const isRecording = recorder.status === "recording";
+  const micHolder = useMicHeldByLecture();
 
   // On stop, do a final suggestions refresh so the summary reflects everything.
   const wasRecordingRef = useRef(false);
@@ -143,7 +146,7 @@ export function LiveCopilot() {
               Stop
             </Button>
           ) : (
-            <Button variant="brand" size="sm" onClick={recorder.start}>
+            <Button variant="brand" size="sm" onClick={recorder.start} disabled={micHolder !== null}>
               <Radio className="h-4 w-4" strokeWidth={2} />
               Start listening
             </Button>
@@ -158,6 +161,16 @@ export function LiveCopilot() {
       </div>
 
       {recorder.error && <p className="text-[13px] font-medium text-red-700">{recorder.error}</p>}
+
+      {micHolder && (
+        <p className="text-[13px] text-muted">
+          A recording is running for{" "}
+          <Link href={`/pages/${micHolder.pageId}`} className="font-medium text-brand-ink underline">
+            {micHolder.pageTitle}
+          </Link>
+          . Stop it before listening here — one microphone, one recording.
+        </p>
+      )}
 
       <div className="flex items-start gap-2 rounded-xl border border-sky-soft bg-sky-soft/40 px-3.5 py-2.5 text-[12.5px] text-sky-ink">
         <Info className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
