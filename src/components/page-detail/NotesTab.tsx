@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Mic, Square, Undo2, Wand2, X } from "lucide-react";
 import { NotesView } from "@/components/page-detail/NotesView";
+import { ReadAloudBar } from "@/components/page-detail/ReadAloudBar";
 import { RecapPlayer } from "@/components/page-detail/RecapPlayer";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
@@ -32,6 +33,8 @@ export function NotesTab({
   const [error, setError] = useState<string | null>(null);
   const [previousMarkdown, setPreviousMarkdown] = useState<string | null>(null);
   const notesRef = useRef<HTMLDivElement>(null);
+  // The prose only — the read-aloud bar should not narrate the key-term cards.
+  const proseRef = useRef<HTMLDivElement>(null);
 
   const recorder = useMediaRecorder();
 
@@ -216,8 +219,10 @@ export function NotesTab({
         {error && <p className="text-[12.5px] text-red-600">{error}</p>}
       </form>
 
+      <ReadAloudBar proseRef={proseRef} markdown={markdown} />
+
       <div ref={notesRef} onMouseUp={captureSelection}>
-        <NotesView markdown={markdown} keyTerms={keyTerms} />
+        <NotesView markdown={markdown} keyTerms={keyTerms} proseRef={proseRef} />
       </div>
 
       <RecapPlayer pageId={pageId} />

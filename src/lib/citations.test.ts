@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formatCitation, slideNumberFromChunk } from "./citations.ts";
+import { dedupeCitations, formatCitation, slideNumberFromChunk } from "./citations.ts";
 
 test("slideNumberFromChunk reads the slide prefix the pptx extractor writes", () => {
   assert.equal(slideNumberFromChunk("Slide 8: Calvin cycle\nThe dark reactions…"), 8);
@@ -46,4 +46,24 @@ test("formatCitation leaves a non-slide material with just its title", () => {
     materialId: "m2",
   });
   assert.deepEqual(out, { label: "Course syllabus", pageId: null, materialId: "m2" });
+});
+
+test("dedupeCitations collapses several chunks from one lecture to a single citation", () => {
+  const out = dedupeCitations([
+    { label: "Photosynthesis", pageId: "p1", materialId: null },
+    { label: "Photosynthesis", pageId: "p1", materialId: null },
+    { label: "Photosynthesis · Slide 2", pageId: "p1", materialId: null },
+  ]);
+  assert.deepEqual(out, [{ label: "Photosynthesis", pageId: "p1", materialId: null }]);
+});
+
+test("dedupeCitations keeps two materials that share a title, keyed on id not label", () => {
+  const out = dedupeCitations([
+    { label: "Syllabus", pageId: null, materialId: "m1" },
+    { label: "Syllabus", pageId: null, materialId: "m2" },
+  ]);
+  assert.deepEqual(out, [
+    { label: "Syllabus", pageId: null, materialId: "m1" },
+    { label: "Syllabus", pageId: null, materialId: "m2" },
+  ]);
 });
