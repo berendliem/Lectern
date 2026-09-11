@@ -180,6 +180,33 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
     setStatus("idle");
   }, []);
 
+  /**
+   * Throws the take away and releases the microphone. `reset()` only clears
+   * state — before this existed, the only thing that stopped the tracks was the
+   * `onstop` handler of a completed recording, so an abandoned session kept the
+   * mic open and the browser's recording indicator lit.
+   */
+  const discard = useCallback(() => {
+    stopSegmentLoop(false);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    const recorder = mediaRecorderRef.current;
+    mediaRecorderRef.current = null;
+    if (recorder && recorder.state !== "inactive") {
+      // Drop the assembling handlers first: this take is not being saved.
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      recorder.stop();
+    }
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    chunksRef.current = [];
+    stopLevelMeter();
+    setAudioBlob(null);
+    setElapsedSeconds(0);
+    setStatus("idle");
+  }, [stopSegmentLoop, stopLevelMeter]);
+
   return {
     status,
     elapsedSeconds,
@@ -191,5 +218,6 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
     pauseRecording,
     resumeRecording,
     reset,
+    discard,
   };
 }
