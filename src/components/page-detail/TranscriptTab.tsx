@@ -8,6 +8,8 @@ import { RecordingPanel } from "@/components/recording/RecordingPanel";
 import { AudioUploadDropzone } from "@/components/recording/AudioUploadDropzone";
 import { TranscriptView } from "@/components/page-detail/TranscriptView";
 import { SyncedTranscriptPlayer } from "@/components/page-detail/SyncedTranscriptPlayer";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 import type { Chapter, TranscriptSegment } from "@/types";
 
 export function TranscriptTab({
@@ -29,9 +31,12 @@ export function TranscriptTab({
 }) {
   const router = useRouter();
   const [view, setView] = useState<"clean" | "raw">(cleanText ? "clean" : "raw");
-  const [cleaning, setCleaning] = useState(false);
-  const [chaptering, setChaptering] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { run, task } = useTasks();
+  const chapterKey = `page:${pageId}:chapters`;
+  const cleanKey = `page:${pageId}:cleanup`;
+  const chaptering = task(chapterKey)?.status === "running";
+  const cleaning = task(cleanKey)?.status === "running";
+  const error = task(chapterKey)?.error ?? task(cleanKey)?.error ?? null;
 
   const src = `/api/pages/${pageId}/audio`;
   // Audio + timestamped segments get the synced player (click a line to seek,
@@ -40,37 +45,18 @@ export function TranscriptTab({
   const showClean = view === "clean" && !!cleanText;
 
   async function detectChapters() {
-    setChaptering(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/chapters`, { method: "POST" });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) setError(body.error ?? "Chapter detection failed. Try again.");
-      else router.refresh();
-    } catch {
-      setError("Chapter detection failed. Try again.");
-    } finally {
-      setChaptering(false);
-    }
+    await run({ key: chapterKey, label: "Detecting chapters…", href: `/pages/${pageId}` }, async () => {
+      await postTask(`/api/pages/${pageId}/chapters`, "Chapter detection failed. Try again.");
+    });
+    router.refresh();
   }
 
   async function cleanup() {
-    setCleaning(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/cleanup-transcript`, { method: "POST" });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(body.error ?? "Transcript cleanup failed. Try again.");
-      } else {
-        setView("clean");
-        router.refresh();
-      }
-    } catch {
-      setError("Transcript cleanup failed. Try again.");
-    } finally {
-      setCleaning(false);
-    }
+    await run({ key: cleanKey, label: "Cleaning up the transcript…", href: `/pages/${pageId}` }, async () => {
+      await postTask(`/api/pages/${pageId}/cleanup-transcript`, "Transcript cleanup failed. Try again.");
+    });
+    if (task(cleanKey)?.status !== "error") setView("clean");
+    router.refresh();
   }
 
   return (

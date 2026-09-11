@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Loader2, RefreshCw, Waypoints } from "lucide-react";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 
 type ConceptNode = { id: string; label: string; group: number };
 type ConceptEdge = { from: string; to: string; label: string };
@@ -61,28 +63,25 @@ function layoutNodes(nodes: ConceptNode[]): PlacedNode[] {
 }
 
 export function ConceptMapTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: boolean }) {
-  const [map, setMap] = useState<ConceptMap | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  const { run, task } = useTasks();
+  const taskKey = `page:${pageId}:concept-map`;
+  const mapTask = task(taskKey);
+  const loading = mapTask?.status === "running";
+  const map = (mapTask?.data as ConceptMap | undefined) ?? null;
+  const error = mapTask?.error ?? null;
 
   async function generate() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/concept-map`, { method: "POST" });
-      if (res.ok) {
-        const { conceptMap } = await res.json();
-        setMap(conceptMap);
-      } else {
-        const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Could not generate the concept map. Try again.");
+    await run(
+      { key: taskKey, label: "Drawing the concept map…", href: `/pages/${pageId}` },
+      async ({ emit }) => {
+        const body = (await postTask(
+          `/api/pages/${pageId}/concept-map`,
+          "Could not build a concept map from this lecture."
+        )) as { conceptMap?: ConceptMap };
+        emit(body.conceptMap);
       }
-    } catch {
-      setError("Network error — please try again.");
-    } finally {
-      setLoading(false);
-    }
+    );
   }
 
   const placed = useMemo(() => (map ? layoutNodes(map.nodes) : []), [map]);

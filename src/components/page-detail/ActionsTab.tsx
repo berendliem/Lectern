@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { CircleHelp, Gavel, ListChecks, Loader2, RefreshCw } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { Button } from "@/components/ui/Button";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 
 type ActionKind = "ACTION" | "DECISION" | "QUESTION";
 
@@ -22,8 +24,11 @@ const GROUPS: { kind: ActionKind; label: string; icon: typeof ListChecks }[] = [
 
 export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTranscript: boolean }) {
   const [items, setItems] = useState<ActionItem[] | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { run, task } = useTasks();
+  const taskKey = `page:${pageId}:action-items`;
+  const generateTask = task(taskKey);
+  const loading = generateTask?.status === "running";
 
   useEffect(() => {
     let ignore = false;
@@ -41,21 +46,17 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
   }, [pageId]);
 
   async function generate() {
-    setLoading(true);
     setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/action-items`, { method: "POST" });
-      const body = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setItems(body.items ?? []);
-      } else {
-        setError(body.error ?? "Could not extract action items. Try again.");
+    await run(
+      { key: taskKey, label: "Extracting action items…", href: `/pages/${pageId}` },
+      async ({ emit }) => {
+        const body = (await postTask(
+          `/api/pages/${pageId}/action-items`,
+          "Could not extract action items. Try again."
+        )) as { items?: ActionItem[] };
+        emit(body.items ?? []);
       }
-    } catch {
-      setError("Could not extract action items. Try again.");
-    } finally {
-      setLoading(false);
-    }
+    );
   }
 
   async function toggle(item: ActionItem) {
@@ -89,7 +90,10 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
     );
   }
 
-  const hasItems = (items?.length ?? 0) > 0;
+  const taskItems = generateTask?.data as ActionItem[] | undefined;
+  const shownItems = taskItems ?? items;
+  const hasItems = (shownItems?.length ?? 0) > 0;
+  const shownError = generateTask?.error ?? error;
 
   return (
     <div className="flex flex-col gap-4">
@@ -107,9 +111,9 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
           {hasItems ? "Regenerate" : "Extract"}
         </Button>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {shownError && <p className="text-sm text-red-600">{shownError}</p>}
 
-      {items === null ? (
+      {shownItems === null ? (
         <p className="text-sm text-muted-2">Loading…</p>
       ) : !hasItems ? (
         <div className="rounded-lg border border-dashed border-line-strong px-4 py-10 text-center text-sm text-muted-2">
@@ -119,7 +123,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
         </div>
       ) : (
         GROUPS.map(({ kind, label, icon: Icon }) => {
-          const group = items.filter((i) => i.kind === kind);
+          const group = shownItems.filter((i) => i.kind === kind);
           if (group.length === 0) return null;
           return (
             <section key={kind}>

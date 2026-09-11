@@ -6,6 +6,8 @@ import { Loader2, Mic, Square, Undo2, Wand2, X } from "lucide-react";
 import { NotesView } from "@/components/page-detail/NotesView";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 import type { KeyTerm } from "@/types";
 
 /**
@@ -26,13 +28,18 @@ export function NotesTab({
   const [markdown, setMarkdown] = useState(initialMarkdown);
   const [instruction, setInstruction] = useState("");
   const [selectedText, setSelectedText] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  // Only undo() sets this — applyEdit's in-flight state comes from the task below.
+  const [undoBusy, setUndoBusy] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previousMarkdown, setPreviousMarkdown] = useState<string | null>(null);
   const notesRef = useRef<HTMLDivElement>(null);
 
   const recorder = useMediaRecorder();
+  const { run, task } = useTasks();
+  const editKey = `page:${pageId}:edit-notes`;
+  const editTask = task(editKey);
+  const busy = editTask?.status === "running" || undoBusy;
 
   // Server refreshes (router.refresh after other pipeline steps) can change
   // the prop; adopt it unless we're mid-edit. Adjusting state during render
@@ -96,37 +103,35 @@ export function NotesTab({
   async function applyEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!instruction.trim() || busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/edit-notes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          instruction: instruction.trim(),
-          ...(selectedText ? { selectedText } : {}),
-        }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(body.error ?? "Editing the notes failed. Try again.");
-      } else {
-        setPreviousMarkdown(body.previousMarkdown ?? null);
-        setMarkdown(body.markdown);
-        setInstruction("");
-        setSelectedText(null);
-        router.refresh();
+    const before = markdown;
+    await run(
+      { key: editKey, label: "Applying your edit to the notes…", href: `/pages/${pageId}` },
+      async ({ emit }) => {
+        const body = (await postTask(`/api/pages/${pageId}/edit-notes`, "Could not apply that edit.", {
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instruction: instruction.trim(),
+            ...(selectedText ? { selectedText } : {}),
+          }),
+        })) as { markdown?: string };
+        if (!body.markdown) throw new Error("Could not apply that edit.");
+        emit(body.markdown);
       }
-    } catch {
-      setError("Editing the notes failed. Try again.");
-    } finally {
-      setBusy(false);
+    );
+    const applied = task(editKey);
+    const next = applied?.status === "error" ? null : ((applied?.data as string | undefined) ?? null);
+    if (next && next !== before) {
+      setPreviousMarkdown(before);
+      setMarkdown(next);
+      setInstruction("");
+      setSelectedText(null);
+      router.refresh();
     }
   }
 
   async function undo() {
     if (!previousMarkdown) return;
-    setBusy(true);
+    setUndoBusy(true);
     setError(null);
     try {
       const res = await fetch(`/api/pages/${pageId}`, {
@@ -142,7 +147,7 @@ export function NotesTab({
         setError("Could not undo the edit.");
       }
     } finally {
-      setBusy(false);
+      setUndoBusy(false);
     }
   }
 
@@ -212,7 +217,9 @@ export function NotesTab({
           </div>
         )}
         {recorder.error && <p className="text-[12.5px] text-red-600">{recorder.error}</p>}
-        {error && <p className="text-[12.5px] text-red-600">{error}</p>}
+        {(editTask?.error ?? error) && (
+          <p className="text-[12.5px] text-red-600">{editTask?.error ?? error}</p>
+        )}
       </form>
 
       <div ref={notesRef} onMouseUp={captureSelection}>
