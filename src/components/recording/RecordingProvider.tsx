@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaRecorder, type RecorderStatus } from "@/components/recording/useMediaRecorder";
 import { transcribePage, uploadAudio } from "@/components/recording/upload";
@@ -42,6 +42,14 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   const [liveBusy, setLiveBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // `save()` resumes after two network round-trips, by which time a `start()`
+  // may have replaced the session under it. Written after commit, never during
+  // render, this lets the tail ask "am I still the current session?" — it is
+  // never the source of the pageId or the blob, which stay on one snapshot.
+  const currentSessionRef = useRef<RecordingSession | null>(null);
+  useEffect(() => {
+    currentSessionRef.current = session;
+  }, [session]);
 
   const handleLiveSegment = useCallback(async (blob: Blob) => {
     setLiveBusy(true);
@@ -67,12 +75,23 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
 
   const start = useCallback(
     async (page: { id: string; title: string }) => {
+      // One recording at a time, app-wide. A second `startRecording()` would
+      // overwrite the recorder's refs mid-take: the first recorder keeps running
+      // with nobody holding its output, its chunks bleed into the new take's
+      // array, and its stream's tracks leak with the microphone still open. A
+      // stopped-but-unsaved take counts as live — its blob is the only copy.
+      const unsavedTake = recorder.status === "stopped" && recorder.audioBlob !== null;
+      if (session || recorder.status === "recording" || recorder.status === "paused" || unsavedTake) {
+        // Refuse silently and leave the existing session's state alone: both the
+        // panel and the shell bar already show the recording that is in the way.
+        return;
+      }
       setSaveError(null);
       setLiveTranscript("");
       setSession({ pageId: page.id, pageTitle: page.title });
       await recorder.startRecording();
     },
-    [recorder]
+    [recorder, session]
   );
 
   const discard = useCallback(() => {
@@ -83,12 +102,16 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
   }, [recorder]);
 
   const save = useCallback(async () => {
+    // A second invoke while the first is still in flight would upload the same
+    // take twice.
+    if (saving) return;
     // The session and the blob are read from the same render, so a caller
     // holding an older `save` can only be a no-op — never this lecture's audio
     // filed against the page a later session moved on to.
+    const startedSession = session;
     const blob = recorder.audioBlob;
-    if (!session || !blob) return;
-    const { pageId } = session;
+    if (!startedSession || !blob) return;
+    const { pageId } = startedSession;
     setSaving(true);
     setSaveError(null);
 
@@ -124,11 +147,16 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    recorder.reset();
-    setSession(null);
-    setLiveTranscript("");
     router.refresh();
-  }, [recorder, router, run, session]);
+
+    // Release the take only if it is still the one on screen. A `start()` during
+    // the awaits above would have moved the session on, and `reset()` then blanks
+    // the blob and the status of a recording still in progress.
+    if (currentSessionRef.current !== startedSession) return;
+    recorder.reset();
+    setSession((prev) => (prev === startedSession ? null : prev));
+    setLiveTranscript("");
+  }, [recorder, router, run, saving, session]);
 
   const value = useMemo<RecordingContextValue>(
     () => ({
