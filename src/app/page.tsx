@@ -4,7 +4,10 @@ import { ImportButton } from "@/components/dashboard/ImportButton";
 import { TodayRow } from "@/components/home/TodayRow";
 import { CourseCard } from "@/components/home/CourseCard";
 import { computeStreak } from "@/lib/planner";
-import { masteryByFolder } from "@/lib/calendar-events";
+import { HOME_WINDOW_DAYS, isStale, masteryByFolder } from "@/lib/calendar-events";
+import { UpNext, type UpNextEvent } from "@/components/home/UpNext";
+import { CalendarSyncTrigger } from "@/components/home/CalendarSyncTrigger";
+import { isCalendarConfigured } from "@/lib/calendar-sync";
 
 // This page reads directly from the local SQLite DB via Prisma, which Next
 // can't see as a "dynamic" data source -- without this it gets frozen as
@@ -21,7 +24,7 @@ function greeting(now: Date): string {
 export default async function DashboardPage() {
   const now = new Date();
 
-  const [folders, cards, logs, dueCount, exams] = await Promise.all([
+  const [folders, cards, logs, dueCount, exams, upcoming, lastSync, calendarConfigured] = await Promise.all([
     db.folder.findMany({
       orderBy: { name: "asc" },
       select: {
@@ -48,6 +51,20 @@ export default async function DashboardPage() {
       orderBy: { start: "asc" },
       select: { folderId: true, title: true, start: true },
     }),
+    db.calendarEvent.findMany({
+      where: {
+        start: {
+          gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+          lt: new Date(now.getTime() + HOME_WINDOW_DAYS * 24 * 60 * 60 * 1000),
+        },
+        OR: [{ kind: { not: "OTHER" } }, { folderId: { not: null } }],
+      },
+      orderBy: { start: "asc" },
+      take: 6,
+      include: { folder: { select: { id: true, name: true, color: true } } },
+    }),
+    db.calendarEvent.aggregate({ _max: { syncedAt: true } }),
+    isCalendarConfigured(),
   ]);
 
   const stats = masteryByFolder(
@@ -66,6 +83,17 @@ export default async function DashboardPage() {
       nextExamByFolder.set(e.folderId, { title: e.title, start: e.start });
     }
   }
+
+  const upNextEvents: UpNextEvent[] = upcoming.map((e) => ({
+    id: e.id,
+    title: e.title,
+    start: e.start.toISOString(),
+    allDay: e.allDay,
+    kind: e.kind,
+    folder: e.folder,
+  }));
+  const lastSyncedAt = lastSync._max.syncedAt;
+  const stale = calendarConfigured && isStale(lastSyncedAt, now);
 
   const dateLine = now.toLocaleDateString("en", { weekday: "long", day: "numeric", month: "long" });
 
@@ -93,7 +121,14 @@ export default async function DashboardPage() {
         <>
           <TodayRow dueCount={dueCount} streak={streak} totalCards={cards.length} />
 
-          {/* UP NEXT */}
+          <UpNext
+            events={upNextEvents}
+            folders={folders.map((f) => ({ id: f.id, name: f.name }))}
+            configured={calendarConfigured}
+            lastSyncedAt={lastSyncedAt ? lastSyncedAt.toISOString() : null}
+            now={now.toISOString()}
+          />
+          <CalendarSyncTrigger stale={stale} />
 
           <section aria-labelledby="courses-heading" className="flex flex-col gap-3">
             <h2 id="courses-heading" className="text-[13px] font-semibold text-ink-soft">
