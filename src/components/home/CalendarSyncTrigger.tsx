@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 
 const SKIP_KEY = "lectern:calendar-unconfigured";
 
-// Dev strict mode double-invokes the effect; `cancelled` only stops acting
-// on the response, not the second fetch. This guard makes the fetch itself
-// singular across both invocations.
+// Dev strict mode double-invokes the effect; this guard makes the fetch
+// itself singular across both invocations. Assumes a single
+// CalendarSyncTrigger instance per page (true today: home renders one).
 let inFlight: Promise<void> | null = null;
 
 /**
@@ -26,10 +26,8 @@ export function CalendarSyncTrigger({ stale }: { stale: boolean }) {
       // Storage may be unavailable; a sync attempt is harmless.
     }
     if (inFlight) return;
-    let cancelled = false;
     inFlight = fetch("/api/integrations/calendar/sync", { method: "POST" })
       .then((res) => {
-        if (cancelled) return;
         if (res.status === 409) {
           try {
             sessionStorage.setItem(SKIP_KEY, "1");
@@ -45,9 +43,6 @@ export function CalendarSyncTrigger({ stale }: { stale: boolean }) {
       .finally(() => {
         inFlight = null;
       });
-    return () => {
-      cancelled = true;
-    };
   }, [stale, router]);
 
   return null;
