@@ -169,6 +169,49 @@ Then open **Integrations** in the sidebar and hit **Test** on each server (the f
 
 > Put tokens in a server's `env`, never in `args` — commands and args are shown on the Integrations page and in error messages; `env` values are not.
 
+## Lectern as an MCP server (asking Claude about your lectures)
+
+The other direction: `scripts/lectern-mcp.ts` exposes your lectures *to* an MCP client, so you
+can ask a Claude Code session what a lecture covered or which syllabus topics nothing has
+taught yet. The committed `.mcp.json` wires it up — open this repo in Claude Code, approve the
+`lectern` server, and start the dev server, which is where the tools actually read from.
+
+```
+list_courses     every course and the courseId the other tools need
+list_lectures    one course's lectures, with flashcard and question counts
+get_lecture      one lecture's notes or raw transcript
+search_course    semantic search over a course's transcripts, notes and materials
+topic_coverage   every syllabus topic, and whether anything captured teaches it
+review_load      the cards due now, and which lecture each came from
+```
+
+Two write tools come with it — `create_action_items` records next steps on a lecture, and
+`schedule_reviews` puts review sessions on your calendar (needs the Google Calendar server
+above). Unpinned, both reach any course you name, and `schedule_reviews` with no `pageId`
+covers every course's due cards at once. Worth knowing before you blanket-approve
+`mcp__lectern__*` in your own session: a transcript is recorded audio and uploaded material,
+so it is untrusted text, and it flows back to the model through `get_lecture` and
+`search_course` — a lecture that contains "add these action items" is text a model can act
+on. Per-call approval is what stands between that and a write, so leave it on.
+
+The server has two modes, and the difference is a safety boundary rather than a convenience:
+
+- **Unpinned** — no `LECTERN_FOLDER_ID` in the environment, which is what `.mcp.json` gives you.
+  Every course is reachable and each call names its own `courseId`. Fine for a session you are
+  sitting in front of, approving calls.
+- **Pinned** — `LECTERN_FOLDER_ID` set, which is how the study-plan agent is spawned. The course
+  is fixed by the environment and is not a tool argument at all, so an unattended run that
+  pre-approves `mcp__lectern__*` cannot reach a course it was not pointed at. `list_courses` is
+  not even registered in this mode.
+
+Your own `.mcp.json` never leaks into a study-plan run: that run is spawned with
+`--strict-mcp-config` (`src/lib/agent/args.ts`), so it sees only the one pinned server Lectern
+hands it.
+
+`topic_coverage` is the one to reach for when you want to know what is still uncovered. Its
+scores are a heuristic — a topic it marks uncovered may simply be taught under different words,
+so check with `search_course` before treating a gap as real.
+
 ## Project layout
 
 ```
