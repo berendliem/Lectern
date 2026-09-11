@@ -10,6 +10,8 @@ import type { CoverageState } from "@/lib/coverage";
 import { PretestDialog } from "@/components/course/PretestDialog";
 import { LessonRunner } from "@/components/course/LessonRunner";
 import { StudyPlanPanel } from "@/components/course/StudyPlanPanel";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 
 export type TopicRow = {
   id: string;
@@ -51,6 +53,9 @@ export function CourseOverview({
   const [debateSelect, setDebateSelect] = useState<string>("");
   const [debateSubmitting, setDebateSubmitting] = useState(false);
   const router = useRouter();
+  const { run, task } = useTasks();
+  const syllabusKey = `folder:${folderId}:parse-syllabus`;
+  const parsingSyllabus = task(syllabusKey)?.status === "running";
 
   async function send(key: string, url: string, init: RequestInit, failure: string) {
     setBusy(key);
@@ -77,12 +82,18 @@ export function CourseOverview({
       topics.length === 0 ||
       window.confirm("Re-parsing replaces this course's topic list, including any edits. Continue?");
     if (!confirmed) return;
-    await send(
-      "parse",
-      `/api/folders/${folderId}/parse-syllabus`,
-      { method: "POST" },
-      "Could not parse that syllabus."
+    await run(
+      { key: syllabusKey, label: "Reading the syllabus…", href: `/folders/${folderId}` },
+      async () => {
+        await postTask(
+          `/api/folders/${folderId}/parse-syllabus`,
+          "Could not parse that syllabus.",
+          undefined,
+          "Network error talking to the local server."
+        );
+      }
     );
+    router.refresh();
   }
 
   async function startDebate() {
@@ -163,12 +174,12 @@ export function CourseOverview({
           </button>
           <button
             onClick={parseSyllabus}
-            disabled={!hasSyllabus || busy !== null}
+            disabled={!hasSyllabus || busy !== null || parsingSyllabus}
             title={hasSyllabus ? undefined : "Upload a syllabus to this course first"}
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-[13px] font-medium text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
           >
             <Sparkles className="h-3.5 w-3.5" strokeWidth={2.2} />
-            {busy === "parse" ? "Parsing…" : topics.length > 0 ? "Re-parse syllabus" : "Parse syllabus"}
+            {parsingSyllabus ? "Parsing…" : topics.length > 0 ? "Re-parse syllabus" : "Parse syllabus"}
           </button>
           {topics.length > 0 && (
             <>
@@ -222,7 +233,9 @@ export function CourseOverview({
         </div>
       )}
 
-      {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
+      {(task(syllabusKey)?.error ?? error) && (
+        <p className="text-[13px] font-medium text-red-700">{task(syllabusKey)?.error ?? error}</p>
+      )}
 
       {/* What this course got wrong and has not since got right. Each entry closes
           itself the next time the same lecture or card scores well, so the list is
