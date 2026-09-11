@@ -4,10 +4,11 @@ import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { chatRequestSchema } from "@/lib/validation";
 import { searchPages } from "@/lib/fts";
+import { retrieve } from "@/lib/retrieval";
+import { formatCitation, type Citation } from "@/lib/citations";
 
-const MAX_SOURCES = 6;
-const MAX_CONTEXT_CHARS = 22_000;
 const PER_SOURCE_CHARS = 4_500;
+const FTS_FALLBACK_PAGES = 6;
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -18,35 +19,47 @@ export async function POST(req: NextRequest) {
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return jsonError("No question to answer", 422);
 
-  // Retrieve the most relevant lectures for the latest question via full-text
-  // search, then ground the answer in their notes/transcripts.
-  const hits = await searchPages(lastUser.content, MAX_SOURCES);
-  const pages = hits.length
-    ? await db.page.findMany({
-        where: { id: { in: hits.map((h) => h.pageId) } },
-        include: { notes: true, transcript: true },
-      })
-    : [];
-  // Preserve FTS relevance ordering.
-  const byId = new Map(pages.map((p) => [p.id, p]));
+  const { hits } = await retrieve({ scope: { kind: "all" }, query: lastUser.content });
 
-  let used = 0;
-  const contextBlocks: string[] = [];
-  const sources: { pageId: string; title: string }[] = [];
-  for (const hit of hits) {
-    const page = byId.get(hit.pageId);
-    if (!page) continue;
-    const material = page.notes?.markdown ?? page.transcript?.rawText ?? "";
-    if (!material.trim()) continue;
-    const block = `### Lecture: ${page.title}\n${material.slice(0, PER_SOURCE_CHARS)}`;
-    if (used + block.length > MAX_CONTEXT_CHARS) break;
-    used += block.length;
-    contextBlocks.push(block);
-    sources.push({ pageId: page.id, title: page.title });
+  const blocks: string[] = [];
+  const citations: Citation[] = [];
+
+  if (hits.length > 0) {
+    const seen = new Set<string>();
+    for (const hit of hits) {
+      blocks.push(`### ${hit.title}\n${hit.text}`);
+      const citation = formatCitation(hit);
+      // Several chunks of one lecture cite it once. Key on the id, not the
+      // label: two materials can share a title.
+      const key = citation.pageId ?? citation.materialId ?? citation.label;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      citations.push(citation);
+    }
+  } else {
+    // No vectors to work with — the library has never been indexed, or every
+    // rung of the embedding chain failed. Keyword search is what this route ran
+    // on before it had a vector index, and it still answers.
+    const ftsHits = await searchPages(lastUser.content, FTS_FALLBACK_PAGES);
+    const pages = ftsHits.length
+      ? await db.page.findMany({
+          where: { id: { in: ftsHits.map((h) => h.pageId) } },
+          include: { notes: true, transcript: true },
+        })
+      : [];
+    const byId = new Map(pages.map((p) => [p.id, p]));
+    for (const hit of ftsHits) {
+      const page = byId.get(hit.pageId);
+      if (!page) continue;
+      const text = page.notes?.markdown ?? page.transcript?.rawText ?? "";
+      if (!text.trim()) continue;
+      blocks.push(`### Lecture: ${page.title}\n${text.slice(0, PER_SOURCE_CHARS)}`);
+      citations.push({ label: page.title, pageId: page.id, materialId: null });
+    }
   }
 
-  const context = contextBlocks.length
-    ? contextBlocks.join("\n\n---\n\n")
+  const context = blocks.length
+    ? blocks.join("\n\n---\n\n")
     : "(No lectures in the library matched this question.)";
 
   const systemPrompt = `You are a study assistant with access to the student's personal lecture library. Answer their question using the lecture excerpts below. When you use a fact from a lecture, name the lecture it came from (e.g. "In your Photosynthesis lecture…"). Be concise and concrete. If the library doesn't cover the question, say so plainly — you may then add general knowledge, clearly labeled as outside their lectures.\n\nLECTURE EXCERPTS:\n${context}`;
@@ -60,7 +73,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const reply = await callLLMText({ model, messages: chatMessages });
-    return NextResponse.json({ reply, sources });
+    return NextResponse.json({ reply, citations });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ask failed";
     return jsonError(message, 502);
