@@ -1,4 +1,5 @@
 import type { ChunkWhereInput } from "@/generated/prisma/models/Chunk";
+import { courseChunkFilter } from "@/lib/embed-math";
 
 /**
  * Pure retrieval helpers. Deliberately free of imports from db, the embedding
@@ -67,10 +68,7 @@ export function scopeFilter(scope: ResolvedScope, model: string): ChunkWhereInpu
     case "page":
       return { model, pageId: scope.pageId };
     case "course":
-      return {
-        model,
-        OR: [{ page: { folderId: scope.folderId } }, { material: { folderId: scope.folderId } }],
-      };
+      return courseChunkFilter(scope.folderId, model);
     case "all":
       // ponytail: materials bypass the FTS prefilter and are loaded whole for
       // the folders in play — page_search indexes pages only, so prefiltering

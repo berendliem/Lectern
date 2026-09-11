@@ -95,7 +95,7 @@ export function LibraryChat() {
                 {m.citations.map((c) =>
                   c.pageId ? (
                     <Link
-                      key={c.label}
+                      key={c.pageId ?? c.materialId ?? c.label}
                       href={`/pages/${c.pageId}`}
                       className="flex items-center gap-1 rounded-full border border-brand-border bg-brand-soft/40 px-2.5 py-1 text-[11.5px] font-medium text-brand-ink transition-colors hover:bg-brand-soft"
                     >
@@ -104,7 +104,7 @@ export function LibraryChat() {
                     </Link>
                   ) : (
                     <span
-                      key={c.label}
+                      key={c.pageId ?? c.materialId ?? c.label}
                       className="flex items-center gap-1 rounded-full border border-line bg-surface-2 px-2.5 py-1 text-[11.5px] font-medium text-ink-soft"
                     >
                       <Presentation className="h-3 w-3" strokeWidth={2.2} />

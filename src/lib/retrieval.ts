@@ -13,17 +13,28 @@ export type Scope =
   | { kind: "all" };
 
 /**
- * `semantic` — vectors were used.
- * `unindexed` — this scope has no chunks for the active embedder. A distinct
- *   fact from failure: most likely the source predates the vector index, or
- *   `EMBED_PROVIDER` changed and `npm run reindex` has not run.
+ * `semantic` — vectors were used to rank real candidates.
+ * `unindexed` — the scope had real candidate ids but the chunks table has
+ *   none of them for the active embedder. A broken/missing-index signal:
+ *   most likely the source predates the vector index, or `EMBED_PROVIDER`
+ *   changed and `npm run reindex` has not run.
+ * `empty` — no search was meaningfully attempted: the query was blank, or (on
+ *   `all` scope) the FTS prefilter matched no lectures. A normal outcome —
+ *   most often an off-topic question — not evidence anything is broken, and
+ *   worth telling apart from `unindexed` for that reason.
  * `fts` — embedding threw; the caller's keyword fallback carries the answer.
  * Callers degrade differently on each, so the distinction is preserved.
  */
-export type RetrievalMode = "semantic" | "fts" | "unindexed";
+export type RetrievalMode = "semantic" | "fts" | "unindexed" | "empty";
 
 const MAX_HITS = 4;
-const CONTEXT_CHARS = 5_000;
+/**
+ * ~1,250 tokens. Leaves an 8k-context model room for the system prompt,
+ * several turns of history, and an answer — the budget this branch exists to
+ * establish. Exported so both routes' FTS fallback paths can cap themselves
+ * to it instead of inventing their own multi-thousand-character budgets.
+ */
+export const CONTEXT_CHARS = 5_000;
 const RERANK_CANDIDATES = 40;
 /** How many lectures the FTS prefilter narrows the library to for `all`. */
 const FTS_PREFILTER_PAGES = 15;
@@ -59,56 +70,69 @@ export async function retrieve(opts: {
 }): Promise<{ hits: CourseHit[]; mode: RetrievalMode }> {
   const trimmed = opts.query.trim();
   const scopeLabel = opts.scope.kind;
-  let mode: RetrievalMode = "semantic";
-  let hits: CourseHit[] = [];
 
   if (!trimmed) {
-    // An empty query still produced a retrieval decision (zero hits) — log it
-    // so the ledger in retrieval-log isn't silently missing rows for the
-    // requests that never got a query. Every return path logs; this is the
-    // only one that would otherwise skip it.
-    await logRetrieval({ query: trimmed, scope: scopeLabel, mode, hits, topScore: 0 });
-    return { hits, mode };
+    // chatRequestSchema's role enum accepts "assistant" and only requires the
+    // array to be non-empty, so an all-assistant messages array reaches here
+    // with pages/[id]/chat/route.ts's `lastUser?.content ?? ""`. No search was
+    // attempted — keep the row so the ledger still catches this upstream bug,
+    // but don't claim a mode that implies vectors were computed.
+    const mode: RetrievalMode = "empty";
+    await logRetrieval({ query: trimmed, scope: scopeLabel, mode, hits: [], topScore: 0 });
+    return { hits: [], mode };
   }
+
+  let mode: RetrievalMode = "semantic";
+  let hits: CourseHit[] = [];
 
   try {
     const model = activeEmbedModelLabel();
     const resolved = await resolveScope(opts.scope, trimmed);
 
-    const rows = await db.chunk.findMany({
-      where: scopeFilter(resolved, model),
-      select: {
-        id: true,
-        text: true,
-        source: true,
-        pageId: true,
-        materialId: true,
-        vector: true,
-        page: { select: { title: true } },
-        material: { select: { title: true } },
-      },
-    });
-
-    if (rows.length === 0) {
-      // Not "nothing was relevant enough" — this scope has no chunks at all for
-      // the active embedder. A clean, distinct signal the caller can act on.
-      mode = "unindexed";
+    if (resolved.kind === "all" && resolved.pageIds.length === 0) {
+      // The FTS prefilter matched no lectures for this question — a normal
+      // outcome for an off-topic question, not evidence the index is broken.
+      // scopeFilter would just match zero rows below; skip the query and say
+      // so honestly instead of logging the same "unindexed" a broken index
+      // would produce.
+      mode = "empty";
     } else {
-      const [queryVector] = await embedTexts([trimmed]);
-      const scored: CourseHit[] = rows
-        .map((row) => ({
-          chunkId: row.id,
-          text: row.text,
-          score: cosine(queryVector, decodeVector(row.vector)),
-          source: row.source,
-          pageId: row.pageId,
-          materialId: row.materialId,
-          title: row.page?.title ?? row.material?.title ?? "Untitled",
-        }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, RERANK_CANDIDATES);
+      const rows = await db.chunk.findMany({
+        where: scopeFilter(resolved, model),
+        select: {
+          id: true,
+          text: true,
+          source: true,
+          pageId: true,
+          materialId: true,
+          vector: true,
+          page: { select: { title: true } },
+          material: { select: { title: true } },
+        },
+      });
 
-      hits = packContext(await rerank(trimmed, scored), MAX_HITS, CONTEXT_CHARS);
+      if (rows.length === 0) {
+        // Not "nothing was relevant enough" — this scope had real candidate
+        // ids but no chunks at all for the active embedder. A clean, distinct
+        // signal the caller can act on.
+        mode = "unindexed";
+      } else {
+        const [queryVector] = await embedTexts([trimmed]);
+        const scored: CourseHit[] = rows
+          .map((row) => ({
+            chunkId: row.id,
+            text: row.text,
+            score: cosine(queryVector, decodeVector(row.vector)),
+            source: row.source,
+            pageId: row.pageId,
+            materialId: row.materialId,
+            title: row.page?.title ?? row.material?.title ?? "Untitled",
+          }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, RERANK_CANDIDATES);
+
+        hits = packContext(await rerank(trimmed, scored), MAX_HITS, CONTEXT_CHARS);
+      }
     }
   } catch (e) {
     // Every rung of the embedding chain failed. Retrieval quality drops; the

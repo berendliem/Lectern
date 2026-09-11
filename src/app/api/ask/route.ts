@@ -4,9 +4,13 @@ import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { chatRequestSchema } from "@/lib/validation";
 import { searchPages } from "@/lib/fts";
-import { retrieve } from "@/lib/retrieval";
-import { formatCitation, type Citation } from "@/lib/citations";
+import { retrieve, CONTEXT_CHARS } from "@/lib/retrieval";
+import { packContext } from "@/lib/retrieval-math";
+import { dedupeCitations, formatCitation, type Citation } from "@/lib/citations";
 
+// Caps how much of one FTS-matched page's raw (unchunked) text is even
+// considered per source, before packContext trims whole blocks down to
+// CONTEXT_CHARS below.
 const PER_SOURCE_CHARS = 4_500;
 const FTS_FALLBACK_PAGES = 6;
 
@@ -22,24 +26,19 @@ export async function POST(req: NextRequest) {
   const { hits } = await retrieve({ scope: { kind: "all" }, query: lastUser.content });
 
   const blocks: string[] = [];
-  const citations: Citation[] = [];
+  let citations: Citation[] = [];
 
   if (hits.length > 0) {
-    const seen = new Set<string>();
     for (const hit of hits) {
       blocks.push(`### ${hit.title}\n${hit.text}`);
-      const citation = formatCitation(hit);
-      // Several chunks of one lecture cite it once. Key on the id, not the
-      // label: two materials can share a title.
-      const key = citation.pageId ?? citation.materialId ?? citation.label;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      citations.push(citation);
     }
+    citations = hits.map(formatCitation);
   } else {
     // No vectors to work with — the library has never been indexed, or every
     // rung of the embedding chain failed. Keyword search is what this route ran
-    // on before it had a vector index, and it still answers.
+    // on before it had a vector index, and it still answers. Whole per-page
+    // blocks are trimmed by the same CONTEXT_CHARS budget the semantic path
+    // honours, instead of shipping every fallback page at full length.
     const ftsHits = await searchPages(lastUser.content, FTS_FALLBACK_PAGES);
     const pages = ftsHits.length
       ? await db.page.findMany({
@@ -48,15 +47,27 @@ export async function POST(req: NextRequest) {
         })
       : [];
     const byId = new Map(pages.map((p) => [p.id, p]));
+    const candidates: { text: string; title: string; pageId: string | null; materialId: string | null }[] = [];
     for (const hit of ftsHits) {
       const page = byId.get(hit.pageId);
       if (!page) continue;
       const text = page.notes?.markdown ?? page.transcript?.rawText ?? "";
       if (!text.trim()) continue;
-      blocks.push(`### Lecture: ${page.title}\n${text.slice(0, PER_SOURCE_CHARS)}`);
-      citations.push({ label: page.title, pageId: page.id, materialId: null });
+      candidates.push({
+        text: text.slice(0, PER_SOURCE_CHARS),
+        title: page.title,
+        pageId: page.id,
+        materialId: null,
+      });
+    }
+    for (const kept of packContext(candidates, FTS_FALLBACK_PAGES, CONTEXT_CHARS)) {
+      blocks.push(`### Lecture: ${kept.title}\n${kept.text}`);
+      citations.push({ label: kept.title, pageId: kept.pageId, materialId: kept.materialId });
     }
   }
+
+  // Several chunks from one lecture collapse to a single citation.
+  citations = dedupeCitations(citations);
 
   const context = blocks.length
     ? blocks.join("\n\n---\n\n")

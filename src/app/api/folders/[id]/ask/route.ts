@@ -4,18 +4,18 @@ import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { chatRequestSchema } from "@/lib/validation";
 import { searchPages } from "@/lib/fts";
-import { formatCitation, type Citation } from "@/lib/citations";
+import { dedupeCitations, formatCitation, type Citation } from "@/lib/citations";
 import { reasoningModel } from "@/lib/llm";
-import { retrieve, type RetrievalMode } from "@/lib/retrieval";
+import { retrieve, CONTEXT_CHARS } from "@/lib/retrieval";
+import { packContext } from "@/lib/retrieval-math";
 
-// Caps how much of one FTS-matched lecture's raw (unchunked) text goes into
-// the prompt. Semantic hits need no such cap here: Chunk rows are already
+// Caps how much of one FTS-matched page's raw (unchunked) text is even
+// considered per source, before packContext trims whole blocks down to
+// CONTEXT_CHARS below. Semantic hits need no such cap: Chunk rows are already
 // capped at write time (CHUNK_CHARS in src/lib/embeddings.ts), so slicing
 // them again here could never truncate anything.
 const FTS_PAGE_CHARS = 2_800;
 const FTS_FALLBACK_PAGES = 8;
-
-type Retrieval = RetrievalMode;
 
 async function ftsFallback(
   courseId: string,
@@ -29,13 +29,28 @@ async function ftsFallback(
         include: { notes: true, transcript: true },
       })
     : [];
-  const blocks: string[] = [];
-  const citations: Citation[] = [];
-  for (const page of pages) {
+  const byId = new Map(pages.map((p) => [p.id, p]));
+  // Walk in ftsHits' bm25-ranked order, not `pages`' db-returned order — now
+  // that packContext below trims whole blocks once the budget is spent, which
+  // block survives depends on this order.
+  const candidates: { text: string; title: string; pageId: string | null; materialId: string | null }[] = [];
+  for (const hit of ftsHits) {
+    const page = byId.get(hit.pageId);
+    if (!page) continue;
     const text = page.notes?.markdown ?? page.transcript?.rawText ?? "";
     if (!text.trim()) continue;
-    blocks.push(`### ${page.title}\n${text.slice(0, FTS_PAGE_CHARS)}`);
-    citations.push({ label: page.title, pageId: page.id, materialId: null });
+    candidates.push({
+      text: text.slice(0, FTS_PAGE_CHARS),
+      title: page.title,
+      pageId: page.id,
+      materialId: null,
+    });
+  }
+  const blocks: string[] = [];
+  const citations: Citation[] = [];
+  for (const kept of packContext(candidates, k, CONTEXT_CHARS)) {
+    blocks.push(`### ${kept.title}\n${kept.text}`);
+    citations.push({ label: kept.title, pageId: kept.pageId, materialId: kept.materialId });
   }
   return { blocks, citations };
 }
@@ -57,7 +72,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     scope: { kind: "course", folderId: id },
     query: lastUser.content,
   });
-  const retrieval: Retrieval = mode;
   let blocks: string[] = [];
   let citations: Citation[] = [];
 
@@ -71,15 +85,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     ({ blocks, citations } = await ftsFallback(id, lastUser.content, FTS_FALLBACK_PAGES));
   }
 
-  // De-duplicate citations: several chunks from one lecture or material cite
-  // it once. Key on the id, not the label — two materials can share a title.
-  const seen = new Set<string>();
-  citations = citations.filter((c) => {
-    const key = c.pageId ?? c.materialId ?? c.label;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  // Several chunks from one lecture or material collapse to a single citation.
+  citations = dedupeCitations(citations);
 
   const context = blocks.length
     ? blocks.join("\n\n---\n\n")
@@ -95,7 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       messages: chatMessages,
       stage: "reasoning",
     });
-    return NextResponse.json({ reply, citations, retrieval });
+    return NextResponse.json({ reply, citations, retrieval: mode });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ask failed";
     return jsonError(message, 502);

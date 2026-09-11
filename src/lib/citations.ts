@@ -31,3 +31,19 @@ export function formatCitation(hit: {
     materialId: hit.materialId,
   };
 }
+
+/**
+ * Collapses several chunks from one lecture or material into a single
+ * citation. Keyed on the id, not the label: two materials (e.g. two terms'
+ * syllabi) can share a title, and keying on the label would silently merge
+ * citations that point at different sources.
+ */
+export function dedupeCitations(citations: Citation[]): Citation[] {
+  const seen = new Set<string>();
+  return citations.filter((c) => {
+    const key = c.pageId ?? c.materialId ?? c.label;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}

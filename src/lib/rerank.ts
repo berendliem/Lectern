@@ -15,7 +15,7 @@ const MODEL = "Xenova/ms-marco-MiniLM-L-6-v2";
 // tokenizer, so scoring a { text, text_pair } object through it returns the
 // same score (1.0) for every candidate instead of throwing. Talking to the
 // tokenizer and model directly is the only way this model's pair-aware score
-// comes through; see task-2-report.md for the probe that found this.
+// comes through.
 type Tokenizer = (
   text: string | string[],
   options: { text_pair: string | string[]; padding: true; truncation: true }
