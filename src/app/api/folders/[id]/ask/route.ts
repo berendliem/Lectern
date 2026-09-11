@@ -3,19 +3,19 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { chatRequestSchema } from "@/lib/validation";
-import { searchCourse } from "@/lib/embeddings";
 import { searchPages } from "@/lib/fts";
 import { formatCitation, type Citation } from "@/lib/citations";
 import { reasoningModel } from "@/lib/llm";
+import { retrieve, type RetrievalMode } from "@/lib/retrieval";
 
-const K = 8;
 // Caps how much of one FTS-matched lecture's raw (unchunked) text goes into
 // the prompt. Semantic hits need no such cap here: Chunk rows are already
 // capped at write time (CHUNK_CHARS in src/lib/embeddings.ts), so slicing
 // them again here could never truncate anything.
 const FTS_PAGE_CHARS = 2_800;
+const FTS_FALLBACK_PAGES = 8;
 
-type Retrieval = "semantic" | "fts" | "unindexed";
+type Retrieval = RetrievalMode;
 
 async function ftsFallback(
   courseId: string,
@@ -53,29 +53,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return jsonError("No question to answer", 422);
 
-  let retrieval: Retrieval = "semantic";
+  const { hits, mode } = await retrieve({
+    scope: { kind: "course", folderId: id },
+    query: lastUser.content,
+  });
+  const retrieval: Retrieval = mode;
   let blocks: string[] = [];
   let citations: Citation[] = [];
 
-  try {
-    const hits = await searchCourse(id, lastUser.content, K);
-    if (hits.length === 0) {
-      // Brute-force cosine over the whole course: an empty result here means
-      // precisely "this course has no chunks for the active embedder" (most
-      // likely it predates Phase 2, or the embedder changed) — never "nothing
-      // was relevant enough". That's a clean, distinct signal from a failure.
-      retrieval = "unindexed";
-      ({ blocks, citations } = await ftsFallback(id, lastUser.content, K));
-    } else {
-      blocks = hits.map((h) => `### ${h.title}\n${h.text}`);
-      citations = hits.map(formatCitation);
-    }
-  } catch (e) {
-    // Every rung of the embedding chain failed. Fall back to full-text search
-    // scoped to this course: retrieval quality drops, the feature does not break.
-    console.error(`[ask] semantic retrieval failed for course ${id}, falling back to FTS:`, e);
-    retrieval = "fts";
-    ({ blocks, citations } = await ftsFallback(id, lastUser.content, K));
+  if (hits.length > 0) {
+    blocks = hits.map((h) => `### ${h.title}\n${h.text}`);
+    citations = hits.map(formatCitation);
+  } else {
+    // Either this course has no chunks for the active embedder, or embedding
+    // failed. `mode` already records which; both fall back to full-text search
+    // scoped to this course.
+    ({ blocks, citations } = await ftsFallback(id, lastUser.content, FTS_FALLBACK_PAGES));
   }
 
   // De-duplicate citations: several chunks from one lecture or material cite
