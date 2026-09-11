@@ -1,12 +1,11 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { Markdown } from "@/components/Markdown";
 import type { KeyTerm } from "@/types";
 
 export function NotesView({ markdown, keyTerms }: { markdown: string; keyTerms: KeyTerm[] }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="prose prose-zinc prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-h1:text-xl prose-h2:text-lg prose-table:text-sm">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+        <Markdown>{markdown}</Markdown>
       </div>
       {keyTerms.length > 0 && (
         <div>

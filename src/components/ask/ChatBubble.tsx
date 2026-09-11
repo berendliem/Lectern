@@ -1,5 +1,4 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { Markdown } from "@/components/Markdown";
 import clsx from "@/lib/clsx";
 
 // Models reach for <br> inside markdown tables. react-markdown escapes raw HTML,
@@ -34,7 +33,7 @@ export function ChatBubble({
       {role === "user" ? (
         content
       ) : (
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{stripHtmlBreaks(content)}</ReactMarkdown>
+        <Markdown>{stripHtmlBreaks(content)}</Markdown>
       )}
     </div>
   );
