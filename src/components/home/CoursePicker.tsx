@@ -39,7 +39,7 @@ export function CoursePicker({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Add to course">
+    <Modal open={open} onClose={onClose} title="Choose a course">
       <div className="flex flex-col gap-1">
         {folders.map((f) => (
           <Button key={f.id} variant="ghost" className="justify-start" disabled={saving !== null} onClick={() => pick(f.id)}>

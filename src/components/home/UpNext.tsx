@@ -129,9 +129,17 @@ export function UpNext({
                       <span className="w-14 shrink-0 text-[13px] tabular-nums text-muted">{timeLabel(e.start, e.allDay)}</span>
                       <span className="flex min-w-0 flex-1 items-center gap-2">
                         {e.folder ? (
-                          <span className={clsx("truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold", FOLDER_CHIP_CLASSES[family])}>
+                          <button
+                            type="button"
+                            onClick={() => setPickerFor(e.id)}
+                            aria-label={`Change course for ${e.title}`}
+                            className={clsx(
+                              "truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold hover:opacity-80",
+                              FOLDER_CHIP_CLASSES[family]
+                            )}
+                          >
                             {e.folder.name}
-                          </span>
+                          </button>
                         ) : (
                           <button
                             type="button"
@@ -167,7 +175,7 @@ export function UpNext({
       )}
       <div className="flex items-center justify-between text-[11px] text-muted-2">
         <span>
-          {lastSyncedAt ? `Last synced ${sinceLabel(lastSyncedAt, now)}` : "Not synced yet"} ·{" "}
+          {lastSyncedAt ? `Last synced ${sinceLabel(lastSyncedAt, now)}` : "Nothing on the calendar yet"} ·{" "}
           <button type="button" onClick={retry} disabled={retrying} className="font-semibold hover:text-brand-ink">
             {retrying ? "Syncing…" : "Retry"}
           </button>
