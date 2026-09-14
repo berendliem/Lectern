@@ -85,6 +85,11 @@ export function UpNext({
       });
       if (!res.ok) throw new Error();
       const { page } = await res.json();
+      try {
+        sessionStorage.setItem("lectern:record-intent", page.id);
+      } catch {
+        // Storage may be unavailable; the recorder falls back to not autostarting.
+      }
       router.push(`/pages/${page.id}?record=1`);
     } catch {
       setRowError((r) => ({ ...r, [e.id]: "Could not create the page" }));
@@ -112,48 +117,52 @@ export function UpNext({
       </h2>
       {groups.length > 0 && (
         <ol className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-surface">
-          {groups.map((g) =>
-            g.events.map((e, i) => {
-              const family = folderFamily(e.folder?.color);
-              const canRecord = e.kind === "CLASS" && inRecordWindow(e.start, now);
-              return (
-                <li key={e.id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
-                  <span className="w-20 shrink-0 text-[13px] font-semibold text-ink-soft">{i === 0 ? g.label : ""}</span>
-                  <span className="w-14 shrink-0 text-[13px] tabular-nums text-muted">{timeLabel(e.start, e.allDay)}</span>
-                  <span className="flex min-w-0 flex-1 items-center gap-2">
-                    {e.folder ? (
-                      <span className={clsx("truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold", FOLDER_CHIP_CLASSES[family])}>
-                        {e.folder.name}
+          {groups.map((g) => (
+            <li key={g.key}>
+              <p className="px-4 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-2">{g.label}</p>
+              <ul className="flex flex-col divide-y divide-line">
+                {g.events.map((e) => {
+                  const family = folderFamily(e.folder?.color);
+                  const canRecord = e.kind === "CLASS" && inRecordWindow(e.start, now);
+                  return (
+                    <li key={e.id} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
+                      <span className="w-14 shrink-0 text-[13px] tabular-nums text-muted">{timeLabel(e.start, e.allDay)}</span>
+                      <span className="flex min-w-0 flex-1 items-center gap-2">
+                        {e.folder ? (
+                          <span className={clsx("truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold", FOLDER_CHIP_CLASSES[family])}>
+                            {e.folder.name}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setPickerFor(e.id)}
+                            className="text-[11px] font-semibold text-muted-2 hover:text-brand-ink"
+                          >
+                            Add to course
+                          </button>
+                        )}
+                        <span className="truncate text-[15px] text-ink">{e.title}</span>
                       </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setPickerFor(e.id)}
-                        className="text-[11px] font-semibold text-muted-2 hover:text-brand-ink"
-                      >
-                        Add to course
-                      </button>
-                    )}
-                    <span className="truncate text-[15px] text-ink">{e.title}</span>
-                  </span>
-                  {e.kind === "EXAM" && (
-                    <span className="shrink-0 text-[13px] font-semibold text-gold">{examCountdown(e.start, now)}</span>
-                  )}
-                  {canRecord && (
-                    <Button size="sm" variant="brand" disabled={recording === e.id} onClick={() => record(e)}>
-                      <Mic className="h-3.5 w-3.5" strokeWidth={2.2} />
-                      Record
-                    </Button>
-                  )}
-                  {rowError[e.id] && (
-                    <span role="alert" className="text-[11px] font-semibold text-red-700">
-                      {rowError[e.id]}
-                    </span>
-                  )}
-                </li>
-              );
-            })
-          )}
+                      {e.kind === "EXAM" && (
+                        <span className="shrink-0 text-[13px] font-semibold text-gold">{examCountdown(e.start, now)}</span>
+                      )}
+                      {canRecord && (
+                        <Button size="sm" variant="brand" disabled={recording === e.id} onClick={() => record(e)}>
+                          <Mic className="h-3.5 w-3.5" strokeWidth={2.2} />
+                          Record
+                        </Button>
+                      )}
+                      {rowError[e.id] && (
+                        <span role="alert" className="text-[11px] font-semibold text-red-700">
+                          {rowError[e.id]}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          ))}
         </ol>
       )}
       <div className="flex items-center justify-between text-[11px] text-muted-2">
