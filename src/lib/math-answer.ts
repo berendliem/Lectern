@@ -25,7 +25,7 @@ type Strategy = { name: MathStrategy; decide: (user: string, correct: string) =>
  * make its parser dangerous and the documented hardening is to override them;
  * this instance is the only one the grader ever uses.
  */
-export const safeMath = create(all);
+const safeMath = create(all);
 
 // Captured before the override below: `parseOrNull` needs the real parser,
 // and disabling `parse` on the namespace is what keeps a student-typed
@@ -56,7 +56,7 @@ const MAX_LENGTH = 500;
 const RELATIVE_TOLERANCE = 1e-9;
 const ABSOLUTE_TOLERANCE = 1e-12;
 
-export function numbersEqual(a: number, b: number): boolean {
+function numbersEqual(a: number, b: number): boolean {
   if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
   const difference = Math.abs(a - b);
   // The absolute arm first: near zero the relative test divides by nothing
@@ -162,6 +162,13 @@ function toNestedNumbers(value: unknown): unknown[] | null {
   return Array.isArray(array) ? array : null;
 }
 
+/**
+ * ponytail: number leaves only, here and in `parseSet`. mathjs's Complex is
+ * not a number to `typeof`, so `{i,-i}` or a rotation matrix's eigenvalues
+ * decline in every evaluator strategy and fall through to the string
+ * comparison, which marks them wrong unless the student typed the reference
+ * verbatim. Teach both helpers Complex the first time a course asks for one.
+ */
 function nestedEqual(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) return false;
@@ -259,6 +266,13 @@ function freeVariables(node: MathNode): string[] {
   return [...names].sort();
 }
 
+/**
+ * ponytail: agreement at five points is evidence, not proof. Two different
+ * expressions that happen to coincide on every sample are declared equal, and
+ * more samples narrow that gap without closing it. A real CAS — or mathjs's
+ * own `simplify`, disabled here as untrusted-input surface — is the upgrade
+ * if a course ever produces a pair that collides.
+ */
 const probeStrategy: Strategy = {
   name: "probe",
   decide(user, correct) {
@@ -303,20 +317,23 @@ const probeStrategy: Strategy = {
   },
 };
 
-/** Tasks 3 and 4 append to this list, in order. */
-export const STRATEGIES: Strategy[] = [numericStrategy, collectionStrategy, probeStrategy];
+/** Tried in order: the cheapest verdict first, the one that samples last. */
+const STRATEGIES: readonly Strategy[] = [numericStrategy, collectionStrategy, probeStrategy];
 
 export function checkMathAnswer(userAnswer: string, correctAnswer: string): MathGrade {
-  const user = latexToAscii(userAnswer);
-  const correct = latexToAscii(correctAnswer);
+  // The cap sits above the converter, not below it: `latexToAscii` scans the
+  // string and recurses into every group it finds, so a runaway input must
+  // not reach it either. The string comparison still runs, so past the cap
+  // there is a verdict rather than a crash.
+  const withinCap = userAnswer.length <= MAX_LENGTH && correctAnswer.length <= MAX_LENGTH;
+  const user = withinCap ? latexToAscii(userAnswer) : userAnswer;
+  const correct = withinCap ? latexToAscii(correctAnswer) : correctAnswer;
 
   if (canonicalise(user) === canonicalise(correct) && correct.length > 0) {
     return { isCorrect: true, strategy: "canonical" };
   }
 
-  // Past the cap nothing is parsed. The string comparison above already ran,
-  // so there is still a verdict.
-  if (user.length <= MAX_LENGTH && correct.length <= MAX_LENGTH) {
+  if (withinCap) {
     for (const strategy of STRATEGIES) {
       const verdict = strategy.decide(user, correct);
       if (verdict !== null) return { isCorrect: verdict, strategy: strategy.name };
