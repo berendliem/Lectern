@@ -73,3 +73,71 @@ test("a student expression cannot reach mathjs's risky functions", () => {
   assert.notEqual(unitNode, null);
   assert.equal(evaluateOrNull(unitNode!), null);
 });
+
+test("a set ignores order and duplicates", () => {
+  assert.deepEqual(checkMathAnswer("{2,3,5}", "{5,3,2}"), {
+    isCorrect: true,
+    strategy: "collection",
+  });
+  assert.deepEqual(checkMathAnswer("{2,2,3}", "{3,2}"), {
+    isCorrect: true,
+    strategy: "collection",
+  });
+});
+
+test("a set with a different member is wrong", () => {
+  assert.deepEqual(checkMathAnswer("{2,3}", "{2,4}"), {
+    isCorrect: false,
+    strategy: "collection",
+  });
+});
+
+test("set elements are evaluated, so 1/2 and 0.5 are the same member", () => {
+  assert.deepEqual(checkMathAnswer("{1/2, 3}", "{0.5, 3}"), {
+    isCorrect: true,
+    strategy: "collection",
+  });
+});
+
+test("an identical matrix matches as a string, and a rewritten one element-wise", () => {
+  assert.deepEqual(checkMathAnswer("[[1,2],[3,4]]", "[[1,2],[3,4]]"), {
+    isCorrect: true,
+    strategy: "canonical",
+  });
+  assert.deepEqual(
+    checkMathAnswer("[[1,2],[3,4]]", "\\begin{bmatrix}1 & 2 \\\\ 3 & 4\\end{bmatrix}"),
+    { isCorrect: true, strategy: "canonical" }
+  );
+  assert.deepEqual(checkMathAnswer("[[1/2,2],[3,4]]", "[[0.5,2],[3,4]]"), {
+    isCorrect: true,
+    strategy: "collection",
+  });
+});
+
+test("a transposed matrix is a different answer", () => {
+  assert.deepEqual(checkMathAnswer("[[1,2],[3,4]]", "[[1,3],[2,4]]"), {
+    isCorrect: false,
+    strategy: "collection",
+  });
+});
+
+test("a vector's order matters", () => {
+  assert.deepEqual(checkMathAnswer("[1,2,3]", "[3,2,1]"), {
+    isCorrect: false,
+    strategy: "collection",
+  });
+});
+
+test("a shape mismatch is wrong", () => {
+  assert.deepEqual(checkMathAnswer("[[1,2]]", "[[1,2],[3,4]]"), {
+    isCorrect: false,
+    strategy: "collection",
+  });
+});
+
+test("a set and a vector of the same numbers are different answers", () => {
+  assert.deepEqual(checkMathAnswer("{2,3}", "[2,3]"), {
+    isCorrect: false,
+    strategy: "collection",
+  });
+});

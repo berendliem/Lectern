@@ -99,8 +99,99 @@ const numericStrategy: Strategy = {
   },
 };
 
+/**
+ * Splits on the commas that are not inside a bracket or brace, so
+ * `{[1,2], 3}` is two elements and not three.
+ */
+function splitTopLevel(body: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const ch of body) {
+    if (ch === "(" || ch === "[" || ch === "{") depth++;
+    if (ch === ")" || ch === "]" || ch === "}") depth--;
+    if (ch === "," && depth === 0) {
+      parts.push(current);
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  parts.push(current);
+  return parts.map((part) => part.trim()).filter((part) => part.length > 0);
+}
+
+/** `{...}` to its evaluated members. Null when it is not a set, or a member will not evaluate. */
+function parseSet(text: string): number[] | null {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null;
+
+  const members: number[] = [];
+  for (const element of splitTopLevel(trimmed.slice(1, -1))) {
+    const node = parseOrNull(element);
+    const value = node ? evaluateOrNull(node) : null;
+    if (typeof value !== "number") return null;
+    members.push(value);
+  }
+  return members;
+}
+
+/** Order-insensitive, duplicates collapsed, compared with the numeric tolerance. */
+function setsEqual(a: number[], b: number[]): boolean {
+  const dedupe = (values: number[]) =>
+    values.filter((value, index) => values.findIndex((other) => numbersEqual(value, other)) === index);
+
+  const left = dedupe(a);
+  const right = dedupe(b);
+  if (left.length !== right.length) return false;
+  return left.every((value) => right.some((other) => numbersEqual(value, other)));
+}
+
+/** A nested array of numbers, or null when the value is not one. */
+function toNestedNumbers(value: unknown): unknown[] | null {
+  const array = safeMath.isMatrix(value) ? value.toArray() : value;
+  return Array.isArray(array) ? array : null;
+}
+
+function nestedEqual(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    return a.every((element, index) => nestedEqual(element, b[index]));
+  }
+  if (typeof a === "number" && typeof b === "number") return numbersEqual(a, b);
+  return false;
+}
+
+const collectionStrategy: Strategy = {
+  name: "collection",
+  decide(user, correct) {
+    const userSet = parseSet(user);
+    const correctSet = parseSet(correct);
+    if (userSet && correctSet) return setsEqual(userSet, correctSet);
+
+    // A set against a vector is a mismatch, not a decline: they are different
+    // answers, and saying so is the correct verdict rather than a shrug.
+    if (userSet || correctSet) {
+      const other = userSet ? correct : user;
+      const otherNode = parseOrNull(other);
+      const otherValue = otherNode ? evaluateOrNull(otherNode) : null;
+      return toNestedNumbers(otherValue) ? false : null;
+    }
+
+    const userNode = parseOrNull(user);
+    const correctNode = parseOrNull(correct);
+    if (!userNode || !correctNode) return null;
+
+    const userArray = toNestedNumbers(evaluateOrNull(userNode));
+    const correctArray = toNestedNumbers(evaluateOrNull(correctNode));
+    if (!userArray || !correctArray) return null;
+
+    return nestedEqual(userArray, correctArray);
+  },
+};
+
 /** Tasks 3 and 4 append to this list, in order. */
-export const STRATEGIES: Strategy[] = [numericStrategy];
+export const STRATEGIES: Strategy[] = [numericStrategy, collectionStrategy];
 
 export function checkMathAnswer(userAnswer: string, correctAnswer: string): MathGrade {
   const user = latexToAscii(userAnswer);
