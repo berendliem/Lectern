@@ -142,18 +142,29 @@ independent points is the verdict.
 This is what makes `(x+1)^2` and `x^2 + 2x + 1` the same answer without a CAS —
 characteristic polynomials, generating functions, any algebraic rearrangement.
 
-Three details that matter:
+Four details that matter:
 
 1. **Sample count.** Five points. Two polynomials that differ agree at finitely
    many points; five random reals agreeing to tolerance is decisive enough for
    an answer box, and the cost is five evaluations.
-2. **Sample range.** Draw from a continuous range away from the small integers
-   (roughly 1.5 to 9.5, non-integer). Sampling `0` and `1` is how `x^2` and `x`
-   get declared equal.
+2. **Sample range.** Draw the magnitude from a continuous range away from the
+   small integers (roughly 1.5 to 9.5, non-integer), and draw the sign
+   independently so the sample covers both halves of the line. Sampling `0`
+   and `1` is how `x^2` and `x` get declared equal; sampling only positives is
+   the same class of coincidence, and it is how `abs(x)` and `sqrt(x^2)` get
+   declared equal to `x`. An expression undefined on negatives — a square
+   root, a log — returns a non-real value there, which the domain-error rule
+   below already discards, so the sign costs redraws rather than coverage.
 3. **Domain errors.** An expression undefined at a sample point (division by
    zero, a log of a negative) discards that point and draws another, up to a
    small retry cap. If too few valid points survive, the strategy declines
    rather than guessing.
+4. **Reproducibility.** The sample points come from a PRNG seeded from the two
+   normalized inputs, not from the clock. A pair whose domain is a narrow
+   window can run out of valid points inside the retry cap; if the draws vary
+   run to run, so does the verdict, and Goal 4's "deterministic" holds for the
+   grader but not for the grade. The same pair must always reach the same
+   answer, and an unrelated pair must walk a different sequence.
 
 Variable sets must match before probing. `x + 1` and `y + 1` are different
 answers, not the same expression under a rename.

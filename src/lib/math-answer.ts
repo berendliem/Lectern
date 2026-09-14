@@ -201,11 +201,42 @@ const collectionStrategy: Strategy = {
 
 /** Five points is decisive for an answer box: two different polynomials agree at finitely many. */
 const PROBE_POINTS = 5;
-/** Away from 0 and 1, where x, x^2 and sqrt(x) all agree. Non-integer, so lattice coincidences do not bite. */
+/** Magnitude, away from 0 and 1 where x, x^2 and sqrt(x) all agree. Non-integer, so lattice coincidences do not bite. */
 const PROBE_MIN = 1.5;
 const PROBE_MAX = 9.5;
-/** A pole or a log of a negative discards the point; this bounds the redraws. */
+/** A pole, a log of a negative or a root of one discards the point; this bounds the redraws. */
 const MAX_DRAWS = PROBE_POINTS * 6;
+
+/**
+ * Hashes both sides into a seed. FNV-1a is four lines and spreads a
+ * one-character difference across the whole word, which is all that is asked
+ * of it: an unrelated pair must walk an unrelated sequence.
+ */
+function seedFrom(user: string, correct: string): number {
+  const text = `${user} ${correct}`;
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+/**
+ * mulberry32, seeded per comparison. The draws stay pseudo-random in
+ * character; what changes is that the same pair of answers always walks the
+ * same sequence, so the verdict is a property of the answers rather than of
+ * when the student pressed submit. Grading off `Math.random()` graded
+ * `sqrt(x-8)+1` against `1+sqrt(x-8)` correct 15 times in 20 and wrong 5.
+ */
+function mulberry32(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), state | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 /** mathjs resolves these itself — they are constants, not the student's variables. */
 const RESERVED = new Set(["pi", "e", "tau", "phi", "i", "Infinity", "NaN", "null", "true", "false"]);
@@ -242,11 +273,17 @@ const probeStrategy: Strategy = {
     // `x + 1` and `y + 1` are different answers, not one expression renamed.
     if (userVariables.join(",") !== correctVariables.join(",")) return false;
 
+    const random = mulberry32(seedFrom(user, correct));
+
     let agreements = 0;
     for (let draw = 0; draw < MAX_DRAWS && agreements < PROBE_POINTS; draw++) {
       const scope: Record<string, number> = {};
       for (const name of userVariables) {
-        scope[name] = PROBE_MIN + Math.random() * (PROBE_MAX - PROBE_MIN);
+        // The sign is drawn as well as the magnitude. A positive-only sample
+        // is the same class of coincidence as sampling 0 and 1: it declares
+        // abs(x) equal to x, and sqrt(x^2) equal to x.
+        const magnitude = PROBE_MIN + random() * (PROBE_MAX - PROBE_MIN);
+        scope[name] = random() < 0.5 ? -magnitude : magnitude;
       }
 
       const userValue = evaluateOrNull(userNode, scope);

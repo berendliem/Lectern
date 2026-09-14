@@ -186,6 +186,24 @@ test("a constant expression never reaches the probe", () => {
   assert.deepEqual(checkMathAnswer("2+2", "4"), { isCorrect: true, strategy: "numeric" });
 });
 
+test("the probe samples negatives, so abs(x) and sqrt(x^2) are not x", () => {
+  // On a positive-only sample both of these agree with `x` at every point,
+  // and a wrong answer is marked correct with nothing in the data to show it.
+  assert.deepEqual(checkMathAnswer("abs(x)", "x"), { isCorrect: false, strategy: "probe" });
+  assert.deepEqual(checkMathAnswer("sqrt(x^2)", "x"), { isCorrect: false, strategy: "probe" });
+});
+
+test("the same pair reaches the same verdict every time", () => {
+  // A restricted domain is where an unseeded probe was a coin flip: whether
+  // five valid points survived the draw budget varied run to run, so this
+  // pair — the same expression written two ways — graded correct 15 times in
+  // 20 and wrong the other 5.
+  const verdicts = Array.from({ length: 20 }, () =>
+    JSON.stringify(checkMathAnswer("sqrt(x-8)+1", "1+sqrt(x-8)"))
+  );
+  assert.equal(new Set(verdicts).size, 1);
+});
+
 test("a student answer cannot reconfigure the grader for the answers after it", () => {
   // `config` mutates the module-level mathjs instance for the life of the
   // process. Before it was disabled, this one answer switched every later
