@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { checkMathAnswer } from "./math-answer.ts";
+import { checkMathAnswer, parseOrNull, evaluateOrNull } from "./math-answer.ts";
 
 test("an identical answer is correct", () => {
   assert.deepEqual(checkMathAnswer("42", "42"), { isCorrect: true, strategy: "canonical" });
@@ -60,4 +60,16 @@ test("the risky mathjs functions are disabled", () => {
     isCorrect: false,
     strategy: "canonical",
   });
+});
+
+test("a student expression cannot reach mathjs's risky functions", () => {
+  // Disabled at the namespace, so the symbol resolves to a thrower and the
+  // evaluation declines. With `parse` enabled this returns a Node instead.
+  const node = parseOrNull('parse("2+3")');
+  assert.notEqual(node, null);
+  assert.equal(evaluateOrNull(node!), null);
+
+  const unitNode = parseOrNull('createUnit("furlong")');
+  assert.notEqual(unitNode, null);
+  assert.equal(evaluateOrNull(unitNode!), null);
 });

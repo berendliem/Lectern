@@ -26,7 +26,14 @@ type Strategy = { name: MathStrategy; decide: (user: string, correct: string) =>
  * this instance is the only one the grader ever uses.
  */
 export const safeMath = create(all);
-const DISABLED = ["import", "createUnit", "reviver", "simplify", "derivative", "resolve"];
+
+// Captured before the override below: `parseOrNull` needs the real parser,
+// and disabling `parse` on the namespace is what keeps a student-typed
+// expression from reaching it. mathjs's own security guidance is to take
+// the reference first and disable afterwards.
+const parseExpression = safeMath.parse.bind(safeMath);
+
+const DISABLED = ["import", "createUnit", "reviver", "evaluate", "parse", "simplify", "derivative", "resolve"];
 safeMath.import(
   Object.fromEntries(
     DISABLED.map((name) => [name, () => { throw new Error(`Function ${name} is disabled`); }])
@@ -52,7 +59,7 @@ export function numbersEqual(a: number, b: number): boolean {
 /** Parses with the hardened instance. Null means "this strategy cannot read it". */
 export function parseOrNull(text: string): MathNode | null {
   try {
-    return safeMath.parse(text);
+    return parseExpression(text);
   } catch {
     return null;
   }
