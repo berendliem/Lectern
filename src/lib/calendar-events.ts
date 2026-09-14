@@ -20,7 +20,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const RECORD_BEFORE_MS = 15 * 60 * 1000;
 const RECORD_AFTER_MS = 30 * 60 * 1000;
 
-/** The MCP listing carries no event id, so identity is title plus start. */
+/**
+ * The MCP listing carries no event id, so identity is title plus start. The
+ * second argument is the parsed start as an ISO string, not the model's raw
+ * output — formatting drift in what the model returns must not change identity.
+ */
 export function externalKeyFor(title: string, start: string): string {
   return createHash("sha1").update(`${title}\n${start}`).digest("hex");
 }

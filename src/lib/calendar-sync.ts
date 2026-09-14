@@ -58,7 +58,7 @@ export async function syncCalendarEvents(
     }
     if (when.start < windowStart || when.start >= windowEnd) continue;
     const end = e.end ? (parseEventStart(e.end)?.start ?? null) : null;
-    const externalKey = externalKeyFor(e.title, e.start);
+    const externalKey = externalKeyFor(e.title, when.start.toISOString());
     keys.push(externalKey);
     const matchedFolderId = e.course ? (folderIdByName.get(e.course) ?? null) : null;
     const folderId = pinned.has(externalKey) ? (pinned.get(externalKey) ?? null) : matchedFolderId;
@@ -81,14 +81,16 @@ export async function syncCalendarEvents(
     );
   }
 
-  // A bad classifier run (everything rejected or unparseable) looks exactly
-  // like an empty calendar: keys is []. Pruning on that would wipe the whole
-  // window instead of leaving it for the next sync to retry.
-  if (keys.length === 0 && rejected + unparseable > 0) {
+  // A per-event rejection must not be read as a cancellation: pruning on a
+  // partly bad run would delete the rows the classifier merely stumbled on,
+  // taking a pinned folder with them. The upserts that did parse still run
+  // either way — only the deleteMany is conditional.
+  if (rejected + unparseable > 0) {
     console.warn(
-      `[calendar] sync produced no usable events (${rejected} rejected, ${unparseable} unparseable); skipping the window prune`
+      `[calendar] sync produced ${rejected} rejected and ${unparseable} unparseable event(s); skipping the window prune`
     );
-    return { synced: 0, syncedAt, skippedPrune: true };
+    await db.$transaction([...writes]);
+    return { synced: keys.length, syncedAt, skippedPrune: true };
   }
 
   await db.$transaction([

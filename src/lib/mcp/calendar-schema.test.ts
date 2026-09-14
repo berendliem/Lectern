@@ -26,9 +26,9 @@ test("a kind outside the enum is rejected", () => {
   assert.equal(r.success, false);
 });
 
-test("a course outside the offered list is rejected", () => {
-  const r = parsedEventSchema(courses).safeParse({ title: "x", start: "2026-09-16", course: "Chemistry" });
-  assert.equal(r.success, false);
+test("a course outside the offered list is read as no course", () => {
+  const out = parsedEventSchema(courses).parse({ title: "x", start: "2026-09-16", course: "Chemistry" });
+  assert.equal(out.course, null);
 });
 
 test("an empty course string is read as no course, not a rejection", () => {

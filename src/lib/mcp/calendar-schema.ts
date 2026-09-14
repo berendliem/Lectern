@@ -16,8 +16,9 @@ export type ParsedEvent = {
 };
 
 /**
- * Per-event, not per-response: a single hallucinated course name should drop
- * that event, not the whole sync.
+ * Per-event, not per-response: a hallucinated course name costs the match,
+ * not the row — it is read as no course rather than dropping the event. A
+ * bad `kind` still rejects the event.
  */
 export function parsedEventSchema(courseNames: string[]): z.ZodType<ParsedEvent> {
   const allowed = new Set(courseNames);
@@ -32,8 +33,7 @@ export function parsedEventSchema(courseNames: string[]): z.ZodType<ParsedEvent>
       .max(200)
       .nullable()
       .default(null)
-      .transform((c) => (c === "" ? null : c))
-      .refine((c) => c === null || allowed.has(c), { message: "course is not one of the offered names" }),
+      .transform((c) => (c !== null && allowed.has(c) ? c : null)),
   }) as z.ZodType<ParsedEvent>;
 }
 
