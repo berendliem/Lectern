@@ -105,3 +105,17 @@ export type TagsOnPages = Prisma.TagsOnPagesModel
  * 
  */
 export type Chunk = Prisma.ChunkModel
+/**
+ * Model RetrievalLog
+ * What a question actually retrieved. Exists to answer one question with
+ * evidence rather than memory: are there real questions whose answer is
+ * spread across lectures, such that no single chunk can carry it? That is the
+ * one retrieval failure a concept graph fixes and a better ranker does not.
+ * 
+ * Deliberately has no relations. `AGENTS.md` requires that deleting a lecture
+ * never erase the evidence of study that referenced it; `ReviewLog` achieves
+ * that with `SetNull` on every relation, and this table achieves it by storing
+ * source ids as JSON text — there is no foreign key to cascade and no null to
+ * handle.
+ */
+export type RetrievalLog = Prisma.RetrievalLogModel

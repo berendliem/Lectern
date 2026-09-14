@@ -1,7 +1,6 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { Markdown } from "@/components/Markdown";
 import { CalendarClock, Loader2 } from "lucide-react";
 import type { AgentEvent } from "@/lib/agent/stream";
 import { useTasks } from "@/components/tasks/TaskProvider";
@@ -86,7 +85,7 @@ export function StudyPlanPanel({ folderId }: { folderId: string }) {
 
       {plan && (
         <div className="prose prose-sm max-w-none text-ink dark:prose-invert">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{plan}</ReactMarkdown>
+          <Markdown>{plan}</Markdown>
         </div>
       )}
     </div>

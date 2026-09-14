@@ -21,6 +21,10 @@ enum PageStatus {
 enum QuestionType {
   SHORT_ANSWER
   MULTIPLE_CHOICE
+  /// A sentence with one term removed. `prompt` carries the sentence with the
+  /// gap marked `{{term}}`; `correctAnswer` carries the term on its own, and is
+  /// graded by the same token overlap a short answer gets.
+  CLOZE
 }
 
 enum InterviewSource {
@@ -371,4 +375,28 @@ model Chunk {
 
   @@index([pageId])
   @@index([materialId])
+}
+
+/// What a question actually retrieved. Exists to answer one question with
+/// evidence rather than memory: are there real questions whose answer is
+/// spread across lectures, such that no single chunk can carry it? That is the
+/// one retrieval failure a concept graph fixes and a better ranker does not.
+///
+/// Deliberately has no relations. `AGENTS.md` requires that deleting a lecture
+/// never erase the evidence of study that referenced it; `ReviewLog` achieves
+/// that with `SetNull` on every relation, and this table achieves it by storing
+/// source ids as JSON text — there is no foreign key to cascade and no null to
+/// handle.
+model RetrievalLog {
+  id        String   @id @default(cuid())
+  query     String
+  scope     String // "page" | "course" | "all"
+  mode      String // "semantic" | "fts" | "unindexed"
+  hitCount  Int
+  spread    Int // distinct lectures/materials among the surviving hits
+  topScore  Float
+  sourceIds String // JSON array of the page/material ids that were sent
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

@@ -10,6 +10,7 @@ import { TranscriptTab } from "@/components/page-detail/TranscriptTab";
 import { NotesTab } from "@/components/page-detail/NotesTab";
 import { FlashcardList } from "@/components/flashcards/FlashcardList";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
+import { DrillMissesButton } from "@/components/quiz/DrillMissesButton";
 import { ChatTab } from "@/components/page-detail/ChatTab";
 import { ConceptMapTab } from "@/components/page-detail/ConceptMapTab";
 import { ActionsTab } from "@/components/page-detail/ActionsTab";
@@ -40,6 +41,12 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
   const keyTerms: KeyTerm[] = page.notes ? JSON.parse(page.notes.keyTerms) : [];
   const audioExt = page.audioFilePath?.split(".").pop() ?? "";
   const isVideo = isVideoExtension(audioExt);
+
+  // Distinct questions this lecture has been failed on — the drill button's
+  // subject matter, and the reason it is offered at all.
+  const missedCount = await db.quizQuestion.count({
+    where: { pageId: page.id, attempts: { some: { isCorrect: false } } },
+  });
 
   // Build the pretest reveal: topics this lecture covers, and student's held answers
   const pretestRevealEntries = page.folderId
@@ -114,7 +121,10 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             label: `Quiz${page.quizQuestions.length ? ` (${page.quizQuestions.length})` : ""}`,
             content:
               page.quizQuestions.length > 0 ? (
-                <QuizRunner questions={sanitizeQuizQuestions(page.quizQuestions)} />
+                <div className="flex flex-col gap-5">
+                  <QuizRunner questions={sanitizeQuizQuestions(page.quizQuestions)} />
+                  <DrillMissesButton pageId={page.id} missedCount={missedCount} />
+                </div>
               ) : (
                 <EmptyState message="Quiz questions will appear here once the learning guide has been generated." />
               ),
@@ -211,7 +221,7 @@ function EmptyState({ message }: { message: string }) {
 }
 
 function sanitizeQuizQuestions(
-  questions: { id: string; type: "SHORT_ANSWER" | "MULTIPLE_CHOICE"; prompt: string; options: string | null }[]
+  questions: { id: string; type: "SHORT_ANSWER" | "MULTIPLE_CHOICE" | "CLOZE"; prompt: string; options: string | null }[]
 ): QuizQuestionForRunner[] {
   return questions.map((q) => ({
     id: q.id,

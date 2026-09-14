@@ -67,7 +67,8 @@ export const ModelName = {
   ActionItem: 'ActionItem',
   Tag: 'Tag',
   TagsOnPages: 'TagsOnPages',
-  Chunk: 'Chunk'
+  Chunk: 'Chunk',
+  RetrievalLog: 'RetrievalLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -315,6 +316,21 @@ export const ChunkScalarFieldEnum = {
 } as const
 
 export type ChunkScalarFieldEnum = (typeof ChunkScalarFieldEnum)[keyof typeof ChunkScalarFieldEnum]
+
+
+export const RetrievalLogScalarFieldEnum = {
+  id: 'id',
+  query: 'query',
+  scope: 'scope',
+  mode: 'mode',
+  hitCount: 'hitCount',
+  spread: 'spread',
+  topScore: 'topScore',
+  sourceIds: 'sourceIds',
+  createdAt: 'createdAt'
+} as const
+
+export type RetrievalLogScalarFieldEnum = (typeof RetrievalLogScalarFieldEnum)[keyof typeof RetrievalLogScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -26,13 +26,24 @@ test("courseScopeFilter matches cards through either relation", () => {
 });
 
 test("cardSource describes a lecture-parented card", () => {
-  const out = cardSource({ page: { id: "p1", title: "Photosynthesis" }, material: null });
-  assert.deepEqual(out, { kind: "lecture", id: "p1", title: "Photosynthesis" });
+  const out = cardSource({
+    page: { id: "p1", title: "Photosynthesis", folder: { name: "Biology 101" } },
+    material: null,
+  });
+  assert.deepEqual(out, { kind: "lecture", id: "p1", title: "Photosynthesis", course: "Biology 101" });
 });
 
 test("cardSource describes a material-parented card", () => {
-  const out = cardSource({ page: null, material: { id: "m1", title: "Week 2 slides" } });
-  assert.deepEqual(out, { kind: "material", id: "m1", title: "Week 2 slides" });
+  const out = cardSource({
+    page: null,
+    material: { id: "m1", title: "Week 2 slides", folder: { name: "Biology 101" } },
+  });
+  assert.deepEqual(out, { kind: "material", id: "m1", title: "Week 2 slides", course: "Biology 101" });
+});
+
+test("cardSource leaves the course blank when a lecture has no folder", () => {
+  const out = cardSource({ page: { id: "p1", title: "Orphan", folder: null }, material: null });
+  assert.deepEqual(out, { kind: "lecture", id: "p1", title: "Orphan", course: null });
 });
 
 test("cardSource returns null when a card has lost its parent", () => {

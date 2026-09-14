@@ -11,8 +11,8 @@ type DueCard = {
   id: string;
   prompt: string;
   idealExplanation: string;
-  page: { id: string; title: string } | null;
-  material: { id: string; title: string } | null;
+  page: { id: string; title: string; folder: { name: string } | null } | null;
+  material: { id: string; title: string; folder: { name: string } | null } | null;
 };
 
 export function ReviewSession({ folderId }: { folderId?: string }) {
@@ -154,17 +154,18 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
           </span>
           {(() => {
             const source = cardSource(card);
-            if (source?.kind === "lecture") {
+            if (!source) {
+              return <span className="truncate font-medium text-muted-2">Unknown source</span>;
+            }
+            const label = source.course ? `${source.course} · ${source.title}` : source.title;
+            if (source.kind === "lecture") {
               return (
                 <Link href={`/pages/${source.id}`} className="truncate font-medium hover:text-brand-ink">
-                  {source.title}
+                  {label}
                 </Link>
               );
             }
-            if (source) {
-              return <span className="truncate font-medium">{source.title}</span>;
-            }
-            return <span className="truncate font-medium text-muted-2">Unknown source</span>;
+            return <span className="truncate font-medium">{label}</span>;
           })()}
         </div>
         <div className="h-1 w-full overflow-hidden rounded-full bg-surface-3">

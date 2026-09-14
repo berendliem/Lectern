@@ -1,3 +1,5 @@
+import { blankCloze } from "@/lib/cloze";
+
 type Result = {
   prompt: string;
   isCorrect: boolean;
@@ -19,7 +21,7 @@ export function QuizResultsSummary({ results }: { results: Result[] }) {
           .filter((r) => !r.isCorrect)
           .map((r, i) => (
             <li key={i} className="rounded-lg border border-red-200 bg-red-50 p-3">
-              <p className="text-sm font-medium text-ink">{r.prompt}</p>
+              <p className="text-sm font-medium text-ink">{blankCloze(r.prompt)}</p>
               <p className="mt-1 text-sm text-ink-soft">Your answer: {r.userAnswer}</p>
               <p className="text-sm text-emerald-700">Correct answer: {r.correctAnswer}</p>
               {r.explanation && <p className="mt-1 text-sm text-muted">{r.explanation}</p>}

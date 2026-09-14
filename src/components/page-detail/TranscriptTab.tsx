@@ -7,6 +7,7 @@ import clsx from "@/lib/clsx";
 import { RecordingPanel } from "@/components/recording/RecordingPanel";
 import { useRecording } from "@/components/recording/RecordingProvider";
 import { AudioUploadDropzone } from "@/components/recording/AudioUploadDropzone";
+import { UrlImport } from "@/components/recording/UrlImport";
 import { TranscriptView } from "@/components/page-detail/TranscriptView";
 import { SyncedTranscriptPlayer } from "@/components/page-detail/SyncedTranscriptPlayer";
 import { useTasks } from "@/components/tasks/TaskProvider";
@@ -80,9 +81,12 @@ export function TranscriptTab({
           user here to download or re-save the recording. Without this the link
           lands on a page with no panel on it. */}
       {(!hasAudio || (session?.pageId === pageId && audioBlob !== null)) && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <RecordingPanel pageId={pageId} pageTitle={pageTitle} />
-          {!hasAudio && <AudioUploadDropzone pageId={pageId} />}
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <RecordingPanel pageId={pageId} pageTitle={pageTitle} />
+            {!hasAudio && <AudioUploadDropzone pageId={pageId} />}
+          </div>
+          {!hasAudio && <UrlImport pageId={pageId} />}
         </div>
       )}
 

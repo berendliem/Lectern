@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lectern": {
+      "command": "node",
+      "args": ["--import", "tsx", "scripts/lectern-mcp.ts"]
+    }
+  }
+}

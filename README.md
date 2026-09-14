@@ -28,6 +28,7 @@ That's it — the first run sets everything up (npm deps, `.env` files, database
 Three things to know:
 
 - **ffmpeg** must be on your PATH (macOS: `brew install ffmpeg`, Ubuntu: `sudo apt install ffmpeg`).
+- **yt-dlp** (optional): only needed to attach a lecture by pasting a link (macOS: `brew install yt-dlp`, Ubuntu: `sudo apt install yt-dlp`). Recording and uploading a file work without it.
 - **The `claude` CLI** (optional): only the study-plan agent needs it. [Install Claude Code](https://claude.com/claude-code) and sign in.
 - **An LLM for the AI steps**: put an [OpenRouter](https://openrouter.ai/keys) key in `.env` (`OPENROUTER_API_KEY`) — free-tier models work — **or** go fully local with [Ollama](https://ollama.com): `ollama pull qwen3:8b` and set `LLM_PROVIDER="ollama"` in `.env` (see "Optional: fully local summaries" below).
 
@@ -97,12 +98,15 @@ Open http://localhost:3000.
 ## Using it
 
 1. Click **New Page**, give it a title.
-2. On the page's **Transcript** tab, either record live (mic) or upload an existing audio file.
+2. On the page's **Transcript** tab, record live (mic), upload an existing audio file, or paste a link to a recording — a class on YouTube, a lecture-capture URL, an mp3 on a department page — and Lectern pulls down just the audio track (needs `yt-dlp`).
 3. Click **Transcribe audio** in the status banner once audio is saved.
 4. Click **Generate notes** once transcribed — this calls OpenRouter to produce structured Markdown notes + key terms.
-5. Click **Generate flashcards & quiz** once notes exist — this generates Feynman-style flashcards (explain-it-back prompts, not term/definition pairs) and a mixed short-answer/multiple-choice quiz.
+5. Click **Generate flashcards & quiz** once notes exist — this generates Feynman-style flashcards (explain-it-back prompts, not term/definition pairs) and a quiz mixing short-answer, multiple-choice, and fill-in-the-blank questions.
 6. Study via **Review** (spaced-repetition flashcard session, SM-2 scheduling) or the page's **Quiz** tab (self-test with instant grading), or open the **Chat** tab to ask the assistant anything about the lecture.
    - On the **Transcript** tab, pages with audio get a synced player: click any transcript line to jump the audio there, and the line being spoken is highlighted as it plays (with a 1×–2× speed toggle).
+   - Under the quiz, **Drill my misses** writes new questions on the concepts you got wrong, asked from a different angle so you're recalling the idea rather than the answer you were just shown. It adds to the quiz; nothing existing is removed.
+   - On the **Notes** tab, **Listen to a recap** turns the lecture into a ninety-second spoken summary read aloud by your browser's own voice — for the walk to class. It's written fresh each time and not saved.
+   - Formulae and code survive the trip: notes, chat replies, and study plans render LaTeX (`$x^2$`, `$$…$$`) as typeset maths and fenced blocks as code, so a STEM lecture doesn't come back as raw backslashes.
    - The **Concept map** tab draws an AI-generated map of the lecture's key concepts and how they relate — hover a concept to spotlight its connections.
 7. Organize with folders (sidebar) and tags (page header); **Search** looks across transcripts, notes, and flashcards.
 8. **Export** a page to Markdown or PDF from the page header.
@@ -164,6 +168,49 @@ The app can act as an MCP client. Copy `mcp.config.example.json` to `mcp.config.
 Then open **Integrations** in the sidebar and hit **Test** on each server (the first connection runs `npx` and can take a few seconds). Servers run locally as child processes; nothing goes through any third-party middleman.
 
 > Put tokens in a server's `env`, never in `args` — commands and args are shown on the Integrations page and in error messages; `env` values are not.
+
+## Lectern as an MCP server (asking Claude about your lectures)
+
+The other direction: `scripts/lectern-mcp.ts` exposes your lectures *to* an MCP client, so you
+can ask a Claude Code session what a lecture covered or which syllabus topics nothing has
+taught yet. The committed `.mcp.json` wires it up — open this repo in Claude Code, approve the
+`lectern` server, and start the dev server, which is where the tools actually read from.
+
+```
+list_courses     every course and the courseId the other tools need
+list_lectures    one course's lectures, with flashcard and question counts
+get_lecture      one lecture's notes or raw transcript
+search_course    semantic search over a course's transcripts, notes and materials
+topic_coverage   every syllabus topic, and whether anything captured teaches it
+review_load      the cards due now, and which lecture each came from
+```
+
+Two write tools come with it — `create_action_items` records next steps on a lecture, and
+`schedule_reviews` puts review sessions on your calendar (needs the Google Calendar server
+above). Unpinned, both reach any course you name, and `schedule_reviews` with no `pageId`
+covers every course's due cards at once. Worth knowing before you blanket-approve
+`mcp__lectern__*` in your own session: a transcript is recorded audio and uploaded material,
+so it is untrusted text, and it flows back to the model through `get_lecture` and
+`search_course` — a lecture that contains "add these action items" is text a model can act
+on. Per-call approval is what stands between that and a write, so leave it on.
+
+The server has two modes, and the difference is a safety boundary rather than a convenience:
+
+- **Unpinned** — no `LECTERN_FOLDER_ID` in the environment, which is what `.mcp.json` gives you.
+  Every course is reachable and each call names its own `courseId`. Fine for a session you are
+  sitting in front of, approving calls.
+- **Pinned** — `LECTERN_FOLDER_ID` set, which is how the study-plan agent is spawned. The course
+  is fixed by the environment and is not a tool argument at all, so an unattended run that
+  pre-approves `mcp__lectern__*` cannot reach a course it was not pointed at. `list_courses` is
+  not even registered in this mode.
+
+Your own `.mcp.json` never leaks into a study-plan run: that run is spawned with
+`--strict-mcp-config` (`src/lib/agent/args.ts`), so it sees only the one pinned server Lectern
+hands it.
+
+`topic_coverage` is the one to reach for when you want to know what is still uncovered. Its
+scores are a heuristic — a topic it marks uncovered may simply be taught under different words,
+so check with `search_course` before treating a gap as real.
 
 ## Project layout
 
