@@ -21,7 +21,9 @@ export async function isCalendarConfigured(): Promise<boolean> {
   return CALENDAR_SERVER in servers;
 }
 
-export async function syncCalendarEvents(now: Date = new Date()): Promise<{ synced: number; syncedAt: Date }> {
+export async function syncCalendarEvents(
+  now: Date = new Date()
+): Promise<{ synced: number; syncedAt: Date; skippedPrune: boolean }> {
   // Not isCalendarConfigured(): that helper swallows a broken mcp.config.json
   // into "not configured". Here the contract is narrower — missing server
   // key is 409, any other failure to even read the config is a real 502.
@@ -86,7 +88,7 @@ export async function syncCalendarEvents(now: Date = new Date()): Promise<{ sync
     console.warn(
       `[calendar] sync produced no usable events (${rejected} rejected, ${unparseable} unparseable); skipping the window prune`
     );
-    return { synced: 0, syncedAt };
+    return { synced: 0, syncedAt, skippedPrune: true };
   }
 
   await db.$transaction([
@@ -97,5 +99,5 @@ export async function syncCalendarEvents(now: Date = new Date()): Promise<{ sync
     }),
   ]);
 
-  return { synced: keys.length, syncedAt };
+  return { synced: keys.length, syncedAt, skippedPrune: false };
 }

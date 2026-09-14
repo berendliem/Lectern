@@ -8,7 +8,10 @@ export const runtime = "nodejs";
 // mutating verb and covered by the cross-site guard in src/proxy.ts.
 export async function POST() {
   try {
-    const { synced, syncedAt } = await syncCalendarEvents();
+    const { synced, syncedAt, skippedPrune } = await syncCalendarEvents();
+    if (skippedPrune) {
+      return jsonError("The calendar classifier returned nothing usable this time. Try again in a moment.", 502);
+    }
     return NextResponse.json({ synced, syncedAt: syncedAt.toISOString() });
   } catch (e) {
     if (e instanceof CalendarNotConfiguredError) return jsonError(e.message, 409);
