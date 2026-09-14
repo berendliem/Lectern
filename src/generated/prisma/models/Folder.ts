@@ -193,6 +193,7 @@ export type FolderWhereInput = {
   pages?: Prisma.PageListRelationFilter
   materials?: Prisma.MaterialListRelationFilter
   topics?: Prisma.CourseTopicListRelationFilter
+  calendarEvents?: Prisma.CalendarEventListRelationFilter
 }
 
 export type FolderOrderByWithRelationInput = {
@@ -205,6 +206,7 @@ export type FolderOrderByWithRelationInput = {
   pages?: Prisma.PageOrderByRelationAggregateInput
   materials?: Prisma.MaterialOrderByRelationAggregateInput
   topics?: Prisma.CourseTopicOrderByRelationAggregateInput
+  calendarEvents?: Prisma.CalendarEventOrderByRelationAggregateInput
 }
 
 export type FolderWhereUniqueInput = Prisma.AtLeast<{
@@ -220,6 +222,7 @@ export type FolderWhereUniqueInput = Prisma.AtLeast<{
   pages?: Prisma.PageListRelationFilter
   materials?: Prisma.MaterialListRelationFilter
   topics?: Prisma.CourseTopicListRelationFilter
+  calendarEvents?: Prisma.CalendarEventListRelationFilter
 }, "id">
 
 export type FolderOrderByWithAggregationInput = {
@@ -256,6 +259,7 @@ export type FolderCreateInput = {
   pages?: Prisma.PageCreateNestedManyWithoutFolderInput
   materials?: Prisma.MaterialCreateNestedManyWithoutFolderInput
   topics?: Prisma.CourseTopicCreateNestedManyWithoutFolderInput
+  calendarEvents?: Prisma.CalendarEventCreateNestedManyWithoutFolderInput
 }
 
 export type FolderUncheckedCreateInput = {
@@ -268,6 +272,7 @@ export type FolderUncheckedCreateInput = {
   pages?: Prisma.PageUncheckedCreateNestedManyWithoutFolderInput
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutFolderInput
   topics?: Prisma.CourseTopicUncheckedCreateNestedManyWithoutFolderInput
+  calendarEvents?: Prisma.CalendarEventUncheckedCreateNestedManyWithoutFolderInput
 }
 
 export type FolderUpdateInput = {
@@ -280,6 +285,7 @@ export type FolderUpdateInput = {
   pages?: Prisma.PageUpdateManyWithoutFolderNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutFolderNestedInput
   topics?: Prisma.CourseTopicUpdateManyWithoutFolderNestedInput
+  calendarEvents?: Prisma.CalendarEventUpdateManyWithoutFolderNestedInput
 }
 
 export type FolderUncheckedUpdateInput = {
@@ -292,6 +298,7 @@ export type FolderUncheckedUpdateInput = {
   pages?: Prisma.PageUncheckedUpdateManyWithoutFolderNestedInput
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutFolderNestedInput
   topics?: Prisma.CourseTopicUncheckedUpdateManyWithoutFolderNestedInput
+  calendarEvents?: Prisma.CalendarEventUncheckedUpdateManyWithoutFolderNestedInput
 }
 
 export type FolderCreateManyInput = {
@@ -414,6 +421,22 @@ export type FolderUpdateOneWithoutPagesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.FolderUpdateToOneWithWhereWithoutPagesInput, Prisma.FolderUpdateWithoutPagesInput>, Prisma.FolderUncheckedUpdateWithoutPagesInput>
 }
 
+export type FolderCreateNestedOneWithoutCalendarEventsInput = {
+  create?: Prisma.XOR<Prisma.FolderCreateWithoutCalendarEventsInput, Prisma.FolderUncheckedCreateWithoutCalendarEventsInput>
+  connectOrCreate?: Prisma.FolderCreateOrConnectWithoutCalendarEventsInput
+  connect?: Prisma.FolderWhereUniqueInput
+}
+
+export type FolderUpdateOneWithoutCalendarEventsNestedInput = {
+  create?: Prisma.XOR<Prisma.FolderCreateWithoutCalendarEventsInput, Prisma.FolderUncheckedCreateWithoutCalendarEventsInput>
+  connectOrCreate?: Prisma.FolderCreateOrConnectWithoutCalendarEventsInput
+  upsert?: Prisma.FolderUpsertWithoutCalendarEventsInput
+  disconnect?: Prisma.FolderWhereInput | boolean
+  delete?: Prisma.FolderWhereInput | boolean
+  connect?: Prisma.FolderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.FolderUpdateToOneWithWhereWithoutCalendarEventsInput, Prisma.FolderUpdateWithoutCalendarEventsInput>, Prisma.FolderUncheckedUpdateWithoutCalendarEventsInput>
+}
+
 export type FolderCreateWithoutMaterialsInput = {
   id?: string
   name: string
@@ -423,6 +446,7 @@ export type FolderCreateWithoutMaterialsInput = {
   updatedAt?: Date | string
   pages?: Prisma.PageCreateNestedManyWithoutFolderInput
   topics?: Prisma.CourseTopicCreateNestedManyWithoutFolderInput
+  calendarEvents?: Prisma.CalendarEventCreateNestedManyWithoutFolderInput
 }
 
 export type FolderUncheckedCreateWithoutMaterialsInput = {
@@ -434,6 +458,7 @@ export type FolderUncheckedCreateWithoutMaterialsInput = {
   updatedAt?: Date | string
   pages?: Prisma.PageUncheckedCreateNestedManyWithoutFolderInput
   topics?: Prisma.CourseTopicUncheckedCreateNestedManyWithoutFolderInput
+  calendarEvents?: Prisma.CalendarEventUncheckedCreateNestedManyWithoutFolderInput
 }
 
 export type FolderCreateOrConnectWithoutMaterialsInput = {
@@ -461,6 +486,7 @@ export type FolderUpdateWithoutMaterialsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUpdateManyWithoutFolderNestedInput
   topics?: Prisma.CourseTopicUpdateManyWithoutFolderNestedInput
+  calendarEvents?: Prisma.CalendarEventUpdateManyWithoutFolderNestedInput
 }
 
 export type FolderUncheckedUpdateWithoutMaterialsInput = {
@@ -472,6 +498,7 @@ export type FolderUncheckedUpdateWithoutMaterialsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUncheckedUpdateManyWithoutFolderNestedInput
   topics?: Prisma.CourseTopicUncheckedUpdateManyWithoutFolderNestedInput
+  calendarEvents?: Prisma.CalendarEventUncheckedUpdateManyWithoutFolderNestedInput
 }
 
 export type FolderCreateWithoutTopicsInput = {
@@ -483,6 +510,7 @@ export type FolderCreateWithoutTopicsInput = {
   updatedAt?: Date | string
   pages?: Prisma.PageCreateNestedManyWithoutFolderInput
   materials?: Prisma.MaterialCreateNestedManyWithoutFolderInput
+  calendarEvents?: Prisma.CalendarEventCreateNestedManyWithoutFolderInput
 }
 
 export type FolderUncheckedCreateWithoutTopicsInput = {
@@ -494,6 +522,7 @@ export type FolderUncheckedCreateWithoutTopicsInput = {
   updatedAt?: Date | string
   pages?: Prisma.PageUncheckedCreateNestedManyWithoutFolderInput
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutFolderInput
+  calendarEvents?: Prisma.CalendarEventUncheckedCreateNestedManyWithoutFolderInput
 }
 
 export type FolderCreateOrConnectWithoutTopicsInput = {
@@ -521,6 +550,7 @@ export type FolderUpdateWithoutTopicsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUpdateManyWithoutFolderNestedInput
   materials?: Prisma.MaterialUpdateManyWithoutFolderNestedInput
+  calendarEvents?: Prisma.CalendarEventUpdateManyWithoutFolderNestedInput
 }
 
 export type FolderUncheckedUpdateWithoutTopicsInput = {
@@ -532,6 +562,7 @@ export type FolderUncheckedUpdateWithoutTopicsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUncheckedUpdateManyWithoutFolderNestedInput
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutFolderNestedInput
+  calendarEvents?: Prisma.CalendarEventUncheckedUpdateManyWithoutFolderNestedInput
 }
 
 export type FolderCreateWithoutPagesInput = {
@@ -543,6 +574,7 @@ export type FolderCreateWithoutPagesInput = {
   updatedAt?: Date | string
   materials?: Prisma.MaterialCreateNestedManyWithoutFolderInput
   topics?: Prisma.CourseTopicCreateNestedManyWithoutFolderInput
+  calendarEvents?: Prisma.CalendarEventCreateNestedManyWithoutFolderInput
 }
 
 export type FolderUncheckedCreateWithoutPagesInput = {
@@ -554,6 +586,7 @@ export type FolderUncheckedCreateWithoutPagesInput = {
   updatedAt?: Date | string
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutFolderInput
   topics?: Prisma.CourseTopicUncheckedCreateNestedManyWithoutFolderInput
+  calendarEvents?: Prisma.CalendarEventUncheckedCreateNestedManyWithoutFolderInput
 }
 
 export type FolderCreateOrConnectWithoutPagesInput = {
@@ -581,6 +614,7 @@ export type FolderUpdateWithoutPagesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   materials?: Prisma.MaterialUpdateManyWithoutFolderNestedInput
   topics?: Prisma.CourseTopicUpdateManyWithoutFolderNestedInput
+  calendarEvents?: Prisma.CalendarEventUpdateManyWithoutFolderNestedInput
 }
 
 export type FolderUncheckedUpdateWithoutPagesInput = {
@@ -590,6 +624,71 @@ export type FolderUncheckedUpdateWithoutPagesInput = {
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  materials?: Prisma.MaterialUncheckedUpdateManyWithoutFolderNestedInput
+  topics?: Prisma.CourseTopicUncheckedUpdateManyWithoutFolderNestedInput
+  calendarEvents?: Prisma.CalendarEventUncheckedUpdateManyWithoutFolderNestedInput
+}
+
+export type FolderCreateWithoutCalendarEventsInput = {
+  id?: string
+  name: string
+  description?: string | null
+  color?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  pages?: Prisma.PageCreateNestedManyWithoutFolderInput
+  materials?: Prisma.MaterialCreateNestedManyWithoutFolderInput
+  topics?: Prisma.CourseTopicCreateNestedManyWithoutFolderInput
+}
+
+export type FolderUncheckedCreateWithoutCalendarEventsInput = {
+  id?: string
+  name: string
+  description?: string | null
+  color?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  pages?: Prisma.PageUncheckedCreateNestedManyWithoutFolderInput
+  materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutFolderInput
+  topics?: Prisma.CourseTopicUncheckedCreateNestedManyWithoutFolderInput
+}
+
+export type FolderCreateOrConnectWithoutCalendarEventsInput = {
+  where: Prisma.FolderWhereUniqueInput
+  create: Prisma.XOR<Prisma.FolderCreateWithoutCalendarEventsInput, Prisma.FolderUncheckedCreateWithoutCalendarEventsInput>
+}
+
+export type FolderUpsertWithoutCalendarEventsInput = {
+  update: Prisma.XOR<Prisma.FolderUpdateWithoutCalendarEventsInput, Prisma.FolderUncheckedUpdateWithoutCalendarEventsInput>
+  create: Prisma.XOR<Prisma.FolderCreateWithoutCalendarEventsInput, Prisma.FolderUncheckedCreateWithoutCalendarEventsInput>
+  where?: Prisma.FolderWhereInput
+}
+
+export type FolderUpdateToOneWithWhereWithoutCalendarEventsInput = {
+  where?: Prisma.FolderWhereInput
+  data: Prisma.XOR<Prisma.FolderUpdateWithoutCalendarEventsInput, Prisma.FolderUncheckedUpdateWithoutCalendarEventsInput>
+}
+
+export type FolderUpdateWithoutCalendarEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pages?: Prisma.PageUpdateManyWithoutFolderNestedInput
+  materials?: Prisma.MaterialUpdateManyWithoutFolderNestedInput
+  topics?: Prisma.CourseTopicUpdateManyWithoutFolderNestedInput
+}
+
+export type FolderUncheckedUpdateWithoutCalendarEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  pages?: Prisma.PageUncheckedUpdateManyWithoutFolderNestedInput
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutFolderNestedInput
   topics?: Prisma.CourseTopicUncheckedUpdateManyWithoutFolderNestedInput
 }
@@ -603,12 +702,14 @@ export type FolderCountOutputType = {
   pages: number
   materials: number
   topics: number
+  calendarEvents: number
 }
 
 export type FolderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   pages?: boolean | FolderCountOutputTypeCountPagesArgs
   materials?: boolean | FolderCountOutputTypeCountMaterialsArgs
   topics?: boolean | FolderCountOutputTypeCountTopicsArgs
+  calendarEvents?: boolean | FolderCountOutputTypeCountCalendarEventsArgs
 }
 
 /**
@@ -642,6 +743,13 @@ export type FolderCountOutputTypeCountTopicsArgs<ExtArgs extends runtime.Types.E
   where?: Prisma.CourseTopicWhereInput
 }
 
+/**
+ * FolderCountOutputType without action
+ */
+export type FolderCountOutputTypeCountCalendarEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CalendarEventWhereInput
+}
+
 
 export type FolderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -653,6 +761,7 @@ export type FolderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   pages?: boolean | Prisma.Folder$pagesArgs<ExtArgs>
   materials?: boolean | Prisma.Folder$materialsArgs<ExtArgs>
   topics?: boolean | Prisma.Folder$topicsArgs<ExtArgs>
+  calendarEvents?: boolean | Prisma.Folder$calendarEventsArgs<ExtArgs>
   _count?: boolean | Prisma.FolderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["folder"]>
 
@@ -688,6 +797,7 @@ export type FolderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   pages?: boolean | Prisma.Folder$pagesArgs<ExtArgs>
   materials?: boolean | Prisma.Folder$materialsArgs<ExtArgs>
   topics?: boolean | Prisma.Folder$topicsArgs<ExtArgs>
+  calendarEvents?: boolean | Prisma.Folder$calendarEventsArgs<ExtArgs>
   _count?: boolean | Prisma.FolderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type FolderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -699,6 +809,7 @@ export type $FolderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     pages: Prisma.$PagePayload<ExtArgs>[]
     materials: Prisma.$MaterialPayload<ExtArgs>[]
     topics: Prisma.$CourseTopicPayload<ExtArgs>[]
+    calendarEvents: Prisma.$CalendarEventPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1104,6 +1215,7 @@ export interface Prisma__FolderClient<T, Null = never, ExtArgs extends runtime.T
   pages<T extends Prisma.Folder$pagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Folder$pagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   materials<T extends Prisma.Folder$materialsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Folder$materialsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   topics<T extends Prisma.Folder$topicsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Folder$topicsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CourseTopicPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  calendarEvents<T extends Prisma.Folder$calendarEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Folder$calendarEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CalendarEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1599,6 +1711,30 @@ export type Folder$topicsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.CourseTopicScalarFieldEnum | Prisma.CourseTopicScalarFieldEnum[]
+}
+
+/**
+ * Folder.calendarEvents
+ */
+export type Folder$calendarEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CalendarEvent
+   */
+  select?: Prisma.CalendarEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CalendarEvent
+   */
+  omit?: Prisma.CalendarEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CalendarEventInclude<ExtArgs> | null
+  where?: Prisma.CalendarEventWhereInput
+  orderBy?: Prisma.CalendarEventOrderByWithRelationInput | Prisma.CalendarEventOrderByWithRelationInput[]
+  cursor?: Prisma.CalendarEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CalendarEventScalarFieldEnum | Prisma.CalendarEventScalarFieldEnum[]
 }
 
 /**

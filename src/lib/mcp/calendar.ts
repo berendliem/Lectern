@@ -1,7 +1,11 @@
-import { z } from "zod";
 import { callMcpTool } from "@/lib/mcp/client";
 import { callLLMJSON } from "@/lib/llm";
-import { UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+import {
+  parsedEventSchema,
+  parsedEventsEnvelopeSchema,
+  buildParseEventsSystemPrompt,
+  type ParsedEvent,
+} from "@/lib/mcp/calendar-schema";
 
 export const CALENDAR_SERVER = "google-calendar";
 
@@ -27,43 +31,33 @@ export async function listUpcomingEventsText(days: number): Promise<string> {
   });
 }
 
-export const parsedEventSchema = z.object({
-  title: z.string().min(1).max(200),
-  start: z.string().min(1).max(64),
-  end: z.string().max(64).optional(),
-  location: z.string().max(200).optional(),
-});
-export type ParsedEvent = z.infer<typeof parsedEventSchema>;
-
-const parsedEventsResponseSchema = z.object({ events: z.array(parsedEventSchema).max(50) });
-
-const PARSE_EVENTS_SYSTEM_PROMPT = `You convert a calendar tool's human-readable event listing into structured JSON.
-
-Respond with ONLY a JSON object (no markdown code fences, no commentary) matching exactly this shape:
-{
-  "events": [ { "title": string, "start": string, "end": string, "location": string } ]
-}
-
-Rules:
-- One entry per event in the listing, in the listed order. "end" and "location" may be omitted when not shown.
-- "start"/"end" are the event's date-times as shown, normalized to "YYYY-MM-DDTHH:mm" (all-day events: "YYYY-MM-DD").
-- If the listing says there are no events, return { "events": [] }.
-- Do not invent events that aren't in the listing.
-
-${UNTRUSTED_CONTENT_CLAUSE}`;
-
 /**
  * The calendar MCP server returns formatted text, not JSON — run it through
- * the configured LLM to get structured events for the UI.
+ * the configured LLM to get structured events. `courseNames` are offered to
+ * the model as the only legal values for `course`; anything else is dropped
+ * per event, so one bad guess costs one row rather than the whole listing.
  */
-export async function parseEventsList(listingText: string): Promise<ParsedEvent[]> {
+export async function parseEventsList(
+  listingText: string,
+  courseNames: string[]
+): Promise<{ events: ParsedEvent[]; rejected: number }> {
   const raw = await callLLMJSON({
     model: process.env.OPENROUTER_MODEL_SUMMARY ?? "openrouter/free",
     stage: "summary",
-    systemPrompt: PARSE_EVENTS_SYSTEM_PROMPT,
+    systemPrompt: buildParseEventsSystemPrompt(courseNames),
     userPrompt: `EVENT LISTING:\n"""\n${listingText.slice(0, 24_000)}\n"""`,
   });
-  return (await parsedEventsResponseSchema.parseAsync(raw)).events;
+  const envelope = await parsedEventsEnvelopeSchema.parseAsync(raw);
+  const eventSchema = parsedEventSchema(courseNames);
+  const events: ParsedEvent[] = [];
+  let rejected = 0;
+  for (const candidate of envelope.events) {
+    const r = eventSchema.safeParse(candidate);
+    if (r.success) events.push(r.data);
+    else rejected += 1;
+  }
+  if (rejected > 0) console.warn(`[calendar] dropped ${rejected} event(s) the classifier returned malformed`);
+  return { events, rejected };
 }
 
 /** Creates a calendar event; returns the server's confirmation text. */
