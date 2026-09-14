@@ -34,7 +34,7 @@ Respond with ONLY a JSON object (no markdown code fences, no commentary) matchin
 }
 
 Guidelines:
-- Generate 6-10 questions total, with a mix of SHORT_ANSWER, MULTIPLE_CHOICE and CLOZE.
+- Generate 6-10 questions total, with a mix of SHORT_ANSWER, MULTIPLE_CHOICE, CLOZE, and MATH.
 - For MULTIPLE_CHOICE, write plausible distractors (not obviously wrong) and include 3-5 options.
 - For CLOZE, remove exactly one term per sentence and mark it {{like this}}. Leave enough of the sentence around the gap that the answer is recallable but not guessable, and repeat the removed term verbatim in correctAnswer.
 - Test understanding of concepts from the notes, not just trivia/dates.
