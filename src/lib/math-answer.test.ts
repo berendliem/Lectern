@@ -74,6 +74,17 @@ test("a student expression cannot reach mathjs's risky functions", () => {
   assert.equal(evaluateOrNull(unitNode!), null);
 });
 
+test("a student expression cannot allocate a matrix sized by its own number", () => {
+  // `range(1,1e8)` took two gigabytes before these were disabled; an answer is
+  // never one of these, so declining costs nothing.
+  for (const text of ["range(1,1e8)", "zeros(5000,5000)", "ones(5000,5000)", "identity(5000)", "random([3000,3000])"]) {
+    const node = parseOrNull(text);
+    assert.notEqual(node, null, text);
+    assert.equal(evaluateOrNull(node!), null, text);
+  }
+  assert.deepEqual(checkMathAnswer("range(1,1e8)", "1"), { isCorrect: false, strategy: "canonical" });
+});
+
 test("a set ignores order and duplicates", () => {
   assert.deepEqual(checkMathAnswer("{2,3,5}", "{5,3,2}"), {
     isCorrect: true,

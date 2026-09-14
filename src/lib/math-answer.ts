@@ -39,9 +39,15 @@ const parseExpression = safeMath.parse.bind(safeMath);
 // process, so one answer of `config({number:"BigNumber"})` makes every later
 // evaluation return a BigNumber, every `typeof value !== "number"` guard
 // decline, and every MATH question after it grade by string comparison alone.
+//
+// The second line is the allocators: they size a matrix from a number the
+// student typed, and none of them is an answer. `range(1,1e9)` is thirteen
+// characters, inside every cap, and takes the whole process down inside the
+// answer route. `1:5` goes with `range` and falls back to the string compare.
 const DISABLED = [
   "import", "createUnit", "reviver", "evaluate", "parse", "simplify", "derivative", "resolve",
   "config", "chain",
+  "range", "zeros", "ones", "identity", "random", "randomInt", "pickRandom", "matrixFromFunction", "resize",
 ];
 safeMath.import(
   Object.fromEntries(
