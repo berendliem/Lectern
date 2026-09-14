@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Presentation, ScrollText, Trash2 } from "lucide-react";
 import { shortDate } from "@/lib/format";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 
 export type MaterialSummary = {
   id: string;
@@ -23,9 +25,14 @@ const ICONS: Record<string, typeof FileText> = {
   OTHER: FileText,
 };
 
-export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
+export function MaterialList({
+  folderId,
+  materials,
+}: {
+  folderId: string;
+  materials: MaterialSummary[];
+}) {
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [generating, setGenerating] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   // Extracted text keyed by material id. A material's body can run to megabytes,
@@ -33,6 +40,13 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [loadingPreview, setLoadingPreview] = useState<string | null>(null);
   const router = useRouter();
+  const { run, task } = useTasks();
+
+  function generatingKind(id: string): "flashcards" | "quiz" | null {
+    if (task(`material:${id}:flashcards`)?.status === "running") return "flashcards";
+    if (task(`material:${id}:quiz`)?.status === "running") return "quiz";
+    return null;
+  }
 
   async function togglePreview(id: string) {
     if (openId === id) {
@@ -60,7 +74,12 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
     }
   }
 
-  async function generate(id: string, kind: "flashcards" | "quiz", existing: number) {
+  async function generate(
+    id: string,
+    title: string,
+    kind: "flashcards" | "quiz",
+    existing: number
+  ) {
     // The generate routes delete what is already there before writing. For a
     // material with cards that means the scheduling those cards carry —
     // intervals, ease, the review history behind them — goes with them, and
@@ -76,21 +95,24 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
       return;
     }
 
-    setGenerating(`${id}:${kind}`);
-    setError(null);
-    try {
-      const res = await fetch(`/api/materials/${id}/generate-${kind}`, { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(body.error ?? `Could not generate ${kind} from that material.`);
-        return;
+    await run(
+      {
+        key: `material:${id}:${kind}`,
+        // Two materials generating at once are two identical chips otherwise,
+        // neither of them clickable.
+        label: `Generating ${kind} from "${title}"…`,
+        href: `/folders/${folderId}`,
+      },
+      async () => {
+        await postTask(
+          `/api/materials/${id}/generate-${kind}`,
+          `Could not generate ${kind} from that material.`,
+          undefined,
+          "Network error talking to the local server."
+        );
       }
-      router.refresh();
-    } catch {
-      setError("Network error talking to the local server.");
-    } finally {
-      setGenerating(null);
-    }
+    );
+    router.refresh();
   }
 
   async function remove(id: string, title: string, cards: number, questions: number) {
@@ -139,6 +161,9 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
         {materials.map((material) => {
           const Icon = ICONS[material.kind] ?? FileText;
           const open = openId === material.id;
+          const generating = generatingKind(material.id);
+          const flashcardsError = task(`material:${material.id}:flashcards`)?.error;
+          const quizError = task(`material:${material.id}:quiz`)?.error;
           return (
             <li
               key={material.id}
@@ -162,22 +187,24 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                   </p>
                 </button>
                 <button
-                  onClick={() => generate(material.id, "flashcards", material.flashcardCount)}
+                  onClick={() =>
+                    generate(material.id, material.title, "flashcards", material.flashcardCount)
+                  }
                   disabled={generating !== null}
                   className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
                 >
-                  {generating === `${material.id}:flashcards`
+                  {generating === "flashcards"
                     ? "Generating…"
                     : material.flashcardCount > 0
                       ? `${material.flashcardCount} cards`
                       : "Flashcards"}
                 </button>
                 <button
-                  onClick={() => generate(material.id, "quiz", material.quizCount)}
+                  onClick={() => generate(material.id, material.title, "quiz", material.quizCount)}
                   disabled={generating !== null}
                   className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
                 >
-                  {generating === `${material.id}:quiz`
+                  {generating === "quiz"
                     ? "Generating…"
                     : material.quizCount > 0
                       ? `${material.quizCount} questions`
@@ -199,6 +226,11 @@ export function MaterialList({ materials }: { materials: MaterialSummary[] }) {
                   <Trash2 className="h-4 w-4" strokeWidth={2} />
                 </button>
               </div>
+              {(flashcardsError ?? quizError) && (
+                <p className="mt-1 text-[12.5px] font-medium text-red-700">
+                  {flashcardsError ?? quizError}
+                </p>
+              )}
               {open && (
                 <div className="mt-3 max-h-96 overflow-y-auto rounded-lg border border-line px-3 py-2">
                   {loadingPreview === material.id ? (

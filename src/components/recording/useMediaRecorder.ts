@@ -32,6 +32,15 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Wall-clock duration, not a tick count. Chrome throttles a background tab's
+  // intervals to roughly one a minute, and leaving the page mid-recording is the
+  // whole point of the shell recording bar — a counter that adds one per tick
+  // would persist a few minutes for an hour-long lecture, against the user's
+  // only copy of it, and skew the synced-transcript timeline with it.
+  // `runStartedAtRef` is the Date.now() of the current recording stretch;
+  // `accumulatedMsRef` is every stretch before this one (i.e. before a pause).
+  const runStartedAtRef = useRef<number | null>(null);
+  const accumulatedMsRef = useRef(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const animationRef = useRef<number | null>(null);
 
@@ -41,6 +50,11 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
   const segmentRecorderRef = useRef<MediaRecorder | null>(null);
   const segmentTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const segmentActiveRef = useRef(false);
+  // Bumped by every stop and every start. `onstop` arrives asynchronously, so a
+  // fast pause→resume would otherwise let the *old* recorder's handler spawn a
+  // successor into the new loop — two live segment recorders, one of them held
+  // by nothing and never stopped.
+  const segmentGenerationRef = useRef(0);
 
   useEffect(() => {
     onLiveSegmentRef.current = options?.onLiveSegment;
@@ -49,6 +63,7 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
   const startSegmentLoop = useCallback((stream: MediaStream, mimeType: string | undefined) => {
     if (!onLiveSegmentRef.current) return;
     segmentActiveRef.current = true;
+    const generation = ++segmentGenerationRef.current;
 
     const spawnSegmentRecorder = () => {
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
@@ -60,14 +75,17 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
         if (segmentChunks.length > 0) {
           onLiveSegmentRef.current?.(new Blob(segmentChunks, { type: mimeType ?? "audio/webm" }));
         }
-        // Roll straight into the next segment while the session is live.
-        if (segmentActiveRef.current) spawnSegmentRecorder();
+        // Roll straight into the next segment while this loop is the live one.
+        if (segmentActiveRef.current && segmentGenerationRef.current === generation) {
+          spawnSegmentRecorder();
+        }
       };
       recorder.start();
       segmentRecorderRef.current = recorder;
     };
 
     spawnSegmentRecorder();
+    if (segmentTimerRef.current) clearInterval(segmentTimerRef.current);
     segmentTimerRef.current = setInterval(() => {
       if (segmentRecorderRef.current?.state === "recording") {
         segmentRecorderRef.current.stop();
@@ -77,6 +95,7 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
 
   const stopSegmentLoop = useCallback((flush: boolean) => {
     segmentActiveRef.current = false;
+    segmentGenerationRef.current += 1;
     if (segmentTimerRef.current) clearInterval(segmentTimerRef.current);
     segmentTimerRef.current = null;
     const recorder = segmentRecorderRef.current;
@@ -89,6 +108,38 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
         recorder.stop();
       }
     }
+  }, []);
+
+  /**
+   * The interval is only a render tick: every value it publishes is read off
+   * the clock, so a starved timer shows a stale number for a moment and then
+   * catches up, instead of losing the time it never got to count.
+   */
+  const startElapsedTicker = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      const running = runStartedAtRef.current === null ? 0 : Date.now() - runStartedAtRef.current;
+      setElapsedSeconds(Math.floor((accumulatedMsRef.current + running) / 1000));
+    }, 1000);
+  }, []);
+
+  /** Closes the current stretch and publishes the exact total, for pause/stop. */
+  const bankElapsed = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    if (runStartedAtRef.current !== null) {
+      accumulatedMsRef.current += Date.now() - runStartedAtRef.current;
+      runStartedAtRef.current = null;
+    }
+    setElapsedSeconds(Math.floor(accumulatedMsRef.current / 1000));
+  }, []);
+
+  const clearElapsed = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    runStartedAtRef.current = null;
+    accumulatedMsRef.current = 0;
+    setElapsedSeconds(0);
   }, []);
 
   const stopLevelMeter = useCallback(() => {
@@ -118,7 +169,7 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
     tick();
   }, []);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = useCallback(async (): Promise<boolean> => {
     setError(null);
     setAudioBlob(null);
     chunksRef.current = [];
@@ -141,44 +192,72 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
       startLevelMeter(stream);
       startSegmentLoop(stream, mimeType);
 
+      accumulatedMsRef.current = 0;
+      runStartedAtRef.current = Date.now();
       setElapsedSeconds(0);
-      timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+      startElapsedTicker();
       setStatus("recording");
+      return true;
     } catch {
       setError("Microphone access was denied or is unavailable.");
+      return false;
     }
-  }, [startLevelMeter, stopLevelMeter, startSegmentLoop]);
+  }, [startLevelMeter, stopLevelMeter, startSegmentLoop, startElapsedTicker]);
 
   const stopRecording = useCallback(() => {
     stopSegmentLoop(true);
     mediaRecorderRef.current?.stop();
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
+    bankElapsed();
     setStatus("stopped");
-  }, [stopSegmentLoop]);
+  }, [stopSegmentLoop, bankElapsed]);
 
   const pauseRecording = useCallback(() => {
     stopSegmentLoop(true);
     mediaRecorderRef.current?.pause();
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = null;
+    bankElapsed();
     setStatus("paused");
-  }, [stopSegmentLoop]);
+  }, [stopSegmentLoop, bankElapsed]);
 
   const resumeRecording = useCallback(() => {
     mediaRecorderRef.current?.resume();
     if (streamRef.current) {
       startSegmentLoop(streamRef.current, pickSupportedMimeType());
     }
-    timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    runStartedAtRef.current = Date.now();
+    startElapsedTicker();
     setStatus("recording");
-  }, [startSegmentLoop]);
+  }, [startSegmentLoop, startElapsedTicker]);
 
   const reset = useCallback(() => {
     setAudioBlob(null);
-    setElapsedSeconds(0);
+    clearElapsed();
     setStatus("idle");
-  }, []);
+  }, [clearElapsed]);
+
+  /**
+   * Throws the take away and releases the microphone. `reset()` only clears
+   * state — before this existed, the only thing that stopped the tracks was the
+   * `onstop` handler of a completed recording, so an abandoned session kept the
+   * mic open and the browser's recording indicator lit.
+   */
+  const discard = useCallback(() => {
+    stopSegmentLoop(false);
+    clearElapsed();
+    const recorder = mediaRecorderRef.current;
+    mediaRecorderRef.current = null;
+    if (recorder && recorder.state !== "inactive") {
+      // Drop the assembling handlers first: this take is not being saved.
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      recorder.stop();
+    }
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    chunksRef.current = [];
+    stopLevelMeter();
+    setAudioBlob(null);
+    setStatus("idle");
+  }, [stopSegmentLoop, stopLevelMeter, clearElapsed]);
 
   return {
     status,
@@ -191,5 +270,6 @@ export function useMediaRecorder(options?: { onLiveSegment?: (blob: Blob) => voi
     pauseRecording,
     resumeRecording,
     reset,
+    discard,
   };
 }

@@ -1,63 +1,54 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import { CalendarClock, Loader2 } from "lucide-react";
 import type { AgentEvent } from "@/lib/agent/stream";
+import { useTasks } from "@/components/tasks/TaskProvider";
 
 type PanelEvent = AgentEvent | { type: "error"; message: string };
 
 export function StudyPlanPanel({ folderId }: { folderId: string }) {
-  const [running, setRunning] = useState(false);
-  const [steps, setSteps] = useState<string[]>([]);
-  const [plan, setPlan] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const abort = useRef<AbortController | null>(null);
+  const { run, task } = useTasks();
+  const taskKey = `folder:${folderId}:study-plan`;
+  const planTask = task(taskKey);
+  const running = planTask?.status === "running";
+  const steps = planTask?.progress ?? [];
+  const plan = (planTask?.data as string | undefined) ?? null;
+  const error = planTask?.error ?? null;
 
-  async function run() {
-    abort.current?.abort();
-    const controller = new AbortController();
-    abort.current = controller;
-    setRunning(true);
-    setSteps([]);
-    setPlan(null);
-    setError(null);
-
-    try {
-      const res = await fetch(`/api/folders/${folderId}/study-plan`, {
-        method: "POST",
-        signal: controller.signal,
-      });
-      if (!res.ok || !res.body) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? "Could not start the study-plan run");
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        // The last piece may be half a line; keep it for the next chunk.
-        buffer = lines.pop() ?? "";
-        for (const line of lines) {
-          if (!line.trim()) continue;
-          const event = JSON.parse(line) as PanelEvent;
-          if (event.type === "tool") setSteps((s) => [...s, event.name.replace(/_/g, " ")]);
-          else if (event.type === "result") setPlan(event.text);
-          else if (event.type === "error") setError(event.message);
+  async function start() {
+    await run(
+      { key: taskKey, label: "Planning this week's study…", href: `/folders/${folderId}` },
+      async ({ step, emit }) => {
+        const res = await fetch(`/api/folders/${folderId}/study-plan`, { method: "POST" });
+        if (!res.ok || !res.body) {
+          const body = await res.json().catch(() => null);
+          throw new Error(body?.error ?? "Could not start the study-plan run");
         }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let failure: string | null = null;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          // The last piece may be half a line; keep it for the next chunk.
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            const event = JSON.parse(line) as PanelEvent;
+            if (event.type === "tool") step(event.name.replace(/_/g, " "));
+            else if (event.type === "result") emit(event.text);
+            else if (event.type === "error") failure = event.message;
+          }
+        }
+        // The route sends failures as events on an already-200 response.
+        if (failure) throw new Error(failure);
       }
-    } catch (e) {
-      if ((e as Error).name !== "AbortError") {
-        setError(e instanceof Error ? e.message : "The study-plan run failed");
-      }
-    } finally {
-      setRunning(false);
-    }
+    );
   }
 
   return (
@@ -73,7 +64,7 @@ export function StudyPlanPanel({ folderId }: { folderId: string }) {
           </p>
         </div>
         <button
-          onClick={run}
+          onClick={start}
           disabled={running}
           className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-[13px] font-medium text-white shadow-brand transition-opacity hover:opacity-95 disabled:opacity-50"
         >

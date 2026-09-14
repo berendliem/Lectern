@@ -87,6 +87,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             content: (
               <TranscriptTab
                 pageId={page.id}
+                pageTitle={page.title}
                 hasAudio={!!page.audioFilePath}
                 isVideo={isVideo}
                 transcript={page.transcript?.rawText ?? null}
