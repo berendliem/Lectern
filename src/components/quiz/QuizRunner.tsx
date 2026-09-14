@@ -4,12 +4,13 @@ import { Fragment, useState } from "react";
 import { ShortAnswerQuestion } from "@/components/quiz/ShortAnswerQuestion";
 import { MultipleChoiceQuestion } from "@/components/quiz/MultipleChoiceQuestion";
 import { ClozeQuestion } from "@/components/quiz/ClozeQuestion";
+import { MathQuestion } from "@/components/quiz/MathQuestion";
 import { QuizResultsSummary } from "@/components/quiz/QuizResultsSummary";
 import { Button } from "@/components/ui/Button";
 
 export type QuizQuestionForRunner = {
   id: string;
-  type: "SHORT_ANSWER" | "MULTIPLE_CHOICE" | "CLOZE";
+  type: "SHORT_ANSWER" | "MULTIPLE_CHOICE" | "CLOZE" | "MATH";
   prompt: string;
   options: string[] | null;
 };
@@ -69,7 +70,9 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
         typed for one appears already filled in for the next.
       */}
       <Fragment key={question.id}>
-        {question.type === "SHORT_ANSWER" ? (
+        {question.type === "MATH" ? (
+          <MathQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
+        ) : question.type === "SHORT_ANSWER" ? (
           <ShortAnswerQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
         ) : question.type === "CLOZE" ? (
           <ClozeQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
