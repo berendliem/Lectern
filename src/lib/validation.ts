@@ -400,3 +400,8 @@ export const pretestDetailSchema = z.object({
   chosenIndex: z.number().int().min(0).max(3),
   explanation: z.string(),
 });
+
+/** PATCH /api/calendar-events/[id]: the student names the course, or clears it. */
+export const updateCalendarEventSchema = z.object({
+  folderId: z.string().trim().min(1).nullable(),
+});

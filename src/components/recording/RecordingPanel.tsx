@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
 import { uploadAudio, transcribePage } from "@/components/recording/upload";
@@ -54,6 +54,41 @@ export function RecordingPanel({ pageId }: { pageId: string }) {
   const [saveState, setSaveState] = useState<"idle" | "uploading" | "transcribing">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const router = useRouter();
+  // Arriving from a class row on home: start the mic straight away, then drop
+  // the flag from the URL so a reload or back-navigation does not start again.
+  // The permission prompt happens here, on the lecture page, not on home.
+  // A URL alone must not open the microphone — someone could link or bookmark
+  // a "?record=1" URL and get the mic prompt with no user action on this page.
+  // The Record button on home sets lectern:record-intent to the page id right
+  // before navigating; this effect only starts when that intent matches this
+  // page, and consumes it (removes it) so a later reload of the same URL does
+  // not start again.
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStarted.current) return;
+    if (searchParams.get("record") !== "1") return;
+    let intent: string | null = null;
+    try {
+      intent = sessionStorage.getItem("lectern:record-intent");
+    } catch {
+      intent = null;
+    }
+    if (intent !== pageId) {
+      router.replace(pathname);
+      return;
+    }
+    if (status !== "idle") return;
+    try {
+      sessionStorage.removeItem("lectern:record-intent");
+    } catch {
+      // ignore
+    }
+    autoStarted.current = true;
+    void startRecording();
+    router.replace(pathname);
+  }, [searchParams, pathname, router, startRecording, status, pageId]);
   const previewUrl = useMemo(() => (audioBlob ? URL.createObjectURL(audioBlob) : null), [audioBlob]);
   // "audio/webm;codecs=opus" -> "webm". Good enough for a filename.
   const downloadName = `recording.${audioBlob?.type.split(";")[0].split("/")[1] ?? "webm"}`;

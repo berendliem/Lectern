@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { computeStreak, upcomingSchedule } from "@/lib/planner";
 import { RECALL_LEDGER_SINCE, calibration } from "@/lib/recall";
 import clsx from "@/lib/clsx";
+import { groupByDay, SYNC_WINDOW_DAYS, type CalendarEventKind } from "@/lib/calendar-events";
+import { isCalendarConfigured } from "@/lib/calendar-sync";
+import { folderFamily, FOLDER_CHIP_CLASSES } from "@/lib/folder-colors";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +14,7 @@ export default async function PlannerPage() {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const [logs, cards, dueNow, reviewedToday, totalCards, rated] = await Promise.all([
+  const [logs, cards, dueNow, reviewedToday, totalCards, rated, events, calendarConfigured] = await Promise.all([
     // Deliberately unfiltered by date: this read counts events for the streak and
     // never scores them, so the pre-ledger rows still belong in it.
     db.reviewLog.findMany({ orderBy: { reviewedAt: "desc" }, take: 500, select: { reviewedAt: true } }),
@@ -28,6 +31,17 @@ export default async function PlannerPage() {
       take: 200,
       select: { confidence: true, quality: true },
     }),
+    db.calendarEvent.findMany({
+      where: {
+        start: {
+          gte: startOfToday,
+          lt: new Date(startOfToday.getTime() + SYNC_WINDOW_DAYS * 24 * 60 * 60 * 1000),
+        },
+      },
+      orderBy: { start: "asc" },
+      include: { folder: { select: { id: true, name: true, color: true } } },
+    }),
+    isCalendarConfigured(),
   ]);
 
   const streak = computeStreak(logs.map((l) => l.reviewedAt), now);
@@ -35,6 +49,8 @@ export default async function PlannerPage() {
   const maxCount = Math.max(1, ...schedule.map((d) => d.count));
   const calibrated = calibration(rated);
   const percent = (share: number) => `${Math.round(share * 100)}%`;
+  const eventGroups = groupByDay(events, now);
+  const KIND_LABEL: Record<CalendarEventKind, string> = { EXAM: "Exam", ASSIGNMENT: "Due", CLASS: "Class", OTHER: "" };
 
   const stats = [
     { label: "Due now", value: dueNow, icon: GraduationCap, tint: "bg-brand-soft text-brand-ink", href: dueNow > 0 ? "/review" : null },
@@ -139,6 +155,56 @@ export default async function PlannerPage() {
           <p className="mt-4 text-[13px] text-muted-2">
             No flashcards yet — generate a learning guide on a lecture to start scheduling reviews.
           </p>
+        )}
+      </div>
+
+      {/* Calendar: everything the sync pulled, not just the academic subset home shows. */}
+      <div className="rounded-2xl border border-line/80 bg-surface p-5">
+        <h2 className="mb-4 text-sm font-semibold text-ink">Calendar, next {SYNC_WINDOW_DAYS} days</h2>
+        {!calendarConfigured ? (
+          <p className="text-[13px] text-muted-2">
+            <Link href="/integrations" className="font-semibold text-brand-ink hover:underline">
+              Connect Google Calendar
+            </Link>{" "}
+            to see your classes, deadlines and exams here.
+          </p>
+        ) : eventGroups.length === 0 ? (
+          <p className="text-[13px] text-muted-2">Nothing on the calendar in this window.</p>
+        ) : (
+          <ol className="flex flex-col gap-4">
+            {eventGroups.map((g) => (
+              <li key={g.key}>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-2">{g.label}</p>
+                <ul className="flex flex-col gap-1.5">
+                  {g.events.map((e) => (
+                    <li key={e.id} className="flex items-center gap-3 text-[13px]">
+                      <span className="w-12 shrink-0 tabular-nums text-muted">
+                        {e.allDay
+                          ? "All day"
+                          : e.start.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit", hour12: false })}
+                      </span>
+                      {e.folder && (
+                        <span
+                          className={clsx(
+                            "rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
+                            FOLDER_CHIP_CLASSES[folderFamily(e.folder.color)]
+                          )}
+                        >
+                          {e.folder.name}
+                        </span>
+                      )}
+                      <span className="truncate text-ink">{e.title}</span>
+                      {KIND_LABEL[e.kind] && (
+                        <span className="ml-auto shrink-0 text-[11px] font-semibold uppercase tracking-wide text-muted-2">
+                          {KIND_LABEL[e.kind]}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
         )}
       </div>
     </div>
