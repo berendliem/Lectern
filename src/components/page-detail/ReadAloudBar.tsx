@@ -380,6 +380,12 @@ export function ReadAloudBar({
       aria-label="Read the notes aloud"
       className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface-2/60 p-2"
     >
+      {/* Painted over a Range, so the notes markup is never touched. The rule lives
+          here, not in globals.css, because Lightning CSS does not parse ::highlight()
+          yet and warns on every build. */}
+      <style href="read-aloud-highlight" precedence="default">
+        {`::highlight(${HIGHLIGHT_NAME}) { background-color: var(--read-aloud); }`}
+      </style>
       <Button
         type="button"
         size="sm"
