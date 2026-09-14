@@ -145,8 +145,3 @@ body {
 .shadow-brand {
   box-shadow: 0 8px 24px -10px rgba(0, 27, 66, 0.4);
 }
-
-/* Painted by ReadAloudBar over a Range, so the notes markup is never touched. */
-::highlight(read-aloud) {
-  background-color: var(--read-aloud);
-}
