@@ -32,6 +32,7 @@ export function parsedEventSchema(courseNames: string[]): z.ZodType<ParsedEvent>
       .max(200)
       .nullable()
       .default(null)
+      .transform((c) => (c === "" ? null : c))
       .refine((c) => c === null || allowed.has(c), { message: "course is not one of the offered names" }),
   }) as z.ZodType<ParsedEvent>;
 }

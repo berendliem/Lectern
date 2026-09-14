@@ -15,7 +15,7 @@ export function TodayRow({ dueCount, streak, totalCards }: { dueCount: number; s
       className="flex flex-col gap-3 rounded-2xl border border-line bg-surface px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex items-center gap-3">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
+        <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
           {dueCount > 0 ? <Flame className="h-4 w-4" strokeWidth={2} /> : <CheckCheck className="h-4 w-4" strokeWidth={2} />}
         </span>
         <p className="text-[17px] font-semibold leading-6 text-ink">

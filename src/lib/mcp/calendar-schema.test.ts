@@ -31,6 +31,11 @@ test("a course outside the offered list is rejected", () => {
   assert.equal(r.success, false);
 });
 
+test("an empty course string is read as no course, not a rejection", () => {
+  const out = parsedEventSchema(courses).parse({ title: "Lab", start: "2026-09-16T09:00", course: "" });
+  assert.equal(out.course, null);
+});
+
 test("the envelope accepts unknown events so one bad row cannot sink the sync", () => {
   const r = parsedEventsEnvelopeSchema.safeParse({ events: [{ junk: true }, 42] });
   assert.equal(r.success, true);
