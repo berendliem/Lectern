@@ -130,7 +130,7 @@ export function TranscriptTab({
               "flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2 disabled:opacity-50",
               segments.length < 4 && "ml-auto"
             )}
-            title="Remove filler words, collapse self-corrections, and fix speech-recognition errors — the original stays available"
+            title="Cut filler, student chatter, tangents and course admin, and fix speech-recognition errors — the original stays available"
           >
             {cleaning ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

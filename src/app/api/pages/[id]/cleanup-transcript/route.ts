@@ -5,6 +5,8 @@ import { callLLMText } from "@/lib/llm";
 import { CLEANUP_SYSTEM_PROMPT, buildCleanupUserPrompt } from "@/lib/prompts/cleanup";
 import { getDictionaryEntries, buildSpellingGuide } from "@/lib/dictionary";
 import { splitTextIntoChunks } from "@/lib/text-chunks";
+import { cleanupInput } from "@/lib/cleanup-input";
+import type { TranscriptSegment } from "@/types";
 
 // Chunk size keeps each request comfortably inside small-model context
 // windows; chunks are cleaned independently and rejoined.
@@ -22,7 +24,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     const spellingGuide = buildSpellingGuide(await getDictionaryEntries().catch(() => []));
-    const chunks = splitTextIntoChunks(page.transcript.rawText, CHUNK_CHARS);
+    const segments: TranscriptSegment[] = JSON.parse(page.transcript.segments);
+    const { text, lecturer } = cleanupInput(page.transcript.rawText, segments);
+    const chunks = splitTextIntoChunks(text, CHUNK_CHARS);
     if (chunks.length === 0) return jsonError("The transcript is empty", 422);
     if (chunks.length > MAX_CHUNKS) {
       return jsonError(
@@ -38,7 +42,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         stage: "summary",
         messages: [
           { role: "system", content: CLEANUP_SYSTEM_PROMPT },
-          { role: "user", content: buildCleanupUserPrompt(chunk, spellingGuide) },
+          { role: "user", content: buildCleanupUserPrompt(chunk, spellingGuide, lecturer) },
         ],
       });
       cleanedParts.push(cleaned);
