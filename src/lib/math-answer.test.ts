@@ -203,13 +203,16 @@ test("an expression live on a slice of the sample range is still decided", () =>
   });
 });
 
-test("the same pair reaches the same verdict every time", () => {
-  // A restricted domain is where an unseeded probe was a coin flip: whether
-  // five valid points survived the draw budget varied run to run, so this
-  // pair — the same expression written two ways — graded correct 15 times in
-  // 20 and wrong the other 5.
+test("the seed, not the draw budget, is what makes a verdict stable", () => {
+  // `sqrt(x-9)` is live on about 3% of the sample range, so even at the full
+  // budget it reaches five valid points only about three times in four. That
+  // is the point: swap the seeding back to Math.random() and these 20 calls
+  // disagree. A pair the budget comfortably reaches would pass this test with
+  // no seeding at all, which is what makes it a guard rather than a
+  // formality. What they agree on is not asserted — near the reach threshold
+  // a stable decline is just as correct an outcome as a stable verdict.
   const verdicts = Array.from({ length: 20 }, () =>
-    JSON.stringify(checkMathAnswer("sqrt(x-8)+1", "1+sqrt(x-8)"))
+    JSON.stringify(checkMathAnswer("sqrt(x-9)+1", "1+sqrt(x-9)"))
   );
   assert.equal(new Set(verdicts).size, 1);
 });

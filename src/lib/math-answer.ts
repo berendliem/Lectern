@@ -217,19 +217,23 @@ const PROBE_MAX = 9.5;
  * average one: an expression defined on only a slice of the sample range —
  * `sqrt(x-8)` is live on about a tenth of it — needs a lot of draws to find
  * five valid points. Spending them is cheaper than declining, because
- * declining grades a correct answer wrong. More draws cannot manufacture a
- * false positive either: a genuine disagreement returns false at the first
- * point where both sides evaluate.
+ * declining grades a correct answer wrong. Raising the budget cannot hide a
+ * disagreement a smaller one would have found: the loop halts at the fifth
+ * agreement, and any point where both sides evaluate to finite reals and
+ * differ returns false immediately. It does widen what the loop gets to see
+ * — see the ponytail note on `probeStrategy`.
  */
 const MAX_DRAWS = PROBE_POINTS * 40;
 
 /**
  * Hashes both sides into a seed. FNV-1a is four lines and spreads a
  * one-character difference across the whole word, which is all that is asked
- * of it: an unrelated pair must walk an unrelated sequence.
+ * of it: an unrelated pair must walk an unrelated sequence. The separator is
+ * a NUL because it cannot occur in either side, so `("ab", "c")` and
+ * `("a", "bc")` cannot collide.
  */
 function seedFrom(user: string, correct: string): number {
-  const text = `${user} ${correct}`;
+  const text = `${user}\u0000${correct}`;
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193);
@@ -278,9 +282,12 @@ function freeVariables(node: MathNode): string[] {
 /**
  * ponytail: agreement at five points is evidence, not proof. Two different
  * expressions that happen to coincide on every sample are declared equal, and
- * more samples narrow that gap without closing it. A real CAS — or mathjs's
- * own `simplify`, disabled here as untrusted-input surface — is the upgrade
- * if a course ever produces a pair that collides.
+ * more samples narrow that gap without closing it — including the shape a
+ * sampler cannot see at all, two expressions that agree everywhere both are
+ * defined and differ only where one of them is non-real, which this loop
+ * skips as a domain error (`sqrt(x-8)` against `sqrt(abs(x-8))`). A real CAS
+ * — or mathjs's own `simplify`, disabled here as untrusted-input surface —
+ * is the upgrade if a course ever produces a pair that collides.
  */
 const probeStrategy: Strategy = {
   name: "probe",
