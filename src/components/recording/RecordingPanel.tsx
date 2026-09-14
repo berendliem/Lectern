@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
 import { confirmDiscard, useRecording } from "@/components/recording/RecordingProvider";
 import type { RecorderStatus } from "@/components/recording/useMediaRecorder";
@@ -38,6 +39,45 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
     () => (mine && audioBlob ? URL.createObjectURL(audioBlob) : null),
     [mine, audioBlob]
   );
+
+  // Arriving from a class row on home: start the mic straight away, then drop
+  // the flag from the URL so a reload or back-navigation does not start again.
+  // The permission prompt happens here, on the lecture page, not on home.
+  // A URL alone must not open the microphone — someone could link or bookmark
+  // a "?record=1" URL and get the mic prompt with no user action on this page.
+  // The Record button on home sets lectern:record-intent to the page id right
+  // before navigating; this effect only starts when that intent matches this
+  // page, and consumes it (removes it) so a later reload of the same URL does
+  // not start again.
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStarted.current) return;
+    if (searchParams.get("record") !== "1") return;
+    let intent: string | null = null;
+    try {
+      intent = sessionStorage.getItem("lectern:record-intent");
+    } catch {
+      intent = null;
+    }
+    if (intent !== pageId) {
+      router.replace(pathname);
+      return;
+    }
+    // The provider refuses a second session anyway; leave the intent in place
+    // so the panel's "recording elsewhere" notice explains why nothing started.
+    if (session !== null || status !== "idle") return;
+    try {
+      sessionStorage.removeItem("lectern:record-intent");
+    } catch {
+      // ignore
+    }
+    autoStarted.current = true;
+    void start({ id: pageId, title: pageTitle });
+    router.replace(pathname);
+  }, [searchParams, pathname, router, start, session, status, pageId, pageTitle]);
 
   const [explanation, setExplanation] = useState<string | null>(null);
   const [explaining, setExplaining] = useState(false);
