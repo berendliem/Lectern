@@ -193,6 +193,16 @@ test("the probe samples negatives, so abs(x) and sqrt(x^2) are not x", () => {
   assert.deepEqual(checkMathAnswer("sqrt(x^2)", "x"), { isCorrect: false, strategy: "probe" });
 });
 
+test("an expression live on a slice of the sample range is still decided", () => {
+  // Defined only above x = 8, so roughly a tenth of the signed sample range
+  // lands on its domain. The draw budget is what lets it find five valid
+  // points instead of declining and marking a correct answer wrong.
+  assert.deepEqual(checkMathAnswer("sqrt(x-8)+1", "1+sqrt(x-8)"), {
+    isCorrect: true,
+    strategy: "probe",
+  });
+});
+
 test("the same pair reaches the same verdict every time", () => {
   // A restricted domain is where an unseeded probe was a coin flip: whether
   // five valid points survived the draw budget varied run to run, so this

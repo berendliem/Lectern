@@ -211,8 +211,17 @@ const PROBE_POINTS = 5;
 /** Magnitude, away from 0 and 1 where x, x^2 and sqrt(x) all agree. Non-integer, so lattice coincidences do not bite. */
 const PROBE_MIN = 1.5;
 const PROBE_MAX = 9.5;
-/** A pole, a log of a negative or a root of one discards the point; this bounds the redraws. */
-const MAX_DRAWS = PROBE_POINTS * 6;
+/**
+ * A pole, a log of a negative or a root of one discards the point and draws
+ * again, so the budget is sized for the worst honest case rather than the
+ * average one: an expression defined on only a slice of the sample range —
+ * `sqrt(x-8)` is live on about a tenth of it — needs a lot of draws to find
+ * five valid points. Spending them is cheaper than declining, because
+ * declining grades a correct answer wrong. More draws cannot manufacture a
+ * false positive either: a genuine disagreement returns false at the first
+ * point where both sides evaluate.
+ */
+const MAX_DRAWS = PROBE_POINTS * 40;
 
 /**
  * Hashes both sides into a seed. FNV-1a is four lines and spreads a

@@ -157,8 +157,10 @@ Four details that matter:
    below already discards, so the sign costs redraws rather than coverage.
 3. **Domain errors.** An expression undefined at a sample point (division by
    zero, a log of a negative) discards that point and draws another, up to a
-   small retry cap. If too few valid points survive, the strategy declines
-   rather than guessing.
+   generous retry cap — sized so that an expression live on only a slice of
+   the range still finds its five points, because the draws are cheap and
+   declining grades a correct answer wrong. If too few valid points survive
+   even so, the strategy declines rather than guessing.
 4. **Reproducibility.** The sample points come from a PRNG seeded from the two
    normalized inputs, not from the clock. A pair whose domain is a narrow
    window can run out of valid points inside the retry cap; if the draws vary
