@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Markdown } from "@/components/Markdown";
 import { Button } from "@/components/ui/Button";
 import clsx from "@/lib/clsx";
 
@@ -19,7 +20,9 @@ export function MultipleChoiceQuestion({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-lg text-ink">{prompt}</p>
+      <div className="text-lg text-ink">
+        <Markdown>{prompt}</Markdown>
+      </div>
       <div className="flex flex-col gap-2">
         {options.map((option) => (
           <button
@@ -27,13 +30,13 @@ export function MultipleChoiceQuestion({
             onClick={() => setSelected(option)}
             disabled={disabled}
             className={clsx(
-              "rounded-lg border px-4 py-2.5 text-left text-sm transition-colors",
+              "rounded-lg border px-4 py-2.5 text-left text-sm transition-colors [&_p]:m-0",
               selected === option
                 ? "border-brand bg-brand-soft text-brand-ink"
                 : "border-line bg-surface text-ink-soft hover:border-line-strong"
             )}
           >
-            {option}
+            <Markdown>{option}</Markdown>
           </button>
         ))}
       </div>

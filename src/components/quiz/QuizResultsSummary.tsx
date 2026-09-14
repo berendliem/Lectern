@@ -1,4 +1,5 @@
 import { blankCloze } from "@/lib/cloze";
+import { Markdown } from "@/components/Markdown";
 
 type Result = {
   prompt: string;
@@ -20,11 +21,23 @@ export function QuizResultsSummary({ results }: { results: Result[] }) {
         {results
           .filter((r) => !r.isCorrect)
           .map((r, i) => (
-            <li key={i} className="rounded-lg border border-red-200 bg-red-50 p-3">
-              <p className="text-sm font-medium text-ink">{blankCloze(r.prompt)}</p>
-              <p className="mt-1 text-sm text-ink-soft">Your answer: {r.userAnswer}</p>
-              <p className="text-sm text-emerald-700">Correct answer: {r.correctAnswer}</p>
-              {r.explanation && <p className="mt-1 text-sm text-muted">{r.explanation}</p>}
+            <li key={i} className="rounded-lg border border-red-200 bg-red-50 p-3 [&_p]:m-0">
+              <div className="text-sm font-medium text-ink">
+                <Markdown>{blankCloze(r.prompt)}</Markdown>
+              </div>
+              <div className="mt-1 flex gap-1 text-sm text-ink-soft">
+                <span>Your answer:</span>
+                <Markdown>{r.userAnswer}</Markdown>
+              </div>
+              <div className="flex gap-1 text-sm text-emerald-700">
+                <span>Correct answer:</span>
+                <Markdown>{r.correctAnswer}</Markdown>
+              </div>
+              {r.explanation && (
+                <div className="mt-1 text-sm text-muted">
+                  <Markdown>{r.explanation}</Markdown>
+                </div>
+              )}
             </li>
           ))}
       </ul>
