@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const text = await listUpcomingEventsText(days);
-    const events = await parseEventsList(text).catch(() => []);
+    const { events } = await parseEventsList(text, []).catch(() => ({ events: [], rejected: 0 }));
     return NextResponse.json({ text, events });
   } catch (e) {
     return jsonError(e instanceof Error ? e.message : "Could not load calendar events", 502);

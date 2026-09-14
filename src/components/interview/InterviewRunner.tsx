@@ -13,6 +13,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
+import { useMicHeldByLecture } from "@/components/recording/RecordingProvider";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { averageScore, type InterviewFeedback } from "@/lib/interview";
@@ -105,6 +106,9 @@ function VivaRunner({
   const pendingCompleteRef = useRef(false);
 
   const recorder = useMediaRecorder();
+  // One microphone: a spoken answer while a lecture is recording would revoke
+  // the lecture's capture, and that audio has no second copy.
+  const micHolder = useMicHeldByLecture();
   const [transcribing, setTranscribing] = useState(false);
   const lastBlobRef = useRef<Blob | null>(null);
 
@@ -256,7 +260,12 @@ function VivaRunner({
                 Stop ({recorder.elapsedSeconds}s)
               </Button>
             ) : (
-              <Button variant="secondary" size="sm" onClick={recorder.startRecording} disabled={submitting || transcribing}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={recorder.startRecording}
+                disabled={submitting || transcribing || micHolder !== null}
+              >
                 <Mic className="h-4 w-4" strokeWidth={2} />
                 {transcribing ? "Transcribing…" : "Record answer"}
               </Button>
@@ -267,6 +276,15 @@ function VivaRunner({
             </Button>
             {recorder.error && <span className="text-[13px] text-blush-ink">{recorder.error}</span>}
           </div>
+          {micHolder && (
+            <p className="text-[13px] text-muted">
+              The mic is recording{" "}
+              <Link href={`/pages/${micHolder.pageId}`} className="font-medium text-brand-ink underline">
+                {micHolder.pageTitle}
+              </Link>
+              . Type your answer, or stop that recording first.
+            </p>
+          )}
           {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
         </div>
       )}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 import clsx from "@/lib/clsx";
 
 type Props = {
@@ -25,6 +26,8 @@ const STAGES: { id: StageId; label: string; runningLabel: string }[] = [
   { id: "generate-quiz", label: "Quiz", runningLabel: "Writing quiz questions…" },
 ];
 
+const STAGE_KEY = (pageId: string, stage: StageId) => `page:${pageId}:${stage}`;
+
 export function PipelineStatusBanner({
   pageId,
   errorMessage,
@@ -34,8 +37,7 @@ export function PipelineStatusBanner({
   hasFlashcards,
   hasQuiz,
 }: Props) {
-  const [runningStage, setRunningStage] = useState<StageId | null>(null);
-  const [localError, setLocalError] = useState<string | null>(null);
+  const { run, task, clear } = useTasks();
   const router = useRouter();
 
   const done: Record<StageId, boolean> = {
@@ -47,31 +49,40 @@ export function PipelineStatusBanner({
   const remaining = STAGES.filter((stage) => !done[stage.id]);
   const allDone = remaining.length === 0;
 
+  const stageTasks = STAGES.map((stage) => task(STAGE_KEY(pageId, stage.id)));
+  const runningStage =
+    STAGES.find((stage, i) => stageTasks[i]?.status === "running")?.id ?? null;
+  // A stage whose output now exists produced it somehow, so its old failure is
+  // history — reporting it would shadow both the real state and the server's
+  // own `errorMessage`.
+  const taskError =
+    stageTasks.find((t, i) => !done[STAGES[i].id] && t?.status === "error")?.error ?? null;
+
   async function runRemaining() {
-    setLocalError(null);
+    // Every other action in the app clears its error state as it starts; task
+    // errors have to be cleared the same way, or the banner keeps reporting the
+    // last attempt's failure after this one succeeds.
+    clear(remaining.map((stage) => STAGE_KEY(pageId, stage.id)));
     for (const stage of remaining) {
-      setRunningStage(stage.id);
-      try {
-        const res = await fetch(`/api/pages/${pageId}/${stage.id}`, { method: "POST" });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          setLocalError(body.error ?? `${stage.label} generation failed. You can retry from here.`);
-          setRunningStage(null);
-          router.refresh();
-          return;
+      const outcome = await run(
+        { key: STAGE_KEY(pageId, stage.id), label: stage.runningLabel, href: `/pages/${pageId}` },
+        async () => {
+          await postTask(
+            `/api/pages/${pageId}/${stage.id}`,
+            `${stage.label} generation failed. You can retry from here.`,
+            undefined,
+            "Lost connection to the local server mid-step. You can retry from here."
+          );
         }
-      } catch {
-        setLocalError("Lost connection to the local server mid-step. You can retry from here.");
-        setRunningStage(null);
-        router.refresh();
-        return;
-      }
+      );
       router.refresh();
+      // Later stages read what earlier ones wrote, so a failure stops the chain
+      // — including one reported by a run this click merely joined.
+      if (outcome.status === "error") return;
     }
-    setRunningStage(null);
   }
 
-  const message = localError ?? errorMessage;
+  const message = taskError ?? errorMessage;
   const running = runningStage !== null;
   const runningInfo = STAGES.find((s) => s.id === runningStage);
 

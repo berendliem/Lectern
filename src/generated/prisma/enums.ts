@@ -97,3 +97,13 @@ export const RecallKind = {
 } as const
 
 export type RecallKind = (typeof RecallKind)[keyof typeof RecallKind]
+
+
+export const CalendarEventKind = {
+  EXAM: 'EXAM',
+  ASSIGNMENT: 'ASSIGNMENT',
+  CLASS: 'CLASS',
+  OTHER: 'OTHER'
+} as const
+
+export type CalendarEventKind = (typeof CalendarEventKind)[keyof typeof CalendarEventKind]

@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Mic, Square, Undo2, Wand2, X } from "lucide-react";
 import { NotesView } from "@/components/page-detail/NotesView";
 import { ReadAloudBar } from "@/components/page-detail/ReadAloudBar";
 import { RecapPlayer } from "@/components/page-detail/RecapPlayer";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
+import { useMicHeldByLecture } from "@/components/recording/RecordingProvider";
 import { Button } from "@/components/ui/Button";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 import type { KeyTerm } from "@/types";
 
 /**
@@ -28,7 +32,8 @@ export function NotesTab({
   const [markdown, setMarkdown] = useState(initialMarkdown);
   const [instruction, setInstruction] = useState("");
   const [selectedText, setSelectedText] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  // Only undo() sets this — applyEdit's in-flight state comes from the task below.
+  const [undoBusy, setUndoBusy] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previousMarkdown, setPreviousMarkdown] = useState<string | null>(null);
@@ -37,6 +42,13 @@ export function NotesTab({
   const proseRef = useRef<HTMLDivElement>(null);
 
   const recorder = useMediaRecorder();
+  // Dictation and the lecture recorder are two `getUserMedia()` calls on one
+  // device: while a lecture is being recorded, this entry point stands down.
+  const micHolder = useMicHeldByLecture();
+  const { run, task } = useTasks();
+  const editKey = `page:${pageId}:edit-notes`;
+  const editTask = task(editKey);
+  const busy = editTask?.status === "running" || undoBusy;
 
   // Server refreshes (router.refresh after other pipeline steps) can change
   // the prop; adopt it unless we're mid-edit. Adjusting state during render
@@ -100,37 +112,42 @@ export function NotesTab({
   async function applyEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!instruction.trim() || busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/edit-notes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          instruction: instruction.trim(),
-          ...(selectedText ? { selectedText } : {}),
-        }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(body.error ?? "Editing the notes failed. Try again.");
-      } else {
-        setPreviousMarkdown(body.previousMarkdown ?? null);
-        setMarkdown(body.markdown);
-        setInstruction("");
-        setSelectedText(null);
-        router.refresh();
+    // A plain `let` reassigned only inside the closure below narrows to `never`
+    // at the read site (a real TS 5.9 control-flow gap, not a bug in this code —
+    // confirmed with an isolated repro); a boxed property sidesteps it.
+    const result: { applied: { markdown: string; previousMarkdown: string | null } | null } = {
+      applied: null,
+    };
+    await run(
+      { key: editKey, label: "Applying your edit to the notes…", href: `/pages/${pageId}` },
+      async () => {
+        const body = (await postTask(
+          `/api/pages/${pageId}/edit-notes`,
+          "Editing the notes failed. Try again.",
+          {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              instruction: instruction.trim(),
+              ...(selectedText ? { selectedText } : {}),
+            }),
+          }
+        )) as { markdown?: string; previousMarkdown?: string | null };
+        if (!body.markdown) throw new Error("Editing the notes failed. Try again.");
+        result.applied = { markdown: body.markdown, previousMarkdown: body.previousMarkdown ?? null };
       }
-    } catch {
-      setError("Editing the notes failed. Try again.");
-    } finally {
-      setBusy(false);
+    );
+    if (result.applied) {
+      setPreviousMarkdown(result.applied.previousMarkdown);
+      setMarkdown(result.applied.markdown);
+      setInstruction("");
+      setSelectedText(null);
+      router.refresh();
     }
   }
 
   async function undo() {
     if (!previousMarkdown) return;
-    setBusy(true);
+    setUndoBusy(true);
     setError(null);
     try {
       const res = await fetch(`/api/pages/${pageId}`, {
@@ -146,7 +163,7 @@ export function NotesTab({
         setError("Could not undo the edit.");
       }
     } finally {
-      setBusy(false);
+      setUndoBusy(false);
     }
   }
 
@@ -174,7 +191,7 @@ export function NotesTab({
           <button
             type="button"
             onClick={() => (recording ? recorder.stopRecording() : recorder.startRecording())}
-            disabled={busy || transcribing}
+            disabled={busy || transcribing || (!recording && micHolder !== null)}
             className={
               recording
                 ? "rounded-lg bg-red-100 p-1.5 text-red-600"
@@ -215,8 +232,19 @@ export function NotesTab({
             </button>
           </div>
         )}
+        {micHolder && !recording && (
+          <p className="text-[12.5px] text-muted">
+            The mic is recording{" "}
+            <Link href={`/pages/${micHolder.pageId}`} className="font-medium text-brand-ink underline">
+              {micHolder.pageTitle}
+            </Link>
+            . Dictation would cut that recording off, so type the instruction instead.
+          </p>
+        )}
         {recorder.error && <p className="text-[12.5px] text-red-600">{recorder.error}</p>}
-        {error && <p className="text-[12.5px] text-red-600">{error}</p>}
+        {(editTask?.error ?? error) && (
+          <p className="text-[12.5px] text-red-600">{editTask?.error ?? error}</p>
+        )}
       </form>
 
       <ReadAloudBar proseRef={proseRef} markdown={markdown} />

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createActionItemsSchema, quizResponseSchema } from "./validation.ts";
+import { createActionItemsSchema, learnMoreResponseSchema, quizResponseSchema } from "./validation.ts";
 
 test("a well-formed batch of action items parses", async () => {
   const parsed = await createActionItemsSchema.parseAsync({
@@ -48,4 +48,29 @@ test("an unknown question type is still rejected", () => {
   assert.throws(() =>
     quizResponseSchema.parse({ questions: [{ type: "PROOF", prompt: "p", correctAnswer: "a" }] })
   );
+});
+
+test("a well-formed learn-more response parses", async () => {
+  const parsed = await learnMoreResponseSchema.parseAsync({
+    items: [
+      {
+        concept: "Conjugate priors",
+        why: "Explains why the lecture's beta-binomial update stayed in closed form.",
+        nextStep: "Search: conjugate prior beta binomial",
+      },
+    ],
+  });
+  assert.equal(parsed.items[0].concept, "Conjugate priors");
+});
+
+// The model writing prose into a field it should have skipped is the likeliest
+// malformation; an empty suggestion is the one that would render a blank card.
+test("an item missing a field is rejected", async () => {
+  await assert.rejects(() =>
+    learnMoreResponseSchema.parseAsync({ items: [{ concept: "Priors", why: "Because." }] })
+  );
+});
+
+test("an empty item list is rejected, so an empty tab cannot look like a success", async () => {
+  await assert.rejects(() => learnMoreResponseSchema.parseAsync({ items: [] }));
 });

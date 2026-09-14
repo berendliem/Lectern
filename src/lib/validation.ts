@@ -182,6 +182,19 @@ export const conceptMapResponseSchema = z.object({
     .default([]),
 });
 
+export const learnMoreResponseSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        concept: z.string().min(1).max(80),
+        why: z.string().min(1).max(400),
+        nextStep: z.string().min(1).max(300),
+      })
+    )
+    .min(1)
+    .max(8),
+});
+
 // Terms/hints are interpolated into transcription hotwords and LLM prompts:
 // collapse all whitespace (incl. newlines) so an entry can never span lines
 // and forge its own instruction lines in a prompt.
@@ -407,4 +420,9 @@ export const pretestDetailSchema = z.object({
   correctIndex: z.number().int().min(0).max(3),
   chosenIndex: z.number().int().min(0).max(3),
   explanation: z.string(),
+});
+
+/** PATCH /api/calendar-events/[id]: the student names the course, or clears it. */
+export const updateCalendarEventSchema = z.object({
+  folderId: z.string().trim().min(1).nullable(),
 });

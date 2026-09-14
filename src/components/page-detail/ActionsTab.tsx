@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { CircleHelp, Gavel, ListChecks, Loader2, RefreshCw } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { Button } from "@/components/ui/Button";
+import { useTasks } from "@/components/tasks/TaskProvider";
+import { postTask } from "@/lib/tasks";
 
 type ActionKind = "ACTION" | "DECISION" | "QUESTION";
 
@@ -22,8 +24,11 @@ const GROUPS: { kind: ActionKind; label: string; icon: typeof ListChecks }[] = [
 
 export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTranscript: boolean }) {
   const [items, setItems] = useState<ActionItem[] | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { run, task } = useTasks();
+  const taskKey = `page:${pageId}:action-items`;
+  const generateTask = task(taskKey);
+  const loading = generateTask?.status === "running";
 
   useEffect(() => {
     let ignore = false;
@@ -41,25 +46,22 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
   }, [pageId]);
 
   async function generate() {
-    setLoading(true);
     setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/action-items`, { method: "POST" });
-      const body = await res.json().catch(() => ({}));
-      if (res.ok) {
+    await run(
+      { key: taskKey, label: "Extracting action items…", href: `/pages/${pageId}` },
+      async () => {
+        const body = (await postTask(
+          `/api/pages/${pageId}/action-items`,
+          "Could not extract action items. Try again."
+        )) as { items?: ActionItem[] };
         setItems(body.items ?? []);
-      } else {
-        setError(body.error ?? "Could not extract action items. Try again.");
       }
-    } catch {
-      setError("Could not extract action items. Try again.");
-    } finally {
-      setLoading(false);
-    }
+    );
   }
 
   async function toggle(item: ActionItem) {
     const next = !item.done;
+    setError(null);
     setItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, done: next } : i)) ?? null);
     const res = await fetch(`/api/action-items/${item.id}`, {
       method: "PATCH",
@@ -90,6 +92,9 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
   }
 
   const hasItems = (items?.length ?? 0) > 0;
+  // Local first: `error` is cleared at the start of every action here, so when
+  // it is set it is newer than any task failure the user has already seen.
+  const shownError = error ?? generateTask?.error;
 
   return (
     <div className="flex flex-col gap-4">
@@ -107,7 +112,7 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
           {hasItems ? "Regenerate" : "Extract"}
         </Button>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {shownError && <p className="text-sm text-red-600">{shownError}</p>}
 
       {items === null ? (
         <p className="text-sm text-muted-2">Loading…</p>

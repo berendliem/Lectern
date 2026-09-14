@@ -82,6 +82,16 @@ enum RecallKind {
   PRETEST
 }
 
+/// What a calendar event is to a student. Set by the classifier in
+/// src/lib/mcp/calendar-schema.ts; OTHER is the default and stays off home
+/// unless the event is tied to a course.
+enum CalendarEventKind {
+  EXAM
+  ASSIGNMENT
+  CLASS
+  OTHER
+}
+
 model Folder {
   id          String   @id @default(cuid())
   name        String
@@ -90,9 +100,10 @@ model Folder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  pages     Page[]
-  materials Material[]
-  topics    CourseTopic[]
+  pages            Page[]
+  materials        Material[]
+  topics           CourseTopic[]
+  calendarEvents   CalendarEvent[]
 }
 
 model Material {
@@ -404,4 +415,28 @@ model RetrievalLog {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+/// A Google Calendar event, persisted so home renders from SQLite and never
+/// waits on the MCP server. Rows are replaced on every sync inside the sync
+/// window; the only student-owned field is folderId once folderPinned is set.
+model CalendarEvent {
+  id           String            @id @default(cuid())
+  /// sha1(title + start). The MCP listing is text and carries no event id.
+  externalKey  String            @unique
+  title        String
+  start        DateTime
+  end          DateTime?
+  allDay       Boolean           @default(false)
+  location     String?
+  kind         CalendarEventKind @default(OTHER)
+  folderId     String?
+  /// True once the student picked the course by hand; sync never overwrites it.
+  folderPinned Boolean           @default(false)
+  syncedAt     DateTime          @default(now())
+
+  folder Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  @@index([start])
+  @@index([folderId, start])
 }
