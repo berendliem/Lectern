@@ -4,7 +4,6 @@ import { jsonError } from "@/lib/api-utils";
 import { callLLMText } from "@/lib/llm";
 import { CLEANUP_SYSTEM_PROMPT, buildCleanupUserPrompt } from "@/lib/prompts/cleanup";
 import { getDictionaryEntries, buildSpellingGuide } from "@/lib/dictionary";
-import { splitTextIntoChunks } from "@/lib/text-chunks";
 import { cleanupInput } from "@/lib/cleanup-input";
 import type { TranscriptSegment } from "@/types";
 
@@ -25,8 +24,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   try {
     const spellingGuide = buildSpellingGuide(await getDictionaryEntries().catch(() => []));
     const segments: TranscriptSegment[] = JSON.parse(page.transcript.segments);
-    const { text, lecturer } = cleanupInput(page.transcript.rawText, segments);
-    const chunks = splitTextIntoChunks(text, CHUNK_CHARS);
+    const { chunks, lecturer } = cleanupInput(page.transcript.rawText, segments, CHUNK_CHARS);
     if (chunks.length === 0) return jsonError("The transcript is empty", 422);
     if (chunks.length > MAX_CHUNKS) {
       return jsonError(
