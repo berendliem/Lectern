@@ -26,7 +26,8 @@ export type PageStatus = (typeof PageStatus)[keyof typeof PageStatus]
 export const QuestionType = {
   SHORT_ANSWER: 'SHORT_ANSWER',
   MULTIPLE_CHOICE: 'MULTIPLE_CHOICE',
-  CLOZE: 'CLOZE'
+  CLOZE: 'CLOZE',
+  MATH: 'MATH'
 } as const
 
 export type QuestionType = (typeof QuestionType)[keyof typeof QuestionType]
