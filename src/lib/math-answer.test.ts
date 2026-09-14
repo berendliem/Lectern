@@ -141,3 +141,47 @@ test("a set and a vector of the same numbers are different answers", () => {
     strategy: "collection",
   });
 });
+
+test("an expanded polynomial equals its factored form", () => {
+  assert.deepEqual(checkMathAnswer("(x+1)^2", "x^2+2x+1"), {
+    isCorrect: true,
+    strategy: "probe",
+  });
+});
+
+test("x squared is not two x, which is the collision the old grader scored 1.0", () => {
+  assert.deepEqual(checkMathAnswer("x^2", "2x"), { isCorrect: false, strategy: "probe" });
+});
+
+test("a rename is a different answer", () => {
+  assert.deepEqual(checkMathAnswer("x+1", "y+1"), { isCorrect: false, strategy: "probe" });
+});
+
+test("a two-variable expression is probed in both variables", () => {
+  assert.deepEqual(checkMathAnswer("(a+b)^2", "a^2+2*a*b+b^2"), {
+    isCorrect: true,
+    strategy: "probe",
+  });
+});
+
+test("a function call's name is not treated as a variable", () => {
+  assert.deepEqual(checkMathAnswer("sqrt(x)*sqrt(x)", "x"), {
+    isCorrect: true,
+    strategy: "probe",
+  });
+});
+
+test("an expression with a pole is still decided, not crashed on", () => {
+  assert.deepEqual(checkMathAnswer("1/(x-1)", "1/(x-1)"), {
+    isCorrect: true,
+    strategy: "canonical",
+  });
+  assert.deepEqual(checkMathAnswer("1/(x-1)", "1/(x+1)"), {
+    isCorrect: false,
+    strategy: "probe",
+  });
+});
+
+test("a constant expression never reaches the probe", () => {
+  assert.deepEqual(checkMathAnswer("2+2", "4"), { isCorrect: true, strategy: "numeric" });
+});

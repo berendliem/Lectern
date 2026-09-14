@@ -1,4 +1,4 @@
-import { create, all, type MathNode } from "mathjs";
+import { create, all, type MathNode, type SymbolNode } from "mathjs";
 import { latexToAscii } from "@/lib/latex-ascii";
 
 /**
@@ -190,8 +190,75 @@ const collectionStrategy: Strategy = {
   },
 };
 
+/** Five points is decisive for an answer box: two different polynomials agree at finitely many. */
+const PROBE_POINTS = 5;
+/** Away from 0 and 1, where x, x^2 and sqrt(x) all agree. Non-integer, so lattice coincidences do not bite. */
+const PROBE_MIN = 1.5;
+const PROBE_MAX = 9.5;
+/** A pole or a log of a negative discards the point; this bounds the redraws. */
+const MAX_DRAWS = PROBE_POINTS * 6;
+
+/** mathjs resolves these itself — they are constants, not the student's variables. */
+const RESERVED = new Set(["pi", "e", "tau", "phi", "i", "Infinity", "NaN", "null", "true", "false"]);
+
+/**
+ * The symbols a caller must supply values for. A function's name is a
+ * SymbolNode too — `sqrt(x)` holds one at `fn` — so the path is checked to
+ * keep `sqrt` out of the variable list.
+ */
+function freeVariables(node: MathNode): string[] {
+  const names = new Set<string>();
+  node.filter((candidate, path, parent) => {
+    const isCallee = parent !== null && parent.type === "FunctionNode" && path === "fn";
+    if (candidate.type === "SymbolNode" && !isCallee) {
+      const name = (candidate as SymbolNode).name;
+      if (!RESERVED.has(name)) names.add(name);
+    }
+    return false;
+  });
+  return [...names].sort();
+}
+
+const probeStrategy: Strategy = {
+  name: "probe",
+  decide(user, correct) {
+    const userNode = parseOrNull(user);
+    const correctNode = parseOrNull(correct);
+    if (!userNode || !correctNode) return null;
+
+    const userVariables = freeVariables(userNode);
+    const correctVariables = freeVariables(correctNode);
+    if (userVariables.length === 0 || correctVariables.length === 0) return null;
+
+    // `x + 1` and `y + 1` are different answers, not one expression renamed.
+    if (userVariables.join(",") !== correctVariables.join(",")) return false;
+
+    let agreements = 0;
+    for (let draw = 0; draw < MAX_DRAWS && agreements < PROBE_POINTS; draw++) {
+      const scope: Record<string, number> = {};
+      for (const name of userVariables) {
+        scope[name] = PROBE_MIN + Math.random() * (PROBE_MAX - PROBE_MIN);
+      }
+
+      const userValue = evaluateOrNull(userNode, scope);
+      const correctValue = evaluateOrNull(correctNode, scope);
+      // Undefined for one side at this point: discard it and draw again rather
+      // than call a domain error a disagreement.
+      if (typeof userValue !== "number" || typeof correctValue !== "number") continue;
+      if (!Number.isFinite(userValue) || !Number.isFinite(correctValue)) continue;
+
+      if (!numbersEqual(userValue, correctValue)) return false;
+      agreements++;
+    }
+
+    // Too few usable points to be sure of anything. Declining is honest;
+    // guessing is how a wrong answer gets marked right.
+    return agreements === PROBE_POINTS ? true : null;
+  },
+};
+
 /** Tasks 3 and 4 append to this list, in order. */
-export const STRATEGIES: Strategy[] = [numericStrategy, collectionStrategy];
+export const STRATEGIES: Strategy[] = [numericStrategy, collectionStrategy, probeStrategy];
 
 export function checkMathAnswer(userAnswer: string, correctAnswer: string): MathGrade {
   const user = latexToAscii(userAnswer);
