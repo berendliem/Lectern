@@ -119,3 +119,10 @@ export type Chunk = Prisma.ChunkModel
  * handle.
  */
 export type RetrievalLog = Prisma.RetrievalLogModel
+/**
+ * Model CalendarEvent
+ * A Google Calendar event, persisted so home renders from SQLite and never
+ * waits on the MCP server. Rows are replaced on every sync inside the sync
+ * window; the only student-owned field is folderId once folderPinned is set.
+ */
+export type CalendarEvent = Prisma.CalendarEventModel

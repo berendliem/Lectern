@@ -68,7 +68,8 @@ export const ModelName = {
   Tag: 'Tag',
   TagsOnPages: 'TagsOnPages',
   Chunk: 'Chunk',
-  RetrievalLog: 'RetrievalLog'
+  RetrievalLog: 'RetrievalLog',
+  CalendarEvent: 'CalendarEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -331,6 +332,23 @@ export const RetrievalLogScalarFieldEnum = {
 } as const
 
 export type RetrievalLogScalarFieldEnum = (typeof RetrievalLogScalarFieldEnum)[keyof typeof RetrievalLogScalarFieldEnum]
+
+
+export const CalendarEventScalarFieldEnum = {
+  id: 'id',
+  externalKey: 'externalKey',
+  title: 'title',
+  start: 'start',
+  end: 'end',
+  allDay: 'allDay',
+  location: 'location',
+  kind: 'kind',
+  folderId: 'folderId',
+  folderPinned: 'folderPinned',
+  syncedAt: 'syncedAt'
+} as const
+
+export type CalendarEventScalarFieldEnum = (typeof CalendarEventScalarFieldEnum)[keyof typeof CalendarEventScalarFieldEnum]
 
 
 export const SortOrder = {
