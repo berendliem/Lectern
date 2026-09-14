@@ -25,13 +25,17 @@ export function QuizResultsSummary({ results }: { results: Result[] }) {
               <div className="text-sm font-medium text-ink">
                 <Markdown>{blankCloze(r.prompt)}</Markdown>
               </div>
+              {/* Literal, not markdown: a MATH answer is an ASCII expression
+                  full of `*`, and CommonMark's intraword emphasis silently
+                  turns `2*x*y` into `2xy`. The prompt and the explanation
+                  below stay markdown — those are prose and carry LaTeX. */}
               <div className="mt-1 flex gap-1 text-sm text-ink-soft">
                 <span>Your answer:</span>
-                <Markdown>{r.userAnswer}</Markdown>
+                <code className="font-mono">{r.userAnswer}</code>
               </div>
               <div className="flex gap-1 text-sm text-emerald-700">
                 <span>Correct answer:</span>
-                <Markdown>{r.correctAnswer}</Markdown>
+                <code className="font-mono">{r.correctAnswer}</code>
               </div>
               {r.explanation && (
                 <div className="mt-1 text-sm text-muted">
