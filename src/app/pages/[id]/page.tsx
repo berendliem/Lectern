@@ -13,6 +13,7 @@ import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRu
 import { DrillMissesButton } from "@/components/quiz/DrillMissesButton";
 import { ChatTab } from "@/components/page-detail/ChatTab";
 import { ConceptMapTab } from "@/components/page-detail/ConceptMapTab";
+import { LearnMoreTab } from "@/components/page-detail/LearnMoreTab";
 import { ActionsTab } from "@/components/page-detail/ActionsTab";
 import { InterviewLaunch } from "@/components/interview/InterviewLaunch";
 import { LectureActions } from "@/components/page-detail/LectureActions";
@@ -138,6 +139,11 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             id: "concept-map",
             label: "Concept map",
             content: <ConceptMapTab pageId={page.id} hasMaterial={!!page.transcript || !!page.notes} />,
+          },
+          {
+            id: "learn-more",
+            label: "Learn more",
+            content: <LearnMoreTab pageId={page.id} hasMaterial={!!page.transcript || !!page.notes} />,
           },
           {
             id: "chat",
