@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Markdown } from "@/components/Markdown";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { splitCloze } from "@/lib/cloze";
@@ -25,8 +26,8 @@ export function ClozeQuestion({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-lg leading-relaxed text-ink">
-        {before}
+      <span className="block text-lg leading-relaxed text-ink [&_p]:m-0 [&_p]:inline">
+        <Markdown>{before}</Markdown>
         <Input
           value={answer}
           onChange={(e) => setAnswer(e.target.value)}
@@ -38,8 +39,8 @@ export function ClozeQuestion({
           placeholder="…"
           className="mx-1 inline-block w-40 align-baseline"
         />
-        {after}
-      </p>
+        <Markdown>{after}</Markdown>
+      </span>
       <Button onClick={submit} disabled={disabled || !answer.trim()} className="self-start">
         Submit
       </Button>

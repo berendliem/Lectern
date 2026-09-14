@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { quizAnswerSchema } from "@/lib/validation";
 import { gradeShortAnswer, gradeMultipleChoice } from "@/lib/grading";
+import { checkMathAnswer } from "@/lib/math-answer";
 import { writeRecallSafely } from "@/lib/recall-log";
 import type { RecallRaw } from "@/lib/recall";
 
@@ -23,6 +24,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ que
 
   if (question.type === "MULTIPLE_CHOICE") {
     isCorrect = gradeMultipleChoice(answer, question.correctAnswer);
+    raw = { kind: "QUIZ", correct: isCorrect };
+  } else if (question.type === "MATH") {
+    const grade = checkMathAnswer(answer, question.correctAnswer);
+    isCorrect = grade.isCorrect;
+    // Which strategy decided, so a miscalibrated one shows up in the data
+    // rather than quietly inflating scores.
+    scoreDetail = { strategy: grade.strategy };
+    // The boolean form, like multiple choice. A math answer is right or wrong;
+    // there is no partial credit to feed the interval, and inventing a
+    // similarity for one would make the ledger lie.
     raw = { kind: "QUIZ", correct: isCorrect };
   } else {
     const grade = gradeShortAnswer(answer, question.correctAnswer);

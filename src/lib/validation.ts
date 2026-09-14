@@ -349,6 +349,14 @@ export const quizResponseSchema = z.object({
           correctAnswer: z.string().min(1),
           explanation: z.string().optional(),
         }),
+        z.object({
+          type: z.literal("MATH"),
+          prompt: z.string().min(1),
+          // One canonical value, in ASCII. A sentence here would be graded as
+          // a value by a checker that expects one.
+          correctAnswer: z.string().min(1),
+          explanation: z.string().optional(),
+        }),
       ])
     )
     .min(1),

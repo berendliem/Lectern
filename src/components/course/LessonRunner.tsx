@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { ShortAnswerQuestion } from "@/components/quiz/ShortAnswerQuestion";
 import { MultipleChoiceQuestion } from "@/components/quiz/MultipleChoiceQuestion";
+import { MathQuestion } from "@/components/quiz/MathQuestion";
 import type { LessonScene } from "@/lib/lesson";
 
 type QuizQuestion = {
   id: string;
-  type: "SHORT_ANSWER" | "MULTIPLE_CHOICE";
+  type: "SHORT_ANSWER" | "MULTIPLE_CHOICE" | "CLOZE" | "MATH";
   prompt: string;
   correctAnswer: string;
   options: string[] | null;
@@ -316,7 +317,13 @@ export function LessonRunner({ folderId, topicId, topicTitle }: { folderId: stri
 
         {scene.kind === "CHECK" && quizQuestion && (
           <div className="flex flex-col gap-3">
-            {quizQuestion.type === "SHORT_ANSWER" ? (
+            {quizQuestion.type === "MATH" ? (
+              <MathQuestion
+                prompt={quizQuestion.prompt}
+                onSubmit={handleQuizSubmit}
+                disabled={quizSubmitting || !!quizResult}
+              />
+            ) : quizQuestion.type === "SHORT_ANSWER" ? (
               <ShortAnswerQuestion
                 prompt={quizQuestion.prompt}
                 onSubmit={handleQuizSubmit}

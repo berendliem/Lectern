@@ -25,6 +25,11 @@ enum QuestionType {
   /// gap marked `{{term}}`; `correctAnswer` carries the term on its own, and is
   /// graded by the same token overlap a short answer gets.
   CLOZE
+  /// An answer that is a value rather than prose — a number, a fraction, a
+  /// set, a vector, a matrix, or an expression. `correctAnswer` holds one
+  /// canonical value in ASCII and is graded by `checkMathAnswer`, not by the
+  /// token overlap the other free-text types get.
+  MATH
 }
 
 enum InterviewSource {

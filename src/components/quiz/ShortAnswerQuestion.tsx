@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Markdown } from "@/components/Markdown";
 import { Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
@@ -17,7 +18,9 @@ export function ShortAnswerQuestion({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-lg text-ink">{prompt}</p>
+      <div className="text-lg text-ink">
+        <Markdown>{prompt}</Markdown>
+      </div>
       <Textarea
         rows={3}
         value={answer}

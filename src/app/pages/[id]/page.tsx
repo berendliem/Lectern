@@ -227,7 +227,7 @@ function EmptyState({ message }: { message: string }) {
 }
 
 function sanitizeQuizQuestions(
-  questions: { id: string; type: "SHORT_ANSWER" | "MULTIPLE_CHOICE" | "CLOZE"; prompt: string; options: string | null }[]
+  questions: { id: string; type: "SHORT_ANSWER" | "MULTIPLE_CHOICE" | "CLOZE" | "MATH"; prompt: string; options: string | null }[]
 ): QuizQuestionForRunner[] {
   return questions.map((q) => ({
     id: q.id,
