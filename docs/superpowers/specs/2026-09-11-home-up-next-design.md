@@ -75,12 +75,14 @@ model CalendarEvent {
    `src/lib/mcp/calendar.ts`.
 2. The parse prompt in the same file gains two fields per event: `kind` (one of
    the enum) and `course` (one of the folder names passed into the prompt, or
-   null). The zod schema rejects anything outside those sets; a rejected event
-   is skipped and the rest upsert. One `console.warn` per sync.
+   null). The zod schema rejects an unknown `kind` (the event is skipped) and
+   reads an unknown `course` as null (the event stays, unmatched). One
+   `console.warn` per sync.
 3. Upsert by `externalKey`. Rows whose `start` falls inside the window and that
    this sync did not return are deleted, so a cancelled exam disappears. Rows
    with `folderPinned` keep their `folderId` regardless of what the classifier
-   says.
+   says. The prune runs only when every event parsed; one rejection skips it,
+   so a pinned row is never deleted by a classifier fumble.
 4. Returns `{ synced: number, syncedAt: string }`.
 
 Calendar not configured (no `google-calendar` server in `mcp.config.json`):
@@ -239,7 +241,6 @@ Pure logic lives in `src/lib/calendar-events.ts` and is tested with
 `node --test`, the same split as `embed-math.ts` and `retrieval-math.ts`:
 
 - `externalKeyFor(title, start)`
-- `isAcademic(event)`
 - `recordWindow(start, now)`
 - `groupByDay(events, now)`
 - `masteryByFolder(cards)`

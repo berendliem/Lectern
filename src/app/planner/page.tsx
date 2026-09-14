@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { computeStreak, upcomingSchedule } from "@/lib/planner";
 import { RECALL_LEDGER_SINCE, calibration } from "@/lib/recall";
 import clsx from "@/lib/clsx";
-import { groupByDay, SYNC_WINDOW_DAYS } from "@/lib/calendar-events";
+import { groupByDay, SYNC_WINDOW_DAYS, type CalendarEventKind } from "@/lib/calendar-events";
 import { isCalendarConfigured } from "@/lib/calendar-sync";
 import { folderFamily, FOLDER_CHIP_CLASSES } from "@/lib/folder-colors";
 
@@ -50,7 +50,7 @@ export default async function PlannerPage() {
   const calibrated = calibration(rated);
   const percent = (share: number) => `${Math.round(share * 100)}%`;
   const eventGroups = groupByDay(events, now);
-  const KIND_LABEL: Record<string, string> = { EXAM: "Exam", ASSIGNMENT: "Due", CLASS: "Class", OTHER: "" };
+  const KIND_LABEL: Record<CalendarEventKind, string> = { EXAM: "Exam", ASSIGNMENT: "Due", CLASS: "Class", OTHER: "" };
 
   const stats = [
     { label: "Due now", value: dueNow, icon: GraduationCap, tint: "bg-brand-soft text-brand-ink", href: dueNow > 0 ? "/review" : null },

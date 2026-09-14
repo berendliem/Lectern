@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {
   externalKeyFor,
   parseEventStart,
-  isAcademic,
   inRecordWindow,
   examCountdown,
   dayLabel,
@@ -44,12 +43,6 @@ test("parseEventStart rejects junk", () => {
   assert.equal(parseEventStart("tomorrow"), null);
   assert.equal(parseEventStart(""), null);
   assert.equal(parseEventStart("2026-13-40"), null);
-});
-
-test("isAcademic is true for a kind or a course, false for an untied OTHER", () => {
-  assert.equal(isAcademic({ kind: "EXAM", folderId: null }), true);
-  assert.equal(isAcademic({ kind: "OTHER", folderId: "f1" }), true);
-  assert.equal(isAcademic({ kind: "OTHER", folderId: null }), false);
 });
 
 test("inRecordWindow opens 15 minutes before and closes 30 minutes after", () => {

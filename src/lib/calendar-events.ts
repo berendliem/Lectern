@@ -46,11 +46,6 @@ export function parseEventStart(value: string): { start: Date; allDay: boolean }
   return { start, allDay };
 }
 
-/** Home shows an event only when it is a course's or has an academic kind. */
-export function isAcademic(e: { kind: CalendarEventKind; folderId: string | null }): boolean {
-  return e.kind !== "OTHER" || e.folderId !== null;
-}
-
 /** A class is recordable from 15 minutes before its start to 30 minutes after. */
 export function inRecordWindow(start: Date, now: Date): boolean {
   const delta = start.getTime() - now.getTime();

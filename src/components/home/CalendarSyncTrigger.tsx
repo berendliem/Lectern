@@ -11,6 +11,8 @@ const FAILED_AT_KEY = "lectern:calendar-sync-failed-at";
 // Dev strict mode double-invokes the effect; this guard makes the fetch
 // itself singular across both invocations. Assumes a single
 // CalendarSyncTrigger instance per page (true today: home renders one).
+// Navigating away and back during a slow sync means the completed sync does
+// not refresh the second mount; the next navigation shows the rows.
 let inFlight: Promise<void> | null = null;
 
 /**

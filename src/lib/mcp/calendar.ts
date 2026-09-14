@@ -7,8 +7,6 @@ import {
   type ParsedEvent,
 } from "@/lib/mcp/calendar-schema";
 
-export type { ParsedEvent };
-
 export const CALENDAR_SERVER = "google-calendar";
 
 function localTimeZone(): string {
