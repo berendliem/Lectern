@@ -185,3 +185,21 @@ test("an expression with a pole is still decided, not crashed on", () => {
 test("a constant expression never reaches the probe", () => {
   assert.deepEqual(checkMathAnswer("2+2", "4"), { isCorrect: true, strategy: "numeric" });
 });
+
+test("a student answer cannot reconfigure the grader for the answers after it", () => {
+  // `config` mutates the module-level mathjs instance for the life of the
+  // process. Before it was disabled, this one answer switched every later
+  // evaluation to BigNumber, so the `typeof value !== "number"` guards
+  // declined forever and everything below graded by string comparison.
+  checkMathAnswer('config({number:"BigNumber"})', "5");
+
+  assert.deepEqual(checkMathAnswer("1/2", "0.5"), { isCorrect: true, strategy: "numeric" });
+  assert.deepEqual(checkMathAnswer("[[1/2,2],[3,4]]", "[[0.5,2],[3,4]]"), {
+    isCorrect: true,
+    strategy: "collection",
+  });
+  assert.deepEqual(checkMathAnswer("(x+1)^2", "x^2+2x+1"), {
+    isCorrect: true,
+    strategy: "probe",
+  });
+});

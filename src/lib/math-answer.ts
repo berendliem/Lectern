@@ -33,7 +33,16 @@ export const safeMath = create(all);
 // the reference first and disable afterwards.
 const parseExpression = safeMath.parse.bind(safeMath);
 
-const DISABLED = ["import", "createUnit", "reviver", "evaluate", "parse", "simplify", "derivative", "resolve"];
+// The eight names mathjs's security note publishes, plus `config` and `chain`.
+// `config` is the one that bites: it is reachable from a student-typed
+// expression and it mutates this module-level instance for the life of the
+// process, so one answer of `config({number:"BigNumber"})` makes every later
+// evaluation return a BigNumber, every `typeof value !== "number"` guard
+// decline, and every MATH question after it grade by string comparison alone.
+const DISABLED = [
+  "import", "createUnit", "reviver", "evaluate", "parse", "simplify", "derivative", "resolve",
+  "config", "chain",
+];
 safeMath.import(
   Object.fromEntries(
     DISABLED.map((name) => [name, () => { throw new Error(`Function ${name} is disabled`); }])
