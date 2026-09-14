@@ -4,11 +4,13 @@
  * language than LaTeX at large, which is what makes a lexical pass viable
  * here when it would not be for a document.
  *
- * ponytail: a lexical converter, not a LaTeX parser. Anything outside the
- * subset passes through unchanged, fails to parse in mathjs, and is compared
- * as a string instead — the right degradation, because an answer this cannot
- * read is exactly the answer that should be matched literally. Swap in a real
- * LaTeX parser only if answers start arriving with environments and macros.
+ * ponytail: a lexical converter, not a LaTeX parser. Unsupported commands
+ * survive literally, but supported syntax nested inside them still converts
+ * — e.g., `\text{\frac{1}{2}}` becomes `\text{((1)/(2))}`. This is safe
+ * because both sides of a comparison run through the same converter, so a
+ * pair either matches or does not for the same reason. Swap in a real LaTeX
+ * parser only if answers start arriving with environments and macros that
+ * change the meaning of nested content.
  */
 
 /** Greek and the handful of named constants mathjs or a human would recognise. */

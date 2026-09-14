@@ -170,10 +170,12 @@ contain LaTeX, so a small converter handles the subset that appears in *answers*
 plain braces.
 
 It carries a `ponytail:` comment naming the ceiling: this is a lexical
-converter, not a LaTeX parser. Anything outside the subset passes through
-unchanged, fails to parse in strategies 2–4, and is compared as a string by
-strategy 1 — which is the correct degradation, because an answer the converter
-does not understand is exactly the answer that should be matched literally.
+converter, not a LaTeX parser. Unsupported commands survive literally, but
+supported syntax nested inside them still converts, and this is safe because
+both sides of a comparison run through the same converter — failures occur for
+the same reason on both sides. Unsupported syntax fails to parse in strategies
+2–4 and is compared as a string by strategy 1, which is the correct
+degradation.
 
 ### 4.6 Dependency
 

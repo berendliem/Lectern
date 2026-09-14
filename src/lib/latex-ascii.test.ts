@@ -56,6 +56,14 @@ test("an unsupported command passes through untouched", () => {
   assert.equal(latexToAscii("\\mathbb{R}^3"), "\\mathbb{R}^3");
 });
 
+test("an unsupported wrapper is kept, and supported syntax inside it still converts", () => {
+  // Not a passthrough: the wrapper survives literally while its interior is
+  // converted. Both sides of a comparison run through this, so a pair either
+  // matches or does not for the same reason.
+  assert.equal(latexToAscii("\\text{\\frac{1}{2}}"), "\\text{((1)/(2))}");
+  assert.equal(latexToAscii("\\boxed{\\frac{1}{2}}"), "\\boxed{((1)/(2))}");
+});
+
 test("plain ascii is returned unchanged", () => {
   assert.equal(latexToAscii("[[1,2],[3,4]]"), "[[1,2],[3,4]]");
 });
