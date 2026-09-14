@@ -102,8 +102,8 @@ export function LearnMoreTab({ pageId, hasMaterial }: { pageId: string; hasMater
       {error && <p className="text-xs text-red-600">{error}</p>}
 
       <ul className="flex flex-col gap-2">
-        {learnMore.items.map((item) => (
-          <li key={item.concept} className="rounded-xl border border-line bg-surface px-4 py-3">
+        {learnMore.items.map((item, i) => (
+          <li key={`${i}-${item.concept}`} className="rounded-xl border border-line bg-surface px-4 py-3">
             <h3 className="text-sm font-semibold text-ink-soft">{item.concept}</h3>
             <p className="mt-1 text-[13px] text-muted">{item.why}</p>
             <p className="mt-2 flex items-start gap-1.5 text-[13px] text-brand-ink">
