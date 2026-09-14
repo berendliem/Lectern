@@ -108,7 +108,7 @@ Open http://localhost:3000.
    - On the **Notes** tab, **Listen to a recap** turns the lecture into a ninety-second spoken summary read aloud by your browser's own voice — for the walk to class. It's written fresh each time and not saved.
    - Formulae and code survive the trip: notes, chat replies, and study plans render LaTeX (`$x^2$`, `$$…$$`) as typeset maths and fenced blocks as code, so a STEM lecture doesn't come back as raw backslashes.
    - The **Concept map** tab draws an AI-generated map of the lecture's key concepts and how they relate — hover a concept to spotlight its connections.
-7. Organize with folders (sidebar) and tags (page header); **Search** looks across transcripts, notes, and flashcards.
+7. Organize with courses (sidebar) and tags (page header); **Search** looks across transcripts, notes, and flashcards. **Home** opens on today: cards due, your streak, the week's exams, deadlines and classes from Google Calendar, and one card per course with how much of it you have mastered.
 8. **Export** a page to Markdown or PDF from the page header.
 
 **Per course** (open a course from the sidebar):
@@ -129,7 +129,7 @@ Open http://localhost:3000.
 - **Planner** — review streaks, cards due, and a 7-day upcoming-review schedule.
 - **Dictionary** — a personal dictionary of names, acronyms, and jargon (à la Wispr Flow). Terms are passed to the local whisper model as vocabulary hints so they're transcribed with the right spelling, and the summarizer is told to respect them in your notes. An optional hint per term helps the summarizer know what the term means.
 - **Integrations** — connect [MCP](https://modelcontextprotocol.io) servers (configured Claude-Desktop-style in `mcp.config.json`) to organize and sync:
-  - **Google Calendar**: see this week's schedule, one-click **create a lecture page per class**, and push "Review flashcards (N due)" study blocks into your real calendar.
+  - **Google Calendar**: the next two weeks are synced into Lectern and classified as exam, assignment, class or other, each matched to one of your courses by name (fix a match from the row itself). Home shows the academic ones; the Planner shows everything. A class that is about to start gets a one-click **Record** that opens a pre-titled lecture page with the mic live. You can still push "Review flashcards (N due)" study blocks into the calendar from Integrations.
   - **Notion**: **Export → Sync to Notion** pushes a page's notes, key terms, action items, flashcards, and transcript to a Notion page; re-syncing updates the same page.
   - See "MCP integrations" below for setup.
 
