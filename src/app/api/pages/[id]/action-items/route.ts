@@ -50,9 +50,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       model,
       stage: "summary",
       systemPrompt: ACTION_ITEMS_SYSTEM_PROMPT,
-      userPrompt: buildActionItemsUserPrompt(
-        (page.transcript.cleanText ?? page.transcript.rawText).slice(0, MAX_CONTEXT_CHARS)
-      ),
+      // Raw on purpose: cleanup strips admin and logistics, which is exactly
+      // what this extracts.
+      userPrompt: buildActionItemsUserPrompt(page.transcript.rawText.slice(0, MAX_CONTEXT_CHARS)),
     });
     const parsed = await actionItemsResponseSchema.parseAsync(raw);
 
