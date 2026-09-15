@@ -33,6 +33,20 @@ export function courseScopeFilter(folderId: string) {
   };
 }
 
+/**
+ * A course's materials that exam cram could draw questions from but has none
+ * yet. The syllabus is left out: a quiz on it asks about grading policy and
+ * office hours, not the subject. Text is not checked: the create schema
+ * refuses an empty body and nothing edits it afterwards.
+ */
+export function quizlessMaterialsFilter(folderId: string) {
+  return {
+    folderId,
+    kind: { not: "SYLLABUS" as const },
+    quizQuestions: { none: {} },
+  };
+}
+
 export type CardSource =
   | { kind: "lecture"; id: string; title: string; course: string | null }
   | { kind: "material"; id: string; title: string; course: string | null };

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCheck, GraduationCap, Lightbulb, MessagesSquare } from "lucide-react";
 import { db } from "@/lib/db";
-import { courseScopeFilter } from "@/lib/cards";
+import { courseScopeFilter, quizlessMaterialsFilter } from "@/lib/cards";
 import {
   classifyTopic,
   coverageThreshold,
@@ -35,7 +35,7 @@ export default async function FolderPage({
   const folder = await db.folder.findUnique({ where: { id: folderId } });
   if (!folder) notFound();
 
-  const [pages, quizCount, dueCount, materials, topics, cards, openMisconceptions] = await Promise.all([
+  const [pages, quizCount, quizlessCount, dueCount, materials, topics, cards, openMisconceptions] = await Promise.all([
     db.page.findMany({
       where: { folderId },
       orderBy: { updatedAt: "desc" },
@@ -46,6 +46,8 @@ export default async function FolderPage({
       },
     }),
     db.quizQuestion.count({ where: courseScopeFilter(folderId) }),
+    // Materials with no questions yet still open cram: the cram page generates them.
+    db.material.count({ where: quizlessMaterialsFilter(folderId) }),
     db.flashcard.count({
       where: { nextReviewAt: { lte: new Date() }, ...courseScopeFilter(folderId) },
     }),
@@ -109,7 +111,7 @@ export default async function FolderPage({
               Review {dueCount}
             </Link>
           )}
-          {quizCount > 0 && (
+          {(quizCount > 0 || quizlessCount > 0) && (
             <Link
               href={`/folders/${folder.id}/cram`}
               className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white shadow-brand transition-opacity hover:opacity-95"

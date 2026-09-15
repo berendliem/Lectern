@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, GraduationCap } from "lucide-react";
 import { db } from "@/lib/db";
-import { courseScopeFilter } from "@/lib/cards";
+import { courseScopeFilter, quizlessMaterialsFilter } from "@/lib/cards";
 import { RECALL_LEDGER_SINCE, cramWeight, weightedSample, type CramStats } from "@/lib/recall";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
+import { CramQuestionGenerator } from "@/components/quiz/CramQuestionGenerator";
 
 export const dynamic = "force-dynamic";
 
@@ -82,12 +83,17 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
   if (!folder) notFound();
 
   const now = new Date();
-  const [questions, stats] = await Promise.all([
+  const [questions, stats, quizless] = await Promise.all([
     db.quizQuestion.findMany({
       where: courseScopeFilter(folderId),
       select: { id: true, type: true, prompt: true, options: true, pageId: true, materialId: true },
     }),
     recallBySource(folderId, now),
+    db.material.findMany({
+      where: quizlessMaterialsFilter(folderId),
+      orderBy: { createdAt: "asc" },
+      select: { id: true, title: true },
+    }),
   ]);
 
   // Weighted once the ledger has anything to say, shuffled until then. Either
@@ -137,13 +143,28 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
         </div>
       </div>
 
+      {quizless.length > 0 && (
+        <CramQuestionGenerator
+          folderId={folder.id}
+          materials={quizless}
+          restartsRun={runnerQuestions.length > 0}
+        />
+      )}
+
       {runnerQuestions.length > 0 ? (
-        <QuizRunner questions={runnerQuestions} />
+        // Keyed on the set of question ids, so questions generated above start
+        // a fresh run while a refresh that added none — every material failed,
+        // or was already filled — leaves the run in progress alone. The count
+        // alone would do neither reliably, and the draw is reshuffled on every
+        // render.
+        <QuizRunner key={questions.map((q) => q.id).sort().join()} questions={runnerQuestions} />
       ) : (
-        <div className="rounded-2xl border border-dashed border-line-strong px-4 py-14 text-center text-sm text-muted-2">
-          No quiz questions in this course yet. Generate a learning guide on a lecture, or a quiz
-          on a material, first.
-        </div>
+        quizless.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-line-strong px-4 py-14 text-center text-sm text-muted-2">
+            No quiz questions in this course yet. Add slides or readings to the course, or generate
+            a learning guide on a lecture.
+          </div>
+        )
       )}
     </div>
   );
