@@ -48,8 +48,18 @@ ${NOTES_MARKDOWN_GUIDELINES}
 
 ${UNTRUSTED_CONTENT_CLAUSE}`;
 
+/**
+ * The callout is the only thing telling the student which lines came from the
+ * deck and which from the model, so a slide must not be able to write one.
+ * The prompt copies slide text through nearly verbatim, so the marker is
+ * flattened before the model sees it, not after.
+ */
+export function unmarkAddedContext(slides: string): string {
+  return slides.replace(/>?\s*ℹ️\s*\*\*Added context:\*\*/g, "Added context:");
+}
+
 export function buildSlidesSummarizeUserPrompt(slides: string, spellingGuide = ""): string {
-  return `Here is the text extracted from a lecture's slides (it may be split into "Slide N:" blocks, image-only slides are missing, and a PDF export may break lines oddly). Turn it into study notes following the required JSON shape.${spellingGuide}\n\nSLIDES:\n"""\n${slides}\n"""`;
+  return `Here is the text extracted from a lecture's slides (it may be split into "Slide N:" blocks, image-only slides are missing, and a PDF export may break lines oddly). Turn it into study notes following the required JSON shape.${spellingGuide}\n\nSLIDES:\n"""\n${unmarkAddedContext(slides)}\n"""`;
 }
 
 /** `Transcript.modelUsed` of a page created from a slide deck, as written by

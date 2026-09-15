@@ -6,11 +6,25 @@
 
 import { unzipSync, strFromU8 } from "fflate";
 import { slideXmlToText, docxXmlToText, sortSlideEntries } from "@/lib/office-xml";
+import { MAX_OFFICE_FILE_BYTES, MAX_OFFICE_PART_BYTES } from "@/lib/limits";
+
+/** The only parts read: slide bodies and the document body. */
+const TEXT_PART = /^(ppt\/slides\/slide\d+\.xml|word\/document\.xml)$/;
 
 async function unzip(file: File): Promise<Record<string, Uint8Array>> {
+  if (file.size > MAX_OFFICE_FILE_BYTES) {
+    throw new Error(
+      `That file is ${Math.round(file.size / 1_000_000)} MB; the limit is ${MAX_OFFICE_FILE_BYTES / 1_000_000} MB.`
+    );
+  }
   const buffer = new Uint8Array(await file.arrayBuffer());
   try {
-    return unzipSync(buffer);
+    // Inflate only the parts that get read, each capped by its declared size.
+    // Without the filter every embedded image, font and thumbnail is inflated
+    // first, and one crafted entry can be gigabytes on the main thread.
+    return unzipSync(buffer, {
+      filter: (entry) => TEXT_PART.test(entry.name) && entry.originalSize <= MAX_OFFICE_PART_BYTES,
+    });
   } catch {
     throw new Error("That file isn't a readable Office document.");
   }

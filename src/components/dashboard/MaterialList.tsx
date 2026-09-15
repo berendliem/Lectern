@@ -39,7 +39,6 @@ export function MaterialList({
   // so it is never part of the list payload and is fetched once, on first open.
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [loadingPreview, setLoadingPreview] = useState<string | null>(null);
-  const [makingNotes, setMakingNotes] = useState<string | null>(null);
   const router = useRouter();
   const { run, task } = useTasks();
 
@@ -117,37 +116,36 @@ export function MaterialList({
   }
 
   /** A lecture page from a deck, for a lecture with no recording. The material
-   *  itself is left as it is; the page gets a copy of its text. */
+   *  itself is left as it is; the page gets a copy of its text. Under a task
+   *  key like the generators, so two clicks make one page, not two. */
   async function makeLecturePage(id: string, title: string) {
-    setMakingNotes(id);
     setError(null);
-    try {
-      const res = await fetch(`/api/materials/${id}`);
-      if (!res.ok) {
-        setError("Could not load that material's text.");
-        return;
+    let pageId: string | null = null;
+    const outcome = await run(
+      { key: `material:${id}:notes`, label: `Making lecture notes from "${title}"…`, href: `/folders/${folderId}` },
+      async () => {
+        const res = await fetch(`/api/materials/${id}`).catch(() => {
+          throw new Error("Network error talking to the local server.");
+        });
+        if (!res.ok) throw new Error("Could not load that material's text.");
+        const text = (await res.json()).material?.text;
+        if (typeof text !== "string" || !text.trim()) {
+          throw new Error("Those slides have no extracted text to make notes from.");
+        }
+        const data = (await postTask(
+          "/api/pages/from-text",
+          "Could not make a lecture page from those slides.",
+          {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, text, folderId, source: "slides" }),
+          },
+          "Network error talking to the local server."
+        )) as { page?: { id?: string } };
+        pageId = data.page?.id ?? null;
       }
-      const text = (await res.json()).material?.text;
-      if (typeof text !== "string" || !text.trim()) {
-        setError("Those slides have no extracted text to make notes from.");
-        return;
-      }
-      const created = await fetch("/api/pages/from-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, text, folderId, source: "slides" }),
-      });
-      const data = await created.json();
-      if (!created.ok) {
-        setError(data.error ?? "Could not make a lecture page from those slides.");
-        return;
-      }
-      router.push(`/pages/${data.page.id}`);
-    } catch {
-      setError("Network error talking to the local server.");
-    } finally {
-      setMakingNotes(null);
-    }
+    );
+    if (outcome.status === "error") setError(outcome.error ?? "Could not make a lecture page from those slides.");
+    else if (outcome.ran && pageId) router.push(`/pages/${pageId}`);
   }
 
   async function remove(id: string, title: string, cards: number, questions: number) {
@@ -199,6 +197,7 @@ export function MaterialList({
           const generating = generatingKind(material.id);
           const flashcardsError = task(`material:${material.id}:flashcards`)?.error;
           const quizError = task(`material:${material.id}:quiz`)?.error;
+          const makingNotes = task(`material:${material.id}:notes`)?.status === "running";
           return (
             <li
               key={material.id}
@@ -224,11 +223,11 @@ export function MaterialList({
                 {material.kind === "SLIDES" && (
                   <button
                     onClick={() => makeLecturePage(material.id, material.title)}
-                    disabled={makingNotes === material.id}
+                    disabled={makingNotes}
                     title="Make a lecture page from these slides, for a lecture with no recording"
                     className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
                   >
-                    {makingNotes === material.id ? "Creating…" : "Lecture notes"}
+                    {makingNotes ? "Creating…" : "Lecture notes"}
                   </button>
                 )}
                 <button

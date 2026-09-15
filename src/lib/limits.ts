@@ -19,3 +19,12 @@ export const MAX_SCAN_IMAGE_CHARS = 8_000_000;
 /** Pages that can be joined into one scanned material. Each is its own model
  *  call, so this is a patience limit as much as a size one. */
 export const MAX_SCAN_PAGES = 40;
+
+/** A .pptx or .docx is unzipped in the browser, so its size is a memory limit
+ *  on the tab. Decks with embedded video run to hundreds of MB; the text in
+ *  them does not. */
+export const MAX_OFFICE_FILE_BYTES = 100_000_000;
+
+/** One slide or document body XML part, by its declared size in the archive.
+ *  A real one is kilobytes; a crafted one can inflate to gigabytes. */
+export const MAX_OFFICE_PART_BYTES = 20_000_000;
