@@ -32,6 +32,10 @@ export function MermaidDiagram({ source }: { source: string }) {
             securityLevel: "strict",
             htmlLabels: false,
             flowchart: { htmlLabels: false },
+            // On a parse error mermaid otherwise draws its own error diagram into
+            // a div it appended to <body> and throws without removing it — one
+            // stray node per failed "Explain this", outside React's tree.
+            suppressErrorRendering: true,
           });
           initialized = true;
         }

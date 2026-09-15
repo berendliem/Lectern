@@ -111,20 +111,26 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
     const seq = ++explainSeq.current;
     setExplaining(true);
     setExplainError(null);
-    const res = await fetch("/api/live-explain", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ context }),
-    });
-    if (seq !== explainSeq.current) return;
-    setExplaining(false);
-    if (res.ok) {
-      const { explanation: text, diagram: mermaid } = await res.json();
-      setExplanation(text);
-      setDiagram(typeof mermaid === "string" ? mermaid : null);
-    } else {
-      const body = await res.json().catch(() => ({}));
-      setExplainError(body.error ?? "Couldn't get an explanation right now.");
+    try {
+      const res = await fetch("/api/live-explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context }),
+      });
+      if (seq !== explainSeq.current) return;
+      if (res.ok) {
+        const { explanation: text, diagram: mermaid } = await res.json();
+        setExplanation(text);
+        setDiagram(typeof mermaid === "string" ? mermaid : null);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setExplainError(body.error ?? "Couldn't get an explanation right now.");
+      }
+    } catch {
+      // A dropped connection used to leave the spinner running for good.
+      if (seq === explainSeq.current) setExplainError("Couldn't reach Lectern. Check it is still running.");
+    } finally {
+      if (seq === explainSeq.current) setExplaining(false);
     }
   }
 

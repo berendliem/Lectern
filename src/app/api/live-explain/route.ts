@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON } from "@/lib/llm";
 import { cleanMermaid } from "@/lib/mermaid";
-import { liveExplainSchema } from "@/lib/validation";
+import { liveExplainSchema, liveExplainResponseSchema } from "@/lib/validation";
 
 const SYSTEM_PROMPT = `You are a live study assistant sitting next to a student in a lecture. You receive the most recent stretch of the lecture transcript (raw speech-to-text, possibly with recognition errors). Briefly explain the concept the lecturer is currently talking about, in plain language, as if catching the student up.
 
@@ -22,16 +22,18 @@ export async function POST(req: NextRequest) {
     "openrouter/free";
 
   try {
-    const parsed = (await callLLMJSON({
+    const raw = await callLLMJSON({
       model,
       systemPrompt: SYSTEM_PROMPT,
       userPrompt: `Latest transcript excerpt:\n"""\n${result.data.context}\n"""`,
-    })) as { explanation?: unknown; diagram?: unknown };
+    });
+    const parsed = await liveExplainResponseSchema.safeParseAsync(raw);
+    if (!parsed.success) throw new Error("The model returned no explanation. You can retry this step.");
 
-    const explanation = typeof parsed?.explanation === "string" ? parsed.explanation.trim() : "";
-    if (!explanation) throw new Error("The model returned no explanation. You can retry this step.");
-
-    return NextResponse.json({ explanation, diagram: cleanMermaid(parsed?.diagram) });
+    return NextResponse.json({
+      explanation: parsed.data.explanation,
+      diagram: cleanMermaid(parsed.data.diagram),
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Explanation failed";
     return jsonError(message, 502);

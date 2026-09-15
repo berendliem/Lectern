@@ -26,6 +26,31 @@ test("cleanMermaid rejects config directives hidden after a valid opening line",
   assert.equal(cleanMermaid('%%{init: {"theme":"dark"}}%%\nflowchart TD\n  A --> B'), null);
 });
 
+test("cleanMermaid rejects style and link statements, which reach the same sinks", () => {
+  // `style` lands as an inline style attribute DOMPurify keeps verbatim: the
+  // overlay needs no directive at all. A protocol-relative url() survives the
+  // colon split mermaid does on each declaration.
+  assert.equal(
+    cleanMermaid(
+      "flowchart TD\n  A --> B\n  style A position:fixed,top:0,width:100vw,height:100vh,background:url(//attacker.example/b)"
+    ),
+    null
+  );
+  assert.equal(cleanMermaid("flowchart TD\n  A --> B\n  classDef x position:fixed\n  class A x"), null);
+  assert.equal(cleanMermaid("flowchart TD\n  A --> B\n  linkStyle 0 stroke:red"), null);
+  assert.equal(cleanMermaid('flowchart TD\n  A[Open the slides] --> B\n  click A "https://attacker.example/phish"'), null);
+  assert.equal(cleanMermaid("sequenceDiagram\n  A->>B: hi\n  link A: Slides @ https://attacker.example"), null);
+  assert.equal(cleanMermaid("sequenceDiagram\n  A->>B: hi\n  links A: {\"Slides\": \"https://attacker.example\"}"), null);
+  // A node label that merely contains the word is not a statement.
+  assert.equal(cleanMermaid("flowchart TD\n  A[Click to style] --> B"), "flowchart TD\n  A[Click to style] --> B");
+});
+
+test("cleanMermaid keeps only the diagram types the prompt asks for", () => {
+  assert.equal(cleanMermaid("pie\n  \"A\" : 1"), null);
+  assert.equal(cleanMermaid("classDiagram\n  class A"), null);
+  assert.equal(cleanMermaid("graph LR\n  A --> B"), "graph LR\n  A --> B");
+});
+
 test("cleanMermaid rejects a diagram longer than the cap", () => {
   assert.equal(cleanMermaid(`flowchart TD\n${"  A --> B\n".repeat(500)}`), null);
 });

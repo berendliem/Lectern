@@ -4,8 +4,9 @@
  * first two are usable, and a diagram is optional everywhere it appears — return null
  * rather than handing the renderer something that will throw.
  */
-const DIAGRAM_TYPES =
-  /^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|quadrantChart)\b/i;
+// The two shapes the prompt asks for. Each diagram type is its own renderer with
+// its own sinks; the allowlist stays as small as the feature.
+const DIAGRAM_TYPES = /^(flowchart|graph|sequenceDiagram)\b/i;
 
 /**
  * `%%{init: ...}%%` blocks are mermaid's inline config directives. Mermaid finds them
@@ -17,6 +18,15 @@ const DIAGRAM_TYPES =
  * directive is worth allowing: a diagram carrying one is dropped whole.
  */
 const DIRECTIVE = /%%\{/;
+
+/**
+ * Ordinary statements that reach the same sinks without a directive. `style`,
+ * `classDef` and `linkStyle` become an inline `style` attribute on the node, which
+ * DOMPurify keeps and never parses, so the same fixed-position overlay and `url()`
+ * beacon go through them. `click`, `link` and `links` wrap a node in a real `<a>`
+ * to any host: sanitizeUrl strips `javascript:`, not phishing.
+ */
+const STATEMENT = /^\s*(style|classDef|linkStyle|click|links?)\b/im;
 
 /** Well past the 7-node diagram we ask for, well under mermaid's own 50k parse cap. */
 const MAX_LENGTH = 4000;
@@ -30,6 +40,7 @@ export function cleanMermaid(raw: unknown): string | null {
     .trim();
   if (!DIAGRAM_TYPES.test(unfenced)) return null;
   if (DIRECTIVE.test(unfenced)) return null;
+  if (STATEMENT.test(unfenced)) return null;
   if (unfenced.length > MAX_LENGTH) return null;
   return unfenced;
 }
