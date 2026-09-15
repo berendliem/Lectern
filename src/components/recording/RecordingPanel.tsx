@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
+import { MermaidDiagram } from "@/components/recording/MermaidDiagram";
 import { confirmDiscard, useRecording } from "@/components/recording/RecordingProvider";
 import type { RecorderStatus } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
@@ -80,9 +81,14 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
   }, [searchParams, pathname, router, start, session, status, pageId, pageTitle]);
 
   const [explanation, setExplanation] = useState<string | null>(null);
+  const [diagram, setDiagram] = useState<string | null>(null);
   const [explaining, setExplaining] = useState(false);
   const [explainError, setExplainError] = useState<string | null>(null);
   const liveEndRef = useRef<HTMLDivElement>(null);
+  // Bumped by every explain request and by every clear. A reply whose number is
+  // stale belongs to a take the user has already saved or discarded, and must not
+  // be written back into state — this panel outlives the recording session.
+  const explainSeq = useRef(0);
 
   useEffect(() => {
     liveEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -91,23 +97,40 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
   // "audio/webm;codecs=opus" -> "webm". Good enough for a filename.
   const downloadName = `recording.${audioBlob?.type.split(";")[0].split("/")[1] ?? "webm"}`;
 
+  function clearExplain() {
+    explainSeq.current++;
+    setExplaining(false);
+    setExplanation(null);
+    setDiagram(null);
+    setExplainError(null);
+  }
+
   async function handleExplain() {
     const context = liveTranscript.slice(-2000);
     if (context.length < 10) return;
+    const seq = ++explainSeq.current;
     setExplaining(true);
     setExplainError(null);
-    const res = await fetch("/api/live-explain", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ context }),
-    });
-    setExplaining(false);
-    if (res.ok) {
-      const { explanation: text } = await res.json();
-      setExplanation(text);
-    } else {
-      const body = await res.json().catch(() => ({}));
-      setExplainError(body.error ?? "Couldn't get an explanation right now.");
+    try {
+      const res = await fetch("/api/live-explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context }),
+      });
+      if (seq !== explainSeq.current) return;
+      if (res.ok) {
+        const { explanation: text, diagram: mermaid } = await res.json();
+        setExplanation(text);
+        setDiagram(typeof mermaid === "string" ? mermaid : null);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setExplainError(body.error ?? "Couldn't get an explanation right now.");
+      }
+    } catch {
+      // A dropped connection used to leave the spinner running for good.
+      if (seq === explainSeq.current) setExplainError("Couldn't reach Lectern. Check it is still running.");
+    } finally {
+      if (seq === explainSeq.current) setExplaining(false);
     }
   }
 
@@ -164,7 +187,13 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
           {shown === "stopped" && audioBlob && previewUrl && (
             <>
               <audio controls src={previewUrl} className="h-9" />
-              <Button onClick={save} disabled={busy}>
+              <Button
+                onClick={() => {
+                  clearExplain();
+                  void save();
+                }}
+                disabled={busy}
+              >
                 {saving ? "Saving…" : "Save & transcribe"}
               </Button>
               {/* Ungated on purpose: a save that never returns must not be able
@@ -172,7 +201,10 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
               <Button
                 variant="secondary"
                 onClick={() => {
-                  if (session && confirmDiscard(session, elapsedSeconds)) discard();
+                  if (session && confirmDiscard(session, elapsedSeconds)) {
+                    clearExplain();
+                    discard();
+                  }
                 }}
               >
                 Discard
@@ -232,6 +264,7 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
             <div className="rounded-lg border border-brand-border bg-brand-soft/50 p-3">
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-brand-ink">Assistant</p>
               <p className="text-[13px] leading-6 text-ink-soft">{explanation}</p>
+              {diagram && <MermaidDiagram source={diagram} />}
             </div>
           )}
         </div>

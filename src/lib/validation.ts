@@ -110,6 +110,12 @@ export const liveExplainSchema = z.object({
   context: z.string().trim().min(10).max(8000),
 });
 
+/** What the live-explain model call returns. The diagram is checked by cleanMermaid. */
+export const liveExplainResponseSchema = z.object({
+  explanation: z.string().trim().min(1).max(4000),
+  diagram: z.string().max(20_000).nullish(),
+});
+
 export const chatRequestSchema = z.object({
   messages: z
     .array(
