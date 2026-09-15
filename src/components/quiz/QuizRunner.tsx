@@ -21,6 +21,8 @@ type Feedback = {
   score: number;
   verdict: string | null;
   missing: string[];
+  /** "overlap" when the marking model was unreachable and word overlap stood in. */
+  grader: "llm" | "overlap" | null;
   correctAnswer: string;
   explanation: string | null;
 };
@@ -42,6 +44,9 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
 
   async function handleSubmit(answer: string) {
     const question = queue[index];
+    // Sent along so the route records only the first go in the ledger; after
+    // a miss the correct answer has been on screen.
+    const attempt = (attempts[question.id] ?? 0) + 1;
     setSubmitting(true);
     setError(null);
     let data: Feedback;
@@ -49,7 +54,7 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
       const res = await fetch(`/api/quiz/${question.id}/answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answer }),
+        body: JSON.stringify({ answer, attempt }),
       });
       if (!res.ok) {
         // Silence here would look like a dead Submit button, and the student
@@ -69,7 +74,6 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
       setSubmitting(false);
     }
 
-    const attempt = (attempts[question.id] ?? 0) + 1;
     const comingBack = shouldRequeue(data.score, attempt);
     setAttempts((a) => ({ ...a, [question.id]: attempt }));
     if (comingBack) setQueue((q) => [...q, question]);
@@ -134,6 +138,7 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
 
       {feedback && (
         <div
+          role="status"
           className={`rounded-lg border p-3 text-sm ${
             feedback.isCorrect ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"
           }`}
@@ -142,7 +147,13 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
             {feedback.isCorrect ? "Correct" : "Not quite"} · {feedback.score}/100
             {!feedback.isCorrect && ` (${MASTERY_SCORE} to pass)`}
           </p>
-          {feedback.verdict && <p className="mt-1 text-ink-soft">{feedback.verdict}</p>}
+          {/* An offline mark is a word count, not a reading: say so where it
+              can't be skimmed past as ordinary feedback. */}
+          {feedback.verdict && (
+            <p className={`mt-1 ${feedback.grader === "overlap" ? "font-medium text-amber-700" : "text-ink-soft"}`}>
+              {feedback.verdict}
+            </p>
+          )}
           {/* Literal, not markdown: a MATH answer is an ASCII expression full
               of `*`, and CommonMark's intraword emphasis eats it. */}
           {!feedback.isCorrect && (

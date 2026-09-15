@@ -22,6 +22,7 @@ type Grade = {
   score: number;
   verdict: string;
   missing: string[];
+  grader: "llm" | "overlap";
 };
 
 export function ReviewSession({ folderId }: { folderId?: string }) {
@@ -40,13 +41,10 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // What is on screen right now, readable from inside an awaited callback.
-  // Comparing `queue[index]` there would compare the closure against itself,
-  // which is how a mark for one card silently lands on another.
-  const onScreenCardId = useRef<string | null>(null);
-  useEffect(() => {
-    onScreenCardId.current = queue?.[index]?.id ?? null;
-  }, [queue, index]);
+  // Bumped by every mark request, every edit to the answer, and every advance.
+  // A reply whose number is stale was computed for text or a card that is no
+  // longer on screen, and is dropped rather than applied to whatever is.
+  const suggestSeq = useRef(0);
 
   useEffect(() => {
     let ignore = false;
@@ -70,34 +68,47 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
     const next = !flipped;
     setFlipped(next);
     const card = queue?.[index];
-    if (!next || !card || typed.trim().length === 0) return;
+    // Hiding and revealing again keeps the mark it already has; only an edit
+    // to the answer (handleTyped) asks for a new one.
+    if (!next || !card || typed.trim().length === 0 || grade || grading) return;
 
+    const seq = ++suggestSeq.current;
     setGrading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/review/${card.id}/suggest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ typed }),
       });
-      if (!res.ok) return;
+      if (seq !== suggestSeq.current) return;
+      if (!res.ok) {
+        setError("Couldn't mark what you wrote — grade it yourself below.");
+        return;
+      }
       const data = await res.json();
-      // The grader is slow enough to lose a race with an impatient student. A
-      // mark that arrives after they have moved on belongs to the card it was
-      // computed for, not to whatever is on screen now.
-      if (onScreenCardId.current !== card.id) return;
       if (typeof data.quality === "number" && typeof data.score === "number") {
         setGrade({
           quality: data.quality,
           score: data.score,
           verdict: typeof data.verdict === "string" ? data.verdict : "",
           missing: Array.isArray(data.missing) ? data.missing : [],
+          grader: data.grader === "overlap" ? "overlap" : "llm",
         });
       }
     } catch {
-      // A failed mark leaves the four buttons exactly as they were.
+      if (seq === suggestSeq.current) setError("Couldn't mark what you wrote — grade it yourself below.");
     } finally {
-      setGrading(false);
+      if (seq === suggestSeq.current) setGrading(false);
     }
+  }
+
+  function handleTyped(value: string) {
+    setTyped(value);
+    // The mark in hand, or on its way, was for the old text.
+    suggestSeq.current++;
+    setGrade(null);
+    setGrading(false);
   }
 
   async function handleGrade(quality: number, score: number) {
@@ -106,34 +117,41 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
     // the same attempt count twice, and skip the next card.
     if (!card || saving) return;
     setError(null);
-    setSaving(true);
+    const attempt = (attempts[card.id] ?? 0) + 1;
 
-    // Advancing on a failed write would drop the grade silently: the card keeps
-    // the interval it had, and the student has no way to know their answer went
-    // nowhere. So the deck only moves once the grade is recorded.
-    try {
-      const res = await fetch(`/api/review/${card.id}/grade`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quality,
-          typed: typed.trim() || undefined,
-          confidence: confidence ?? undefined,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "That grade didn't save. Try again.");
+    // Only the first go is evidence of recall: after that the reference has
+    // been on screen, so a second go is practice and stays out of SM-2 and the
+    // ledger. Recording it would schedule a card the student just read as
+    // known, and resolve the misconception it had just demonstrated.
+    if (attempt === 1) {
+      setSaving(true);
+      // Advancing on a failed write would drop the grade silently: the card
+      // keeps the interval it had, and the student has no way to know their
+      // answer went nowhere. So the deck only moves once the grade is recorded.
+      try {
+        const res = await fetch(`/api/review/${card.id}/grade`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            quality,
+            typed: typed.trim() || undefined,
+            confidence: confidence ?? undefined,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error ?? "That grade didn't save. Try again.");
+          return;
+        }
+      } catch {
+        setError("That grade didn't save — check your connection and try again.");
         return;
+      } finally {
+        setSaving(false);
       }
-    } catch {
-      setError("That grade didn't save — check your connection and try again.");
-      return;
-    } finally {
-      setSaving(false);
     }
 
-    const attempt = (attempts[card.id] ?? 0) + 1;
+    suggestSeq.current++;
     setAttempts((a) => ({ ...a, [card.id]: attempt }));
     if (shouldRequeue(score, attempt)) {
       setQueue((q) => (q ? [...q, card] : q));
@@ -145,6 +163,7 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
     setTyped("");
     setConfidence(null);
     setGrade(null);
+    setGrading(false);
     setIndex((i) => i + 1);
   }
 
@@ -234,18 +253,29 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
         flipped={flipped}
         onFlip={handleFlip}
         typed={typed}
-        onTyped={setTyped}
+        onTyped={handleTyped}
         confidence={confidence}
         onConfidence={setConfidence}
+        disabled={saving}
       />
-      {flipped && grading && <p className="text-[13px] text-muted-2">Marking what you wrote…</p>}
+      {flipped && grading && (
+        <p role="status" className="text-[13px] text-muted-2">
+          Marking what you wrote…
+        </p>
+      )}
       {flipped && grade && (
-        <div className="w-full max-w-md rounded-xl border border-line-strong bg-surface-2 p-3 text-sm">
+        <div role="status" className="w-full max-w-md rounded-xl border border-line-strong bg-surface-2 p-3 text-sm">
           <p className="font-medium text-ink">
             {grade.score}/100
             {grade.score < MASTERY_SCORE && ` · ${MASTERY_SCORE} to master`}
           </p>
-          {grade.verdict && <p className="mt-0.5 text-[13px] text-ink-soft">{grade.verdict}</p>}
+          {/* An offline mark is a word count, not a reading: say so where it
+              can't be skimmed past as ordinary feedback. */}
+          {grade.verdict && (
+            <p className={`mt-0.5 text-[13px] ${grade.grader === "overlap" ? "font-medium text-amber-700" : "text-ink-soft"}`}>
+              {grade.verdict}
+            </p>
+          )}
           {grade.missing.length > 0 && (
             <ul className="mt-1 list-disc pl-5 text-[13px] text-muted">
               {grade.missing.map((m, i) => (
@@ -273,7 +303,11 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
           />
         </div>
       )}
-      {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
+      {error && (
+        <p role="alert" className="text-[13px] font-medium text-red-700">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

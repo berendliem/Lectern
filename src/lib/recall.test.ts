@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { qualityForScore, shouldRequeue } from "./grading.ts";
 import {
   BASE_CRAM_WEIGHT,
+  PASS_QUALITY,
   RESOLVE_QUALITY,
   applyCalibrationPenalty,
   calibration,
@@ -23,10 +25,20 @@ test("normalizeQuality maps a correct multiple choice to 4, not 5", () => {
   assert.equal(normalizeQuality({ kind: "QUIZ", correct: false }), 0);
 });
 
-test("normalizeQuality scales short-answer similarity across the whole range", () => {
-  assert.equal(normalizeQuality({ kind: "QUIZ", similarity: 0 }), 0);
-  assert.equal(normalizeQuality({ kind: "QUIZ", similarity: 0.5 }), 3);
-  assert.equal(normalizeQuality({ kind: "QUIZ", similarity: 1 }), 5);
+test("a free-text quiz score reaches the ledger on the session's own bands", () => {
+  // The ledger and the session read one score the same way: anything the
+  // quiz asks again must not be recorded as a Good recall, and vice versa.
+  for (const score of [0, 30, 59, 60, 84, 85, 94, 95, 100]) {
+    const quality = normalizeQuality({ kind: "QUIZ", score, grader: "llm" });
+    assert.equal(quality, qualityForScore(score), `score ${score}`);
+    assert.equal(quality >= RESOLVE_QUALITY, !shouldRequeue(score, 1), `score ${score}`);
+  }
+});
+
+test("an offline overlap grade can pass but never resolves a misconception", () => {
+  assert.equal(normalizeQuality({ kind: "QUIZ", score: 100, grader: "overlap" }), PASS_QUALITY);
+  assert.equal(normalizeQuality({ kind: "QUIZ", score: 85, grader: "overlap" }), PASS_QUALITY);
+  assert.equal(normalizeQuality({ kind: "QUIZ", score: 40, grader: "overlap" }), 0);
 });
 
 test("normalizeQuality maps a Feynman score by twentieths", () => {

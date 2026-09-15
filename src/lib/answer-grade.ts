@@ -3,12 +3,6 @@ import { answerGradeResponseSchema } from "@/lib/validation";
 import { ANSWER_GRADE_SYSTEM_PROMPT, buildAnswerGradeUserPrompt } from "@/lib/prompts/answer-grade";
 import { gradeShortAnswer, MASTERY_SCORE, OVERLAP_PASS } from "@/lib/grading";
 
-const MODEL =
-  process.env.OPENROUTER_MODEL_GRADING ??
-  process.env.OPENROUTER_MODEL_CHAT ??
-  process.env.OPENROUTER_MODEL_SUMMARY ??
-  "openrouter/free";
-
 export type AnswerGrade = {
   /** 0-100. */
   score: number;
@@ -32,9 +26,16 @@ export async function gradeFreeTextAnswer(opts: {
   reference: string;
   answer: string;
 }): Promise<AnswerGrade> {
+  // Read per call like every other stage's model, so an override set after
+  // startup (or in a test) is honoured.
+  const model =
+    process.env.OPENROUTER_MODEL_GRADING ??
+    process.env.OPENROUTER_MODEL_CHAT ??
+    process.env.OPENROUTER_MODEL_SUMMARY ??
+    "openrouter/free";
   try {
     const raw = await callLLMJSON({
-      model: MODEL,
+      model,
       systemPrompt: ANSWER_GRADE_SYSTEM_PROMPT,
       userPrompt: buildAnswerGradeUserPrompt(opts),
     });

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_SCAN_IMAGE_CHARS, MAX_TEXT_CHARS } from "./limits";
+import { MAX_MASTERY_ATTEMPTS } from "./grading";
 
 export const createFolderSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -100,6 +101,9 @@ export const reviewSuggestSchema = z.object({
 
 export const quizAnswerSchema = z.object({
   answer: z.string().trim().min(0).max(2000),
+  // Which go at this question in the current session. Only the first is
+  // evidence of recall; after a miss the correct answer is on screen.
+  attempt: z.number().int().min(1).max(MAX_MASTERY_ATTEMPTS).default(1),
 });
 
 export const liveExplainSchema = z.object({

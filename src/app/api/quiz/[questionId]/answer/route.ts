@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ que
   const question = await db.quizQuestion.findUnique({ where: { id: questionId } });
   if (!question) return jsonError("Question not found", 404);
 
-  const { answer } = result.data;
+  const { answer, attempt } = result.data;
 
   let isCorrect: boolean;
   // 0-100 on every branch, so the session can hold one bar for all four
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ que
     scoreDetail = { score, grader: grade.grader };
     // The score, not the pass/fail: a half-right short answer should shorten
     // the interval without being scored as a blackout.
-    raw = { kind: "QUIZ", similarity: score / 100 };
+    raw = { kind: "QUIZ", score, grader: grade.grader };
   }
 
   await db.quizAttempt.create({
@@ -72,19 +72,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ que
 
   // The explanation is written for exactly this moment and thrown away today.
   // On a wrong answer it is the misconception, verbatim.
-  await writeRecallSafely({
-    raw,
-    pageId: question.pageId,
-    materialId: question.materialId,
-    misconception: question.explanation,
-    detail: { answer, ...(scoreDetail ?? {}) },
-  });
+  //
+  // Only the first go reaches the ledger. After a miss the correct answer is
+  // on screen, so a later go in the same session is practice, not evidence:
+  // recording it would resolve the misconception it just demonstrated, and
+  // three misses in one sitting would count as three strikes.
+  if (attempt === 1) {
+    await writeRecallSafely({
+      raw,
+      pageId: question.pageId,
+      materialId: question.materialId,
+      misconception: question.explanation,
+      detail: { answer, ...(scoreDetail ?? {}) },
+    });
+  }
 
   return NextResponse.json({
     isCorrect,
     score,
     verdict,
     missing,
+    grader: scoreDetail?.grader ?? null,
     correctAnswer: question.correctAnswer,
     explanation: question.explanation,
   });

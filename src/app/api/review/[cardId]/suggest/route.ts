@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { reviewSuggestSchema } from "@/lib/validation";
 import { gradeFreeTextAnswer } from "@/lib/answer-grade";
-import { qualityForScore } from "@/lib/grading";
+import { normalizeQuality } from "@/lib/recall";
 
 /**
  * Scores what the student typed before the reveal, so the card can grade itself
@@ -33,7 +33,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ car
   });
 
   return NextResponse.json({
-    quality: qualityForScore(grade.score),
+    // The ledger's reading of the score, so an offline overlap grade is capped
+    // the same way here as on a quiz answer.
+    quality: normalizeQuality({ kind: "QUIZ", score: grade.score, grader: grade.grader }),
     score: grade.score,
     verdict: grade.verdict,
     missing: grade.missing,
