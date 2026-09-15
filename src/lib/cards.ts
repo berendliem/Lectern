@@ -33,6 +33,20 @@ export function courseScopeFilter(folderId: string) {
   };
 }
 
+/**
+ * A course's materials that exam cram could draw questions from but has none
+ * yet. The syllabus is left out: a quiz on it asks about grading policy and
+ * office hours, not the subject.
+ */
+export function quizlessMaterialsFilter(folderId: string) {
+  return {
+    folderId,
+    kind: { not: "SYLLABUS" as const },
+    text: { not: "" },
+    quizQuestions: { none: {} },
+  };
+}
+
 export type CardSource =
   | { kind: "lecture"; id: string; title: string; course: string | null }
   | { kind: "material"; id: string; title: string; course: string | null };
