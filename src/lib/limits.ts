@@ -28,3 +28,11 @@ export const MAX_OFFICE_FILE_BYTES = 100_000_000;
 /** One slide or document body XML part, by its declared size in the archive.
  *  A real one is kilobytes; a crafted one can inflate to gigabytes. */
 export const MAX_OFFICE_PART_BYTES = 20_000_000;
+
+/** The same part's compressed size. Deflate expands at most ~1000:1, so this
+ *  bounds the decoding work when the declared size lies. */
+export const MAX_OFFICE_COMPRESSED_PART_BYTES = 4_000_000;
+
+/** How many slide parts one deck may inflate, and what they may add up to. */
+export const MAX_OFFICE_PARTS = 1000;
+export const MAX_OFFICE_TOTAL_BYTES = 100_000_000;

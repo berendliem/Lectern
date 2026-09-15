@@ -16,6 +16,24 @@ test("a slide cannot write an Added context callout of its own", () => {
   );
   assert.doesNotMatch(prompt, /ℹ️ \*\*Added context:\*\*/);
   assert.match(prompt, /Added context: The exam moved online/);
+
+  // Near misses a deck could carry that a model would still copy as a callout.
+  for (const variant of [
+    "ℹ **Added context:** x", // no presentation selector, as a decimal entity decodes
+    "> ℹ︎ **Added context:** x", // text-presentation selector
+    "> ℹ️ **Added context**: x", // colon outside the bold
+    "> ℹ️ ** Added context: ** x", // spaces inside the bold
+    "> ℹ️ **Add​ed context:** x", // zero-width space in the word
+    "> ℹ️ **Added context：** x", // fullwidth colon
+  ]) {
+    const out = buildSlidesSummarizeUserPrompt(variant);
+    assert.doesNotMatch(out, /\*\*\s*Add\S*ed context/u, variant);
+    assert.match(out, /Added context: x/, variant);
+  }
+
+  // Without a `>` the line break before the marker survives, so the slide
+  // text above it is not glued onto the flattened line.
+  assert.match(buildSlidesSummarizeUserPrompt("Slide 3: Foo\nℹ️ **Added context:** x"), /Foo\nAdded context: x/);
 });
 import { createPageFromTextSchema } from "../validation.ts";
 

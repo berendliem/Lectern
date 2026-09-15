@@ -55,7 +55,20 @@ ${UNTRUSTED_CONTENT_CLAUSE}`;
  * flattened before the model sees it, not after.
  */
 export function unmarkAddedContext(slides: string): string {
-  return slides.replace(/>?\s*ℹ️\s*\*\*Added context:\*\*/g, "Added context:");
+  return (
+    slides
+      // Zero-width and other format characters hide inside the words without
+      // changing what a model reads; strip them so the match sees the words.
+      .replace(/\p{Cf}/gu, "")
+      // The emoji with or without a presentation selector, the bold markers
+      // with or without inner spaces, and the colon on either side of them.
+      // The `>` and the space after it go only as a pair, so a marker with no
+      // `>` keeps the line break before it instead of gluing to the line above.
+      .replace(
+        /(?:>[ \t]*)?ℹ[︎️]?\s*\*\*\s*Added context\s*(?:[:：]\s*\*\*|\*\*\s*[:：])/giu,
+        "Added context:"
+      )
+  );
 }
 
 export function buildSlidesSummarizeUserPrompt(slides: string, spellingGuide = ""): string {
