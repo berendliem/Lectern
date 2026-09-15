@@ -7,6 +7,7 @@ import { ClozeQuestion } from "@/components/quiz/ClozeQuestion";
 import { MathQuestion } from "@/components/quiz/MathQuestion";
 import { QuizResultsSummary } from "@/components/quiz/QuizResultsSummary";
 import { Button } from "@/components/ui/Button";
+import { MASTERY_SCORE, MAX_MASTERY_ATTEMPTS, shouldRequeue } from "@/lib/grading";
 
 export type QuizQuestionForRunner = {
   id: string;
@@ -17,59 +18,95 @@ export type QuizQuestionForRunner = {
 
 type Feedback = {
   isCorrect: boolean;
+  score: number;
+  verdict: string | null;
+  missing: string[];
   correctAnswer: string;
   explanation: string | null;
 };
 
-type ResultRecord = Feedback & { prompt: string; userAnswer: string };
+type ResultRecord = Feedback & { id: string; prompt: string; userAnswer: string; attempt: number };
 
 export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }) {
+  // The queue, not the question list: a question answered below the mastery
+  // bar is pushed onto the end of it, so the session lasts until the material
+  // is known rather than until the list runs out.
+  const [queue, setQueue] = useState<QuizQuestionForRunner[]>(questions);
   const [index, setIndex] = useState(0);
+  const [attempts, setAttempts] = useState<Record<string, number>>({});
   const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [requeued, setRequeued] = useState(false);
   const [results, setResults] = useState<ResultRecord[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(answer: string) {
-    const question = questions[index];
+    const question = queue[index];
     setSubmitting(true);
-    const res = await fetch(`/api/quiz/${question.id}/answer`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answer }),
-    });
-    setSubmitting(false);
-    if (!res.ok) return;
-    const data: Feedback = await res.json();
+    setError(null);
+    let data: Feedback;
+    try {
+      const res = await fetch(`/api/quiz/${question.id}/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ answer }),
+      });
+      if (!res.ok) {
+        // Silence here would look like a dead Submit button, and the student
+        // would retype an answer that was never marked.
+        const body = await res.json().catch(() => null);
+        setError(body?.error ?? "That answer didn't get marked. Try submitting it again.");
+        return;
+      }
+      const body = await res.json();
+      // The route validates the model's JSON before it ever gets here, so this
+      // is belt-and-braces against a future shape change — not a live hole.
+      data = { ...body, missing: Array.isArray(body.missing) ? body.missing : [] };
+    } catch {
+      setError("Could not reach Lectern. Check it is still running, then submit again.");
+      return;
+    } finally {
+      setSubmitting(false);
+    }
+
+    const attempt = (attempts[question.id] ?? 0) + 1;
+    const comingBack = shouldRequeue(data.score, attempt);
+    setAttempts((a) => ({ ...a, [question.id]: attempt }));
+    if (comingBack) setQueue((q) => [...q, question]);
+    setRequeued(comingBack);
     setFeedback(data);
-    setResults((r) => [...r, { ...data, prompt: question.prompt, userAnswer: answer }]);
+    setResults((r) => [...r, { ...data, id: question.id, prompt: question.prompt, userAnswer: answer, attempt }]);
   }
 
   function handleNext() {
     setFeedback(null);
+    setRequeued(false);
     setIndex((i) => i + 1);
   }
 
   if (questions.length === 0) return null;
 
-  if (index >= questions.length) {
+  if (index >= queue.length) {
     return <QuizResultsSummary results={results} />;
   }
 
-  const question = questions[index];
+  const question = queue[index];
+  const priorAttempts = attempts[question.id] ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-2">
-        Question {index + 1} of {questions.length}
+        Question {index + 1} of {queue.length}
+        {priorAttempts > 0 && " · second look"}
       </p>
 
       {/*
-        Keyed on the question, so moving to the next one remounts the input
-        rather than reusing it. Without this, two questions of the same type in
-        a row share a component instance — and its useState — so the answer
-        typed for one appears already filled in for the next.
+        Keyed on the question and the attempt, so coming back to a question
+        remounts the input rather than reusing it. Without this, two questions
+        of the same type in a row share a component instance — and its useState
+        — so the answer typed for one appears already filled in for the next.
       */}
-      <Fragment key={question.id}>
+      <Fragment key={`${question.id}-${priorAttempts}`}>
         {question.type === "MATH" ? (
           <MathQuestion prompt={question.prompt} onSubmit={handleSubmit} disabled={submitting || !!feedback} />
         ) : question.type === "SHORT_ANSWER" ? (
@@ -86,17 +123,49 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
         )}
       </Fragment>
 
+      {/* The free-text grader is a model call, so submitting is no longer
+          instant. Without this the page looks frozen for a few seconds. */}
+      {submitting && <p className="text-[13px] text-muted-2">Marking your answer…</p>}
+      {error && (
+        <p role="alert" className="text-[13px] font-medium text-red-700">
+          {error}
+        </p>
+      )}
+
       {feedback && (
         <div
           className={`rounded-lg border p-3 text-sm ${
             feedback.isCorrect ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-red-200 bg-red-50 text-red-700"
           }`}
         >
-          <p className="font-medium">{feedback.isCorrect ? "Correct" : "Not quite"}</p>
-          {!feedback.isCorrect && <p>Correct answer: {feedback.correctAnswer}</p>}
+          <p className="font-medium">
+            {feedback.isCorrect ? "Correct" : "Not quite"} · {feedback.score}/100
+            {!feedback.isCorrect && ` (${MASTERY_SCORE} to pass)`}
+          </p>
+          {feedback.verdict && <p className="mt-1 text-ink-soft">{feedback.verdict}</p>}
+          {/* Literal, not markdown: a MATH answer is an ASCII expression full
+              of `*`, and CommonMark's intraword emphasis eats it. */}
+          {!feedback.isCorrect && (
+            <p>
+              Correct answer: <code className="font-mono">{feedback.correctAnswer}</code>
+            </p>
+          )}
+          {feedback.missing.length > 0 && (
+            <ul className="mt-1 list-disc pl-5 text-ink-soft">
+              {feedback.missing.map((m, i) => (
+                <li key={i}>{m}</li>
+              ))}
+            </ul>
+          )}
           {feedback.explanation && <p className="mt-1 text-ink-soft">{feedback.explanation}</p>}
+          {requeued && <p className="mt-1 text-ink-soft">You&rsquo;ll see this one again before the end.</p>}
+          {!feedback.isCorrect && !requeued && (
+            <p className="mt-1 text-ink-soft">
+              {MAX_MASTERY_ATTEMPTS} tries on this one — moving on. It&rsquo;s flagged in your results.
+            </p>
+          )}
           <Button size="sm" onClick={handleNext} className="mt-3">
-            {index + 1 < questions.length ? "Next question" : "See results"}
+            {index + 1 < queue.length ? "Next question" : "See results"}
           </Button>
         </div>
       )}
