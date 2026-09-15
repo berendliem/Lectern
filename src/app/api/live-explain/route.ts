@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callLLMText } from "@/lib/llm";
+import { callLLMJSON } from "@/lib/llm";
+import { cleanMermaid } from "@/lib/mermaid";
 import { liveExplainSchema } from "@/lib/validation";
 
-const SYSTEM_PROMPT = `You are a live study assistant sitting next to a student in a lecture. You receive the most recent stretch of the lecture transcript (raw speech-to-text, possibly with recognition errors). Briefly explain the concept the lecturer is currently talking about, in plain language, as if catching the student up. 2-4 sentences, no preamble, no headings.`;
+const SYSTEM_PROMPT = `You are a live study assistant sitting next to a student in a lecture. You receive the most recent stretch of the lecture transcript (raw speech-to-text, possibly with recognition errors). Briefly explain the concept the lecturer is currently talking about, in plain language, as if catching the student up.
+
+Reply with JSON only: {"explanation": string, "diagram": string}.
+
+- "explanation": 2-4 sentences, no preamble, no headings.
+- "diagram": Mermaid source for a small diagram that supports the explanation — at most 7 nodes, node labels in plain words. Prefer "flowchart TD" for a process or a relationship, "sequenceDiagram" for an exchange over time. No markdown fences, no styling directives, no parentheses or quotes inside node labels. If the concept is a plain definition with nothing to lay out, use an empty string.`;
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -16,14 +22,16 @@ export async function POST(req: NextRequest) {
     "openrouter/free";
 
   try {
-    const explanation = await callLLMText({
+    const parsed = (await callLLMJSON({
       model,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `Latest transcript excerpt:\n"""\n${result.data.context}\n"""` },
-      ],
-    });
-    return NextResponse.json({ explanation });
+      systemPrompt: SYSTEM_PROMPT,
+      userPrompt: `Latest transcript excerpt:\n"""\n${result.data.context}\n"""`,
+    })) as { explanation?: unknown; diagram?: unknown };
+
+    const explanation = typeof parsed?.explanation === "string" ? parsed.explanation.trim() : "";
+    if (!explanation) throw new Error("The model returned no explanation. You can retry this step.");
+
+    return NextResponse.json({ explanation, diagram: cleanMermaid(parsed?.diagram) });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Explanation failed";
     return jsonError(message, 502);
