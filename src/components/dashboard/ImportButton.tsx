@@ -7,11 +7,15 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input, Textarea } from "@/components/ui/Input";
 import { extractPdfText, type OcrProgress } from "@/lib/pdf-extract";
+import { extractPptxText } from "@/lib/office-extract";
 
 export function ImportButton({ folderId }: { folderId?: string }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
+  // Slides of a lecture with no recording: summarized with a prompt that fills
+  // the gaps a terse deck leaves, in marked callouts.
+  const [slides, setSlides] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [ocr, setOcr] = useState<OcrProgress | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -30,29 +34,39 @@ export function ImportButton({ folderId }: { folderId?: string }) {
     setOpen(false);
     setTitle("");
     setText("");
+    setSlides(false);
     setError(null);
   }
 
-  async function handlePdf(file: File) {
+  async function handleFile(file: File) {
     abortRef.current?.abort();
     const abort = new AbortController();
     abortRef.current = abort;
     setError(null);
     setOcr(null);
     setExtracting(true);
+    const isPptx = /\.pptx$/i.test(file.name);
     try {
-      const extracted = await extractPdfText(file, {
-        onOcrProgress: setOcr,
-        signal: abort.signal,
-      });
+      const extracted = isPptx
+        ? (await extractPptxText(file)).text
+        : await extractPdfText(file, { onOcrProgress: setOcr, signal: abort.signal });
+      if (abort.signal.aborted) return;
       if (!extracted) {
-        setError("Couldn't read any text from that PDF, even by OCR-ing its pages.");
+        setError(
+          isPptx
+            ? "Couldn't read any text from that deck. If its slides are images, export it as a PDF and import that instead."
+            : "Couldn't read any text from that PDF, even by OCR-ing its pages."
+        );
       } else {
         setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${extracted}` : extracted));
-        if (!title.trim()) setTitle(file.name.replace(/\.pdf$/i, ""));
+        if (!title.trim()) setTitle(file.name.replace(/\.(pdf|pptx)$/i, ""));
+        if (isPptx) setSlides(true);
       }
-    } catch {
-      if (!abort.signal.aborted) setError("Could not read that PDF.");
+    } catch (e) {
+      // The deck extractor's errors are written for the user; the PDF path's are not.
+      if (!abort.signal.aborted) {
+        setError(isPptx && e instanceof Error ? e.message : "Could not read that PDF.");
+      }
     } finally {
       if (!abort.signal.aborted) {
         setOcr(null);
@@ -70,7 +84,12 @@ export function ImportButton({ folderId }: { folderId?: string }) {
       const res = await fetch("/api/pages/from-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), text: text.trim(), folderId }),
+        body: JSON.stringify({
+          title: title.trim(),
+          text: text.trim(),
+          folderId,
+          source: slides ? "slides" : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -91,7 +110,7 @@ export function ImportButton({ folderId }: { folderId?: string }) {
         <Upload className="h-4 w-4" strokeWidth={2} />
         Import
       </Button>
-      <Modal open={open} onClose={close} title="Import notes or a PDF">
+      <Modal open={open} onClose={close} title="Import notes, a PDF, or slides">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Input
             autoFocus
@@ -113,7 +132,7 @@ export function ImportButton({ folderId }: { folderId?: string }) {
             )}
             <span role="status" aria-live="polite">
               {!extracting
-                ? "Choose a PDF (text is extracted in your browser)"
+                ? "Choose a PDF or PowerPoint (text is extracted in your browser)"
                 : ocr
                   ? `Reading scanned page ${ocr.page} of ${ocr.pages}…`
                   : "Extracting text…"}
@@ -122,11 +141,11 @@ export function ImportButton({ folderId }: { folderId?: string }) {
           <input
             ref={inputRef}
             type="file"
-            accept="application/pdf"
+            accept="application/pdf,.pdf,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handlePdf(file);
+              if (file) handleFile(file);
               e.target.value = "";
             }}
           />
@@ -137,6 +156,21 @@ export function ImportButton({ folderId }: { folderId?: string }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
+
+          <label className="flex items-start gap-2 text-[13px] text-ink">
+            <input
+              type="checkbox"
+              checked={slides}
+              onChange={(e) => setSlides(e.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-[var(--color-brand)]"
+            />
+            <span>
+              These are lecture slides (no recording)
+              <span className="block text-muted-2">
+                Notes will explain what the slides leave out, marked as added context.
+              </span>
+            </span>
+          </label>
 
           {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
 
