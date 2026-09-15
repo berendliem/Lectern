@@ -39,6 +39,7 @@ export function MaterialList({
   // so it is never part of the list payload and is fetched once, on first open.
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [loadingPreview, setLoadingPreview] = useState<string | null>(null);
+  const [makingNotes, setMakingNotes] = useState<string | null>(null);
   const router = useRouter();
   const { run, task } = useTasks();
 
@@ -115,6 +116,40 @@ export function MaterialList({
     router.refresh();
   }
 
+  /** A lecture page from a deck, for a lecture with no recording. The material
+   *  itself is left as it is; the page gets a copy of its text. */
+  async function makeLecturePage(id: string, title: string) {
+    setMakingNotes(id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/materials/${id}`);
+      if (!res.ok) {
+        setError("Could not load that material's text.");
+        return;
+      }
+      const text = (await res.json()).material?.text;
+      if (typeof text !== "string" || !text.trim()) {
+        setError("Those slides have no extracted text to make notes from.");
+        return;
+      }
+      const created = await fetch("/api/pages/from-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, text, folderId, source: "slides" }),
+      });
+      const data = await created.json();
+      if (!created.ok) {
+        setError(data.error ?? "Could not make a lecture page from those slides.");
+        return;
+      }
+      router.push(`/pages/${data.page.id}`);
+    } catch {
+      setError("Network error talking to the local server.");
+    } finally {
+      setMakingNotes(null);
+    }
+  }
+
   async function remove(id: string, title: string, cards: number, questions: number) {
     // Cascade: the material's flashcards, quiz questions and search chunks go
     // with it. Every other delete in the app says what it takes; this one used
@@ -186,6 +221,16 @@ export function MaterialList({
                     {` · ${shortDate(material.createdAt)}`}
                   </p>
                 </button>
+                {material.kind === "SLIDES" && (
+                  <button
+                    onClick={() => makeLecturePage(material.id, material.title)}
+                    disabled={makingNotes === material.id}
+                    title="Make a lecture page from these slides, for a lecture with no recording"
+                    className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
+                  >
+                    {makingNotes === material.id ? "Creating…" : "Lecture notes"}
+                  </button>
+                )}
                 <button
                   onClick={() =>
                     generate(material.id, material.title, "flashcards", material.flashcardCount)
