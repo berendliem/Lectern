@@ -6,6 +6,7 @@
  */
 
 import type { Sm2Result } from "./sm2.ts";
+import { qualityForScore } from "./grading.ts";
 
 /**
  * The migration that turned `ReviewLog` into the ledger backfilled every
@@ -38,7 +39,8 @@ export type RecallRaw =
   /** The review buttons: Again/Hard/Good/Easy as 0/3/4/5. */
   | { kind: "FLASHCARD"; quality: number }
   | { kind: "QUIZ"; correct: boolean }
-  | { kind: "QUIZ"; similarity: number }
+  /** A free-text answer on the 0-100 mastery scale, and which grader marked it. */
+  | { kind: "QUIZ"; score: number; grader: "llm" | "overlap" }
   | { kind: "FEYNMAN"; score: number }
   | { kind: "INTERVIEW"; rating: number }
   | { kind: "BLURT"; covered: number; missed: number; wrong: number }
@@ -76,7 +78,15 @@ export function normalizeQuality(raw: RecallRaw): number {
     }
     case "QUIZ":
     case "PRETEST":
-      if ("similarity" in raw) return clamp(raw.similarity * 5);
+      if ("score" in raw) {
+        // The same bands the session uses to decide mastery, so the ledger
+        // never calls an answer Good while the quiz is still asking it again.
+        // Word overlap can't tell a paraphrase from a wrong answer that reuses
+        // the right nouns, so an offline grade may pass but never resolves a
+        // misconception or raises the ease factor.
+        const quality = qualityForScore(raw.score);
+        return raw.grader === "overlap" ? Math.min(quality, PASS_QUALITY) : quality;
+      }
       // A correct multiple choice is a 4, not a 5: one of four options is a
       // quarter of a guess, and 5 would inflate the ease factor for it.
       return raw.correct ? 4 : 0;
@@ -191,22 +201,6 @@ export function weightedSample<T>(
   }
 
   return out;
-}
-
-/**
- * A typed free-recall attempt, scored against the card's own explanation, maps
- * onto the four buttons. Nothing here submits a grade — the student sees the
- * suggestion pre-highlighted and overrides it whenever it is wrong.
- *
- * ponytail: four hand-picked thresholds, calibrated against cosine similarity
- * on MiniLM; env knobs the first time a real deck argues with them.
- */
-export function suggestQuality(similarity: number): number {
-  if (!Number.isFinite(similarity)) return 0;
-  if (similarity >= 0.8) return 5;
-  if (similarity >= 0.55) return 4;
-  if (similarity >= 0.35) return 3;
-  return 0;
 }
 
 export type CramStats = {

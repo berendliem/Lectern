@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_SCAN_IMAGE_CHARS, MAX_TEXT_CHARS } from "./limits";
+import { MAX_MASTERY_ATTEMPTS } from "./grading";
 
 export const createFolderSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -100,6 +101,9 @@ export const reviewSuggestSchema = z.object({
 
 export const quizAnswerSchema = z.object({
   answer: z.string().trim().min(0).max(2000),
+  // Which go at this question in the current session. Only the first is
+  // evidence of recall; after a miss the correct answer is on screen.
+  attempt: z.number().int().min(1).max(MAX_MASTERY_ATTEMPTS).default(1),
 });
 
 export const liveExplainSchema = z.object({
@@ -139,6 +143,17 @@ export const blurtResponseSchema = z.object({
     )
     .max(8)
     .default([]),
+});
+
+/**
+ * What the free-text answer grader returns. Capped like every other model
+ * response that reaches the screen: the model wrote this after reading a
+ * reference answer it does not control.
+ */
+export const answerGradeResponseSchema = z.object({
+  score: z.number().min(0).max(100),
+  verdict: z.string().trim().min(1).max(600),
+  missing: z.array(z.string().trim().min(1).max(300)).max(3).default([]),
 });
 
 export const feynmanEvaluateSchema = z.object({

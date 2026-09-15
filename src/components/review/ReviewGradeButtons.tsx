@@ -26,16 +26,19 @@ const GRADES: { label: string; sublabel: string; quality: number; classes: strin
 ];
 
 /**
- * `suggested` only draws a ring. It never submits: a nudge on the wrong side of
- * a threshold is a scheduling error the student would never notice, so the
- * grade stays theirs to press.
+ * `suggested` only draws a ring — pressing a button is what submits that
+ * quality. The machine grade is submitted by the card's own "Next card"
+ * button, so these four stay the override: a mark on the wrong side of a
+ * threshold is a scheduling error the student would otherwise never notice.
  */
 export function ReviewGradeButtons({
   onGrade,
   suggested = null,
+  disabled = false,
 }: {
   onGrade: (quality: number) => void;
   suggested?: number | null;
+  disabled?: boolean;
 }) {
   return (
     <div className="grid w-full max-w-md grid-cols-4 gap-2">
@@ -43,7 +46,8 @@ export function ReviewGradeButtons({
         <button
           key={g.label}
           onClick={() => onGrade(g.quality)}
-          className={`flex flex-col items-center rounded-xl border px-2 py-2.5 transition-colors ${g.classes} ${
+          disabled={disabled}
+          className={`flex flex-col items-center rounded-xl border px-2 py-2.5 transition-colors disabled:opacity-50 ${g.classes} ${
             suggested === g.quality ? "ring-2 ring-brand ring-offset-1 ring-offset-surface" : ""
           }`}
         >

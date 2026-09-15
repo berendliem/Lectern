@@ -20,11 +20,14 @@ export function FlashcardFlip({
   onTyped,
   confidence,
   onConfidence,
+  disabled = false,
 }: {
   prompt: string;
   idealExplanation: string;
   flipped: boolean;
   onFlip: () => void;
+  /** While a grade is being saved: hiding the card would hide the only sign of that. */
+  disabled?: boolean;
   typed: string;
   onTyped: (value: string) => void;
   /** 1 Guessing · 2 Fairly sure · 3 Certain. Null while the student skips it. */
@@ -90,7 +93,8 @@ export function FlashcardFlip({
       <button
         type="button"
         onClick={onFlip}
-        className="mt-5 text-xs font-medium text-muted-2 hover:text-brand-ink"
+        disabled={disabled}
+        className="mt-5 text-xs font-medium text-muted-2 hover:text-brand-ink disabled:opacity-50"
       >
         {flipped ? "Hide the reference explanation" : "Reveal the reference explanation"}
       </button>
