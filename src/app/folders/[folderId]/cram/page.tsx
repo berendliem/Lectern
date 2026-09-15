@@ -152,9 +152,12 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
       )}
 
       {runnerQuestions.length > 0 ? (
-        // Keyed on the count so questions generated above start a fresh run
-        // rather than being ignored by a runner that already holds its list.
-        <QuizRunner key={runnerQuestions.length} questions={runnerQuestions} />
+        // Keyed on the set of question ids, so questions generated above start
+        // a fresh run while a refresh that added none — every material failed,
+        // or was already filled — leaves the run in progress alone. The count
+        // alone would do neither reliably, and the draw is reshuffled on every
+        // render.
+        <QuizRunner key={questions.map((q) => q.id).sort().join()} questions={runnerQuestions} />
       ) : (
         quizless.length === 0 && (
           <div className="rounded-2xl border border-dashed border-line-strong px-4 py-14 text-center text-sm text-muted-2">

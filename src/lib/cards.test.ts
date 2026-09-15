@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { assertSingleParent, cardSource, courseScopeFilter } from "./cards.ts";
+import { assertSingleParent, cardSource, courseScopeFilter, quizlessMaterialsFilter } from "./cards.ts";
 
 test("assertSingleParent accepts a lecture-parented card", () => {
   assert.deepEqual(assertSingleParent({ pageId: "p1" }), { pageId: "p1", materialId: null });
@@ -22,6 +22,14 @@ test("assertSingleParent rejects a card parented to both", () => {
 test("courseScopeFilter matches cards through either relation", () => {
   assert.deepEqual(courseScopeFilter("f1"), {
     OR: [{ page: { folderId: "f1" } }, { material: { folderId: "f1" } }],
+  });
+});
+
+test("quizlessMaterialsFilter skips the syllabus and anything already quizzed", () => {
+  assert.deepEqual(quizlessMaterialsFilter("f1"), {
+    folderId: "f1",
+    kind: { not: "SYLLABUS" },
+    quizQuestions: { none: {} },
   });
 });
 

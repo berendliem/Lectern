@@ -25,14 +25,14 @@ export function CramQuestionGenerator({
   restartsRun: boolean;
 }) {
   const [working, setWorking] = useState(false);
-  const [failed, setFailed] = useState<string[]>([]);
+  const [failed, setFailed] = useState<{ title: string; error: string }[]>([]);
   const router = useRouter();
   const { run } = useTasks();
 
   async function generateAll() {
     setWorking(true);
     setFailed([]);
-    const failures: string[] = [];
+    const failures: { title: string; error: string }[] = [];
     for (const material of materials) {
       const outcome = await run(
         {
@@ -51,7 +51,11 @@ export function CramQuestionGenerator({
           );
         }
       );
-      if (outcome.status === "error") failures.push(material.title);
+      // The server's reason, not a blanket "retry": a material with nothing
+      // to generate from fails the same way every time.
+      if (outcome.status === "error") {
+        failures.push({ title: material.title, error: outcome.error ?? "Could not generate a quiz." });
+      }
     }
     setFailed(failures);
     setWorking(false);
@@ -77,9 +81,13 @@ export function CramQuestionGenerator({
         </button>
       </div>
       {failed.length > 0 && (
-        <p className="text-[12.5px] font-medium text-red-700">
-          Could not generate from {failed.join(", ")}. You can retry.
-        </p>
+        <ul role="alert" className="flex flex-col gap-0.5 text-[12.5px] font-medium text-red-700">
+          {failed.map((f) => (
+            <li key={f.title}>
+              {f.title}: {f.error}
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
