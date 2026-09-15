@@ -39,7 +39,7 @@ export const createPageFromTextSchema = z.object({
   segments: z.array(transcriptSegmentSchema).max(20_000).optional(),
   // Provenance, recorded in Transcript.modelUsed. Constrained because it is
   // written to a column other code reads back.
-  source: z.enum(["teams", "zoom", "otter", "subtitles", "import"]).optional(),
+  source: z.enum(["teams", "zoom", "otter", "subtitles", "import", "slides"]).optional(),
 });
 
 export const createMaterialSchema = z.object({

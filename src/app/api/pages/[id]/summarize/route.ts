@@ -5,11 +5,9 @@ import { jsonError } from "@/lib/api-utils";
 import { callLLMJSON, callLLMText, llmModelLabel } from "@/lib/llm";
 import { getDictionaryEntries, buildSpellingGuide } from "@/lib/dictionary";
 import {
-  SUMMARIZE_SYSTEM_PROMPT,
   SUMMARIZE_MAP_SYSTEM_PROMPT,
-  buildSummarizeUserPrompt,
   buildSummarizeMapUserPrompt,
-  buildSummarizeReduceUserPrompt,
+  summarizePromptsFor,
 } from "@/lib/prompts/summarize";
 import { splitTextIntoChunks } from "@/lib/text-chunks";
 import { summaryResponseSchema } from "@/lib/validation";
@@ -34,6 +32,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     // Prefer the cleaned transcript when the user generated one — fewer
     // ASR errors and no filler makes for better notes.
     const transcript = page.transcript.cleanText ?? page.transcript.rawText;
+    // A page made from slides (no recording) gets a prompt that may fill gaps
+    // in marked callouts; a transcript's prompt adds nothing.
+    const { systemPrompt, buildUserPrompt, buildReduceUserPrompt } = summarizePromptsFor(page.transcript.modelUsed);
 
     // Long lectures overflow small (especially local) model context windows:
     // map-reduce them — condense each portion, then summarize the condensates.
@@ -61,15 +62,15 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         });
         interim.push(condensed);
       }
-      userPrompt = buildSummarizeReduceUserPrompt(interim.join("\n\n"), spellingGuide);
+      userPrompt = buildReduceUserPrompt(interim.join("\n\n"), spellingGuide);
     } else {
-      userPrompt = buildSummarizeUserPrompt(transcript, spellingGuide);
+      userPrompt = buildUserPrompt(transcript, spellingGuide);
     }
 
     const raw = await callLLMJSON({
       model,
       stage: "summary",
-      systemPrompt: SUMMARIZE_SYSTEM_PROMPT,
+      systemPrompt,
       userPrompt,
     });
     const parsed = await summaryResponseSchema.parseAsync(raw);
