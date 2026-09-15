@@ -41,6 +41,18 @@ test("cleanMermaid rejects style and link statements, which reach the same sinks
   assert.equal(cleanMermaid('flowchart TD\n  A[Open the slides] --> B\n  click A "https://attacker.example/phish"'), null);
   assert.equal(cleanMermaid("sequenceDiagram\n  A->>B: hi\n  link A: Slides @ https://attacker.example"), null);
   assert.equal(cleanMermaid("sequenceDiagram\n  A->>B: hi\n  links A: {\"Slides\": \"https://attacker.example\"}"), null);
+  // `;` separates statements on one line, so a line anchor alone misses these.
+  assert.equal(cleanMermaid("flowchart TD\n  A --> B; style A position:fixed"), null);
+  assert.equal(cleanMermaid("flowchart TD\n  A --> B;classDef x fill:red"), null);
+  // `details` and `properties` reach the link and image sinks under other names.
+  assert.equal(
+    cleanMermaid('sequenceDiagram\n  participant A\n  details A: {"links": {"Slides": "https://attacker.example"}}'),
+    null
+  );
+  assert.equal(
+    cleanMermaid('sequenceDiagram\n  participant A\n  properties A: {"icon": "https://attacker.example/b.png"}'),
+    null
+  );
   // A node label that merely contains the word is not a statement.
   assert.equal(cleanMermaid("flowchart TD\n  A[Click to style] --> B"), "flowchart TD\n  A[Click to style] --> B");
 });

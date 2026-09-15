@@ -23,10 +23,12 @@ const DIRECTIVE = /%%\{/;
  * Ordinary statements that reach the same sinks without a directive. `style`,
  * `classDef` and `linkStyle` become an inline `style` attribute on the node, which
  * DOMPurify keeps and never parses, so the same fixed-position overlay and `url()`
- * beacon go through them. `click`, `link` and `links` wrap a node in a real `<a>`
- * to any host: sanitizeUrl strips `javascript:`, not phishing.
+ * beacon go through them. `click`, `link`, `links` and a sequence diagram's
+ * `details` wrap a node in a real `<a>` to any host, and `properties` sets an
+ * `<image>` href: sanitizeUrl strips `javascript:`, not phishing or beacons.
+ * A statement may follow `;` on the same line, so a line anchor alone misses it.
  */
-const STATEMENT = /^\s*(style|classDef|linkStyle|click|links?)\b/im;
+const STATEMENT = /(^|;)\s*(style|classDef|linkStyle|click|links?|details|properties)\b/im;
 
 /** Well past the 7-node diagram we ask for, well under mermaid's own 50k parse cap. */
 const MAX_LENGTH = 4000;
