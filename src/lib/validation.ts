@@ -141,6 +141,17 @@ export const blurtResponseSchema = z.object({
     .default([]),
 });
 
+/**
+ * What the free-text answer grader returns. Capped like every other model
+ * response that reaches the screen: the model wrote this after reading a
+ * reference answer it does not control.
+ */
+export const answerGradeResponseSchema = z.object({
+  score: z.number().min(0).max(100),
+  verdict: z.string().trim().min(1).max(600),
+  missing: z.array(z.string().trim().min(1).max(300)).max(3).default([]),
+});
+
 export const feynmanEvaluateSchema = z.object({
   concept: z.string().trim().min(1).max(300),
   /** The lecture the coach was launched from, so the attempt reaches the

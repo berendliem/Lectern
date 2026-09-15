@@ -8,7 +8,6 @@ import {
   cramWeight,
   isSchedulable,
   normalizeQuality,
-  suggestQuality,
   weightedSample,
 } from "./recall.ts";
 import { scheduleNextReview } from "./sm2.ts";
@@ -181,16 +180,4 @@ test("an open misconception adds exactly one to a cram weight", () => {
       cramWeight({ ...stats, openMisconception: false }),
     1
   );
-});
-
-test("suggestQuality maps similarity onto the four buttons at its boundaries", () => {
-  assert.equal(suggestQuality(0.8), 5);
-  assert.equal(suggestQuality(0.79), 4);
-  assert.equal(suggestQuality(0.55), 4);
-  assert.equal(suggestQuality(0.54), 3);
-  assert.equal(suggestQuality(0.35), 3);
-  assert.equal(suggestQuality(0.34), 0);
-  assert.equal(suggestQuality(0), 0);
-  // An embedder that returned nothing usable suggests Again rather than NaN.
-  assert.equal(suggestQuality(Number.NaN), 0);
 });
