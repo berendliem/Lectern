@@ -1,19 +1,25 @@
 import { UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
 
-export const SUMMARIZE_SYSTEM_PROMPT = `You are an expert study-notes writer. You turn raw lecture transcripts into clean, well-organized study notes.
-
-Respond with ONLY a JSON object (no markdown code fences, no commentary) matching exactly this shape:
+// Shared by the transcript and slides prompts so the notes they produce
+// render and parse identically.
+const NOTES_JSON_SHAPE = `Respond with ONLY a JSON object (no markdown code fences, no commentary) matching exactly this shape:
 {
   "markdown": string,   // the notes, written in Markdown with headings (##) and bullet points
   "keyTerms": [ { "term": string, "definition": string } ]  // 3-10 key terms from the lecture
-}
+}`;
 
-Guidelines for "markdown":
-- Start with a single "## " heading summarizing the lecture topic, prefixed with one fitting emoji (e.g. "## 🧬 Cell Division").
+const NOTES_MARKDOWN_GUIDELINES = `- Start with a single "## " heading summarizing the lecture topic, prefixed with one fitting emoji (e.g. "## 🧬 Cell Division").
 - Use "### " subheadings to break the lecture into its main sections/topics, each prefixed with one fitting emoji.
 - Use bullet points for facts, definitions, and examples. Keep bullets concise. Bold the key term in a bullet where it helps scanning.
 - When the lecture compares things (two processes, pros/cons, before/after, categories with properties), present that as a Markdown table instead of bullets.
-- Write any mathematics, chemistry, or formulae as LaTeX: $...$ inline, $$ alone on the lines above and below a displayed equation. Write code as a fenced block with its language. Never flatten either into prose.
+- Write any mathematics, chemistry, or formulae as LaTeX: $...$ inline, $$ alone on the lines above and below a displayed equation. Write code as a fenced block with its language. Never flatten either into prose.`;
+
+export const SUMMARIZE_SYSTEM_PROMPT = `You are an expert study-notes writer. You turn raw lecture transcripts into clean, well-organized study notes.
+
+${NOTES_JSON_SHAPE}
+
+Guidelines for "markdown":
+${NOTES_MARKDOWN_GUIDELINES}
 - Do not invent information that wasn't in the transcript.
 - Do not include a "Key Terms" section in the markdown itself; key terms go only in the keyTerms array.
 
@@ -21,6 +27,72 @@ ${UNTRUSTED_CONTENT_CLAUSE}`;
 
 export function buildSummarizeUserPrompt(transcript: string, spellingGuide = ""): string {
   return `Here is a raw lecture transcript (it may contain speech-recognition errors, filler words, and run-on sentences). Turn it into clean study notes following the required JSON shape.${spellingGuide}\n\nTRANSCRIPT:\n"""\n${transcript}\n"""`;
+}
+
+// A lecture with no recording: the slides are all there is, and they are too
+// terse to learn from as they stand. The model may fill the gaps, but every
+// addition is fenced into a callout so the student can tell the deck's content
+// from the model's.
+export const SLIDES_SUMMARIZE_SYSTEM_PROMPT = `You are an expert study-notes writer. A student missed this lecture and no recording exists, so all you have is the text of the lecturer's slides. Turn it into study notes the student can learn from as if they had attended.
+
+${NOTES_JSON_SHAPE}
+
+Guidelines for "markdown":
+${NOTES_MARKDOWN_GUIDELINES}
+- Cover every point on the slides, in the order the deck presents them. Slide text is terse: turn fragments into clear, complete bullets without changing what they say.
+- Where a slide is too terse to study from (a bare term, an unexplained formula, a list with no reasoning), add a short explanation or example the lecturer would likely have given, on its own line directly after the bullets it explains, with a blank line before it, written exactly as: > ℹ️ **Added context:** ...
+- Anything not stated on the slides goes only in an Added context callout. Never mix your additions into ordinary bullets.
+- Keep additions brief and to standard textbook knowledge. Never contradict the slides, and never invent specifics the slides don't give: dates, figures, names, course policies, deadlines, or exam hints. If a slide can't be interpreted, keep it as stated rather than guessing.
+- Leave out slide furniture: "Slide N:" labels, page numbers, repeated headers and footers, and course codes.
+- Do not include a "Key Terms" section in the markdown itself; key terms go only in the keyTerms array.
+
+${UNTRUSTED_CONTENT_CLAUSE}`;
+
+/**
+ * The callout is the only thing telling the student which lines came from the
+ * deck and which from the model, so a slide must not be able to write one.
+ * The prompt copies slide text through nearly verbatim, so the marker is
+ * flattened before the model sees it, not after.
+ */
+export function unmarkAddedContext(slides: string): string {
+  return (
+    slides
+      // Zero-width and other format characters hide inside the words without
+      // changing what a model reads; strip them so the match sees the words.
+      .replace(/\p{Cf}/gu, "")
+      // The emoji with or without a presentation selector, the bold markers
+      // with or without inner spaces, and the colon on either side of them.
+      // The `>` and the space after it go only as a pair, so a marker with no
+      // `>` keeps the line break before it instead of gluing to the line above.
+      .replace(
+        /(?:>[ \t]*)?ℹ[︎️]?\s*\*\*\s*Added context\s*(?:[:：]\s*\*\*|\*\*\s*[:：])/giu,
+        "Added context:"
+      )
+  );
+}
+
+export function buildSlidesSummarizeUserPrompt(slides: string, spellingGuide = ""): string {
+  return `Here is the text extracted from a lecture's slides (it may be split into "Slide N:" blocks, image-only slides are missing, and a PDF export may break lines oddly). Turn it into study notes following the required JSON shape.${spellingGuide}\n\nSLIDES:\n"""\n${unmarkAddedContext(slides)}\n"""`;
+}
+
+/** `Transcript.modelUsed` of a page created from a slide deck, as written by
+ *  the from-text route for `source: "slides"`. */
+export const SLIDES_TRANSCRIPT_SOURCE = "import:slides";
+
+/** The system prompt and the single-pass and reduce user prompts for a page's
+ *  transcript. The map step is shared: it only condenses, adding nothing. */
+export function summarizePromptsFor(modelUsed: string | null) {
+  return modelUsed === SLIDES_TRANSCRIPT_SOURCE
+    ? {
+        systemPrompt: SLIDES_SUMMARIZE_SYSTEM_PROMPT,
+        buildUserPrompt: buildSlidesSummarizeUserPrompt,
+        buildReduceUserPrompt: buildSlidesSummarizeReduceUserPrompt,
+      }
+    : {
+        systemPrompt: SUMMARIZE_SYSTEM_PROMPT,
+        buildUserPrompt: buildSummarizeUserPrompt,
+        buildReduceUserPrompt: buildSummarizeReduceUserPrompt,
+      };
 }
 
 // Map step for long lectures (map-reduce): each transcript portion is first
@@ -43,4 +115,11 @@ export function buildSummarizeMapUserPrompt(chunk: string, index: number, total:
 
 export function buildSummarizeReduceUserPrompt(interimNotes: string, spellingGuide = ""): string {
   return `Here are dense interim notes taken from consecutive portions of one lecture, in order. Merge them into clean study notes following the required JSON shape (deduplicate overlap between portions, keep every distinct fact).${spellingGuide}\n\nINTERIM NOTES:\n"""\n${interimNotes}\n"""`;
+}
+
+// A long deck is condensed before the final pass, so without this the model
+// would see anonymous interim notes and lose track of what counts as "stated on
+// the slides" — the line every Added context callout depends on.
+export function buildSlidesSummarizeReduceUserPrompt(interimNotes: string, spellingGuide = ""): string {
+  return `Here are dense interim notes condensed, in order, from consecutive portions of one lecture's slides. Condensing added nothing, so treat them as what the slides say. Merge them into study notes following the required JSON shape (deduplicate overlap between portions, keep every distinct fact).${spellingGuide}\n\nINTERIM NOTES FROM THE SLIDES:\n"""\n${interimNotes}\n"""`;
 }

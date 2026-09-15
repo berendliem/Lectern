@@ -115,6 +115,39 @@ export function MaterialList({
     router.refresh();
   }
 
+  /** A lecture page from a deck, for a lecture with no recording. The material
+   *  itself is left as it is; the page gets a copy of its text. Under a task
+   *  key like the generators, so two clicks make one page, not two. */
+  async function makeLecturePage(id: string, title: string) {
+    setError(null);
+    let pageId: string | null = null;
+    const outcome = await run(
+      { key: `material:${id}:notes`, label: `Making lecture notes from "${title}"…`, href: `/folders/${folderId}` },
+      async () => {
+        const res = await fetch(`/api/materials/${id}`).catch(() => {
+          throw new Error("Network error talking to the local server.");
+        });
+        if (!res.ok) throw new Error("Could not load that material's text.");
+        const text = (await res.json()).material?.text;
+        if (typeof text !== "string" || !text.trim()) {
+          throw new Error("Those slides have no extracted text to make notes from.");
+        }
+        const data = (await postTask(
+          "/api/pages/from-text",
+          "Could not make a lecture page from those slides.",
+          {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, text, folderId, source: "slides" }),
+          },
+          "Network error talking to the local server."
+        )) as { page?: { id?: string } };
+        pageId = data.page?.id ?? null;
+      }
+    );
+    if (outcome.status === "error") setError(outcome.error ?? "Could not make a lecture page from those slides.");
+    else if (outcome.ran && pageId) router.push(`/pages/${pageId}`);
+  }
+
   async function remove(id: string, title: string, cards: number, questions: number) {
     // Cascade: the material's flashcards, quiz questions and search chunks go
     // with it. Every other delete in the app says what it takes; this one used
@@ -164,6 +197,7 @@ export function MaterialList({
           const generating = generatingKind(material.id);
           const flashcardsError = task(`material:${material.id}:flashcards`)?.error;
           const quizError = task(`material:${material.id}:quiz`)?.error;
+          const makingNotes = task(`material:${material.id}:notes`)?.status === "running";
           return (
             <li
               key={material.id}
@@ -186,6 +220,16 @@ export function MaterialList({
                     {` · ${shortDate(material.createdAt)}`}
                   </p>
                 </button>
+                {material.kind === "SLIDES" && (
+                  <button
+                    onClick={() => makeLecturePage(material.id, material.title)}
+                    disabled={makingNotes}
+                    title="Make a lecture page from these slides, for a lecture with no recording"
+                    className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
+                  >
+                    {makingNotes ? "Creating…" : "Lecture notes"}
+                  </button>
+                )}
                 <button
                   onClick={() =>
                     generate(material.id, material.title, "flashcards", material.flashcardCount)

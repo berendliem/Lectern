@@ -8,8 +8,9 @@ function decodeEntities(s: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
-    .replace(/&#(\d+);/g, (match, code: string) => {
-      const n = Number(code);
+    // Decimal and hex forms; Office writes hex (&#x2019; for a curly quote).
+    .replace(/&#(x[0-9a-f]+|\d+);/gi, (match, code: string) => {
+      const n = /^x/i.test(code) ? parseInt(code.slice(1), 16) : Number(code);
       // Out-of-range or surrogate code points would throw from
       // String.fromCodePoint; leave the original entity text alone rather
       // than aborting extraction of the whole file over one bad entity.
