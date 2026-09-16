@@ -1,59 +1,50 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Headphones, Loader2, Pause, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { splitForSpeech } from "@/lib/recap-speech";
+import {
+  DEFAULT_VOICE,
+  loadKokoro,
+  pauseSpeech,
+  resumeSpeech,
+  say,
+  silence,
+  speechSupported,
+} from "@/lib/speech";
 
 type Phase = "idle" | "writing" | "speaking" | "paused" | "done";
 
 /**
- * Checked at the click rather than at render: the server has no
- * `speechSynthesis`, so deciding at render whether to show the control at all
- * would have the server and the browser disagree about the markup.
- */
-const hasSpeech = () => typeof window !== "undefined" && "speechSynthesis" in window;
-
-/**
- * A ninety-second spoken recap of the lecture, read by the browser's own
- * speech synthesizer — no audio file to generate, download, or store.
+ * A ninety-second spoken recap of the lecture, read by the on-device voice in
+ * speech.ts — no audio file to generate on a server, download, or store.
  *
- * ponytail: one synthesizer voice, not the two-host podcast the study apps
- * advertise. That needs a paid TTS API and audio stitching; this needs nothing
- * and works offline. Revisit if a voice is ever worth paying for.
+ * ponytail: one voice, not the two-host podcast the study apps advertise, and
+ * always the default voice rather than the one picked in the read-aloud bar.
+ * Share that preference if students ask for it.
  */
 export function RecapPlayer({ pageId }: { pageId: string }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [script, setScript] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Utterances must outlive the render that created them: some browsers
-  // garbage-collect an utterance mid-sentence if nothing else holds it.
-  const queued = useRef<SpeechSynthesisUtterance[]>([]);
-
-  /**
-   * Cancelling speech fires `error` on whatever was mid-sentence — the spec
-   * calls it `canceled`, and it arrives by the same path a genuine failure
-   * would. Letting those handlers survive a deliberate Stop means the student
-   * is told the browser gave up on a recap they themselves ended, so the
-   * handlers come off before the queue is thrown away.
-   */
-  const silenceQueue = useCallback(() => {
-    if (!hasSpeech()) return;
-    for (const u of queued.current) {
-      u.onend = null;
-      u.onerror = null;
-    }
-    queued.current = [];
-    window.speechSynthesis.cancel();
-  }, []);
+  // Bumped on every play, stop and unmount, so a chunk that settles after the
+  // student moved on cannot carry the old reading forward.
+  const runRef = useRef(0);
 
   // Speech is a global the component does not own: leaving the page mid-recap
   // must stop the voice, not let it follow the student around the app.
-  useEffect(() => silenceQueue, [silenceQueue]);
+  useEffect(
+    () => () => {
+      runRef.current++;
+      silence();
+    },
+    []
+  );
 
-  function speak(text: string) {
-    const synth = window.speechSynthesis;
-    silenceQueue();
+  async function speak(text: string) {
+    const run = ++runRef.current;
+    silence();
 
     const chunks = splitForSpeech(text);
     if (chunks.length === 0) {
@@ -64,31 +55,39 @@ export function RecapPlayer({ pageId }: { pageId: string }) {
       return;
     }
 
-    queued.current = chunks.map((chunk, i) => {
-      const utterance = new SpeechSynthesisUtterance(chunk);
-      if (i === chunks.length - 1) utterance.onend = () => setPhase("done");
-      utterance.onerror = () => {
-        setError("The browser stopped reading the recap.");
-        setPhase("done");
-      };
-      return utterance;
-    });
-
-    queued.current.forEach((u) => synth.speak(u));
     setPhase("speaking");
+    for (let i = 0; i < chunks.length; i++) {
+      const outcome = await say(chunks[i], { voice: DEFAULT_VOICE, rate: 1, lang: "en", next: chunks[i + 1] });
+      if (run !== runRef.current) return;
+      if (outcome === "cancelled") {
+        // Silenced from elsewhere — the read-aloud bar started over the recap.
+        setPhase("idle");
+        return;
+      }
+      if (outcome === "failed") {
+        setError("The voice stopped reading the recap.");
+        break;
+      }
+    }
+    setPhase("done");
   }
 
   async function generateAndPlay() {
-    if (!hasSpeech()) {
+    if (!speechSupported()) {
       setError("This browser cannot read text aloud.");
       return;
     }
+    // Started on the click, so the voice downloads while the recap is written.
+    loadKokoro();
     if (script) {
-      speak(script);
+      void speak(script);
       return;
     }
     setPhase("writing");
     setError(null);
+    // Writing takes seconds. Leaving the page in that window bumps the token,
+    // and a recap that arrives after has no player left to stop it.
+    const run = runRef.current;
     try {
       const res = await fetch(`/api/pages/${pageId}/recap`, { method: "POST" });
       if (!res.ok) {
@@ -105,8 +104,9 @@ export function RecapPlayer({ pageId }: { pageId: string }) {
         setPhase("idle");
         return;
       }
+      if (run !== runRef.current) return;
       setScript(body.script);
-      speak(body.script);
+      void speak(body.script);
     } catch {
       // A rejected fetch or an unreadable body must not leave the button
       // spinning with no way back.
@@ -116,17 +116,18 @@ export function RecapPlayer({ pageId }: { pageId: string }) {
   }
 
   function pause() {
-    window.speechSynthesis.pause();
+    pauseSpeech();
     setPhase("paused");
   }
 
   function resume() {
-    window.speechSynthesis.resume();
+    resumeSpeech();
     setPhase("speaking");
   }
 
   function stop() {
-    silenceQueue();
+    runRef.current++;
+    silence();
     setPhase("idle");
   }
 
@@ -173,7 +174,7 @@ export function RecapPlayer({ pageId }: { pageId: string }) {
       </div>
 
       <p className="text-[13px] text-muted-2">
-        About ninety seconds, read by your browser&apos;s voice. Written fresh each session — it is not saved.
+        About ninety seconds, read by a voice that runs on your computer. Written fresh each session — it is not saved.
       </p>
       {/*
         The recap plays with no visual change beyond the button, so a listener
