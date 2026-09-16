@@ -86,7 +86,8 @@
      the text-ink-soft laid on them lifts to near-white and disappears. So the
      tints darken to washes and the text shades lift, here, once, for every
      caller. The solid fills (500, 600) carry white text in both themes and
-     are not remapped. */
+     are not remapped. The 700 and 800 shades turn light here, so they are text
+     colours only: a bg-red-700 would become a pale fill under its white text. */
   --color-red-50: #241014;
   --color-red-100: #3a171b;
   --color-red-200: #5c2328;
