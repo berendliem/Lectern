@@ -79,6 +79,25 @@
   /* Gold at this opacity vanishes on the dark ground; the mid navy reads as a
      wash there the way the gold does on parchment. */
   --read-aloud: rgba(47, 88, 150, 0.55);
+
+  /* Status colours are Tailwind palette classes, not tokens: bg-red-50 behind
+     text-red-700 for a miss, bg-emerald-50 for a pass, bg-amber-200 behind a
+     search hit. Left alone, those pale tints stay pale on the dark ground, and
+     the text-ink-soft laid on them lifts to near-white and disappears. So the
+     tints darken to washes and the text shades lift, here, once, for every
+     caller. The solid fills (500, 600) carry white text in both themes and
+     are not remapped. */
+  --color-red-50: #241014;
+  --color-red-100: #3a171b;
+  --color-red-200: #5c2328;
+  --color-red-700: #fca5a5;
+  --color-emerald-50: #0f2a22;
+  --color-emerald-200: #1f4d3e;
+  --color-emerald-700: #6ee7b7;
+  --color-amber-50: #2b2110;
+  --color-amber-200: #5a4318;
+  --color-amber-700: #fcd34d;
+  --color-amber-800: #fde68a;
 }
 
 @theme inline {
