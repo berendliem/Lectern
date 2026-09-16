@@ -8,7 +8,7 @@ import { PipelineStatusBanner } from "@/components/page-detail/PipelineStatusBan
 import { PageTabs } from "@/components/page-detail/PageTabs";
 import { TranscriptTab } from "@/components/page-detail/TranscriptTab";
 import { NotesTab } from "@/components/page-detail/NotesTab";
-import { FlashcardList } from "@/components/flashcards/FlashcardList";
+import { FlashcardsTab } from "@/components/flashcards/FlashcardsTab";
 import { QuizRunner, type QuizQuestionForRunner } from "@/components/quiz/QuizRunner";
 import { DrillMissesButton } from "@/components/quiz/DrillMissesButton";
 import { ChatTab } from "@/components/page-detail/ChatTab";
@@ -112,7 +112,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             label: `Flashcards${page.flashcards.length ? ` (${page.flashcards.length})` : ""}`,
             content:
               page.flashcards.length > 0 ? (
-                <FlashcardList flashcards={page.flashcards} />
+                <FlashcardsTab pageId={page.id} flashcards={page.flashcards} />
               ) : (
                 <EmptyState message="Flashcards will appear here once the learning guide has been generated." />
               ),
