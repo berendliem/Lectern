@@ -1,4 +1,5 @@
-const GRADES: { label: string; sublabel: string; quality: number; classes: string }[] = [
+/** In order, so the digit keys 1–4 map onto them by position. */
+export const GRADES: { label: string; sublabel: string; quality: number; classes: string }[] = [
   {
     label: "Again",
     sublabel: "Forgot it",
@@ -42,15 +43,19 @@ export function ReviewGradeButtons({
 }) {
   return (
     <div className="grid w-full max-w-md grid-cols-4 gap-2">
-      {GRADES.map((g) => (
+      {GRADES.map((g, i) => (
         <button
           key={g.label}
           onClick={() => onGrade(g.quality)}
           disabled={disabled}
-          className={`flex flex-col items-center rounded-xl border px-2 py-2.5 transition-colors disabled:opacity-50 ${g.classes} ${
+          aria-keyshortcuts={String(i + 1)}
+          className={`relative flex flex-col items-center rounded-xl border px-2 py-2.5 transition-colors disabled:opacity-50 ${g.classes} ${
             suggested === g.quality ? "ring-2 ring-brand ring-offset-1 ring-offset-surface" : ""
           }`}
         >
+          <kbd className="absolute left-1.5 top-1 font-sans text-[10px] opacity-50" aria-hidden="true">
+            {i + 1}
+          </kbd>
           <span className="text-sm font-semibold">{g.label}</span>
           <span className="text-[11px] opacity-70">{g.sublabel}</span>
           {suggested === g.quality && <span className="text-[10px] opacity-70">suggested</span>}
