@@ -43,4 +43,11 @@ test("price ranges and sums are still escaped", () => {
   assert.equal(protectCurrency("It costs $5-$10."), "It costs \\$5-\\$10.");
   assert.equal(protectCurrency("Between $5-10 and $20."), "Between \\$5-10 and \\$20.");
   assert.equal(protectCurrency("$5 + $10 in total"), "\\$5 + \\$10 in total");
+  assert.equal(protectCurrency("Tiers: $5-10, $20-30, $50+"), "Tiers: \\$5-10, \\$20-30, \\$50+");
+  assert.equal(protectCurrency("$5-10 $20"), "\\$5-10 \\$20");
+});
+
+test("an arithmetic run too long to be one inline formula stays text", () => {
+  const long = `$${"1+".repeat(200)}1$`;
+  assert.equal(protectCurrency(long), `\\${long}`);
 });
