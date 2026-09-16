@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen, CalendarPlus, Lightbulb, Loader2, MessagesSquare, Timer } from "lucide-react";
+import { BookOpen, CalendarPlus, CheckCheck, Lightbulb, Loader2, MessagesSquare, Timer } from "lucide-react";
 import { BlurtPanel } from "@/components/flashcards/BlurtPanel";
 
 const LINK_CLASSES =
@@ -13,7 +13,16 @@ const LINK_CLASSES =
  * The lecture-tier entry points: every one of these features works better when
  * it starts from what you just studied instead of a blank slate.
  */
-export function LectureActions({ pageId, pageTitle }: { pageId: string; pageTitle: string }) {
+export function LectureActions({
+  pageId,
+  pageTitle,
+  dueCount = 0,
+}: {
+  pageId: string;
+  pageTitle: string;
+  /** This lecture's cards due now; the review link only shows when there are any. */
+  dueCount?: number;
+}) {
   const router = useRouter();
   const [scheduling, setScheduling] = useState(false);
   const [teaching, setTeaching] = useState(false);
@@ -67,6 +76,14 @@ export function LectureActions({ pageId, pageTitle }: { pageId: string; pageTitl
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2">
+        {dueCount > 0 && (
+          <Link
+            href={`/pages/${pageId}/review`}
+            className={`${LINK_CLASSES} border-brand-border bg-brand-soft/40 text-brand-ink`}
+          >
+            <CheckCheck className="h-3.5 w-3.5" strokeWidth={2.2} /> Review {dueCount} due
+          </Link>
+        )}
         <BlurtPanel pageId={pageId} className={LINK_CLASSES} />
         <Link href={`/feynman?pageId=${pageId}`} className={LINK_CLASSES}>
           <Lightbulb className="h-3.5 w-3.5" strokeWidth={2.2} /> Feynman coach

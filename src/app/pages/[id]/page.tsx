@@ -78,7 +78,11 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
 
       <PretestReveal entries={pretestRevealEntries} />
 
-      <LectureActions pageId={page.id} pageTitle={page.title} />
+      <LectureActions
+        pageId={page.id}
+        pageTitle={page.title}
+        dueCount={page.flashcards.filter((card) => card.nextReviewAt <= new Date()).length}
+      />
 
       <PageTabs
         tabs={[
