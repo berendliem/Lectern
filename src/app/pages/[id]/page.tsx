@@ -123,7 +123,13 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             content:
               page.quizQuestions.length > 0 ? (
                 <div className="flex flex-col gap-5">
-                  <QuizRunner questions={sanitizeQuizQuestions(page.quizQuestions)} />
+                  {/* Keyed on the question set, so a drill that adds questions starts a
+                      session that includes them. Unkeyed, the runner keeps the
+                      list it mounted with and the new questions never appear. */}
+                  <QuizRunner
+                    key={page.quizQuestions.map((q) => q.id).join()}
+                    questions={sanitizeQuizQuestions(page.quizQuestions)}
+                  />
                   <DrillMissesButton pageId={page.id} missedCount={missedCount} />
                 </div>
               ) : (
