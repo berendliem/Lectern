@@ -86,7 +86,7 @@ export default async function ExamCramPage({
   searchParams,
 }: {
   params: Promise<{ folderId: string }>;
-  searchParams: Promise<{ limit?: string }>;
+  searchParams: Promise<{ limit?: string | string[] }>;
 }) {
   const { folderId } = await params;
   const folder = await db.folder.findUnique({ where: { id: folderId } });
@@ -94,7 +94,8 @@ export default async function ExamCramPage({
 
   // Anything that is not one of the offered lengths is the full course; a typo
   // in the URL should not turn a cram into a three-question quiz.
-  const requested = Number((await searchParams).limit);
+  // A repeated key arrives as an array; anything but 20 or 50 means the whole course.
+  const requested = Number([(await searchParams).limit].flat()[0]);
   const limit = LIMITS.find((n) => n === requested) ?? null;
 
   const now = new Date();

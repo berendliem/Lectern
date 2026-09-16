@@ -92,7 +92,12 @@ export function FlashcardFlip({
 
       <button
         type="button"
-        onClick={onFlip}
+        // A mouse reveal leaves focus on this button, where Enter and Space
+        // would press it again instead of reaching the session's shortcuts.
+        onClick={(e) => {
+          e.currentTarget.blur();
+          onFlip();
+        }}
         disabled={disabled}
         className="mt-5 text-xs font-medium text-muted-2 hover:text-brand-ink disabled:opacity-50"
       >
