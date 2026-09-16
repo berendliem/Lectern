@@ -44,11 +44,24 @@ export type WorkerMessage =
 
 export type Engine = "kokoro" | "browser" | "wait" | "none";
 
-/** Which engine reads the next sentence. */
-export function pickEngine(kokoro: KokoroStatus, hasBrowserVoice: boolean): Engine {
+/**
+ * Which engine reads the next sentence. A browser voice picked by name never
+ * waits for Kokoro, so choosing one also skips the model download.
+ */
+export function pickEngine(kokoro: KokoroStatus, hasBrowserVoice: boolean, wantsKokoro = true): Engine {
+  if (!wantsKokoro) return hasBrowserVoice ? "browser" : "none";
   if (kokoro === "ready") return "kokoro";
   if (hasBrowserVoice) return "browser";
   return kokoro === "loading" ? "wait" : "none";
+}
+
+/**
+ * voiceURI is not unique: macOS ships Samantha and Hubert both claiming
+ * "Samantha", so selecting one by URI alone hands back whichever comes first.
+ * Name and language together separate them.
+ */
+export function voiceKey(voice: SpeechSynthesisVoice): string {
+  return `${voice.name}|${voice.lang}|${voice.voiceURI}`;
 }
 
 // --- model state, readable through useSyncExternalStore ---------------------
@@ -86,11 +99,31 @@ export function speechSupported(): boolean {
  * would let the browser pick its default, which can be a network voice.
  */
 function localVoice(lang: string): SpeechSynthesisVoice | undefined {
-  if (!hasBrowserSpeech()) return undefined;
+  return browserVoices(lang).find((v) => v.localService);
+}
+
+/**
+ * The browser's voices for the language — every voice when none match it —
+ * with true duplicates collapsed. Empty until the list has loaded.
+ */
+export function browserVoices(lang: string): SpeechSynthesisVoice[] {
+  if (!hasBrowserSpeech()) return [];
   const prefix = lang.slice(0, 2).toLowerCase();
-  return window.speechSynthesis
-    .getVoices()
-    .find((v) => v.localService && v.lang.slice(0, 2).toLowerCase() === prefix);
+  const all = window.speechSynthesis.getVoices();
+  const matching = all.filter((v) => v.lang.slice(0, 2).toLowerCase() === prefix);
+  const list = matching.length > 0 ? matching : all;
+  return [...new Map(list.map((v) => [voiceKey(v), v])).values()];
+}
+
+export function subscribeBrowserVoices(listener: () => void) {
+  if (!hasBrowserSpeech()) return () => {};
+  window.speechSynthesis.addEventListener("voiceschanged", listener);
+  return () => window.speechSynthesis.removeEventListener("voiceschanged", listener);
+}
+
+function browserVoiceByKey(key: string): SpeechSynthesisVoice | undefined {
+  if (!hasBrowserSpeech()) return undefined;
+  return window.speechSynthesis.getVoices().find((v) => voiceKey(v) === key);
 }
 
 // Sentences parked until an engine can read them, woken by anything that might
@@ -199,7 +232,8 @@ function render(text: string, voice: KokoroVoice, rate: number): Promise<AudioBu
 export type Outcome = "ended" | "cancelled" | "failed";
 
 export type SayOptions = {
-  voice: KokoroVoice;
+  /** A Kokoro voice id, or the voiceKey of one of the browser's voices. */
+  voice: string;
   rate: number;
   /** For the browser voice, which has to be told the language. */
   lang: string;
@@ -216,18 +250,20 @@ let utterance: SpeechSynthesisUtterance | null = null;
 /** Reads one sentence and settles when it has been read, stopped, or has failed. */
 export async function say(text: string, options: SayOptions): Promise<Outcome> {
   const gen = generation;
-  let engine = pickEngine(state.status, !!localVoice(options.lang));
+  const kokoroVoice = isKokoroVoice(options.voice) ? options.voice : null;
+  const hasBrowserVoice = () => !!(browserVoiceByKey(options.voice) ?? localVoice(options.lang));
+  let engine = pickEngine(state.status, hasBrowserVoice(), kokoroVoice !== null);
 
   while (engine === "wait") {
     await new Promise<void>((resolve) => waiters.add(resolve));
     if (gen !== generation) return "cancelled";
-    engine = pickEngine(state.status, !!localVoice(options.lang));
+    engine = pickEngine(state.status, hasBrowserVoice(), kokoroVoice !== null);
   }
 
-  if (engine === "kokoro") {
-    const audio = render(text, options.voice, options.rate);
-    rendered.delete(`${options.voice}|${options.rate}|${text}`);
-    if (options.next) render(options.next, options.voice, options.rate);
+  if (engine === "kokoro" && kokoroVoice) {
+    const audio = render(text, kokoroVoice, options.rate);
+    rendered.delete(`${kokoroVoice}|${options.rate}|${text}`);
+    if (options.next) render(options.next, kokoroVoice, options.rate);
     try {
       const buffer = await audio;
       if (gen !== generation) return "cancelled";
@@ -243,13 +279,29 @@ export async function say(text: string, options: SayOptions): Promise<Outcome> {
   return "failed";
 }
 
+// 0..1, shared by both engines. Kokoro applies it mid-sentence through the gain
+// node; the browser engine reads it when the next utterance is made.
+let volume = 1;
+let gain: GainNode | null = null;
+
+export function setVolume(next: number) {
+  volume = Math.max(0, Math.min(1, next));
+  if (gain) gain.gain.value = volume;
+}
+
 function playBuffer(buffer: AudioBuffer, gen: number): Promise<Outcome> {
   const ctx = audioCtx;
   if (!ctx) return Promise.resolve("failed");
+  if (!gain) {
+    gain = ctx.createGain();
+    gain.gain.value = volume;
+    gain.connect(ctx.destination);
+  }
+  const out = gain;
   return new Promise((resolve) => {
     const node = ctx.createBufferSource();
     node.buffer = buffer;
-    node.connect(ctx.destination);
+    node.connect(out);
     node.onended = () => {
       if (source === node) source = null;
       resolve(gen === generation ? "ended" : "cancelled");
@@ -259,15 +311,18 @@ function playBuffer(buffer: AudioBuffer, gen: number): Promise<Outcome> {
   });
 }
 
-function speakWithBrowser(text: string, { rate, lang }: SayOptions, gen: number): Promise<Outcome> {
+function speakWithBrowser(text: string, { voice: wanted, rate, lang }: SayOptions, gen: number): Promise<Outcome> {
   return new Promise((resolve) => {
     // Chrome drops a speak() issued in the same tick as a cancel().
     setTimeout(() => {
       if (gen !== generation) return resolve("cancelled");
-      const voice = localVoice(lang);
+      // A picked browser voice is used as picked, network or not; the fallback
+      // for a Kokoro voice stays on-device.
+      const voice = browserVoiceByKey(wanted) ?? localVoice(lang);
       if (!voice) return resolve("failed");
       const u = new SpeechSynthesisUtterance(text);
       u.rate = rate;
+      u.volume = volume;
       u.voice = voice;
       u.lang = voice.lang;
       const settle = (outcome: Outcome) => {
