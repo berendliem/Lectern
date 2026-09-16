@@ -62,7 +62,7 @@ export function MermaidDiagram({ source }: { source: string }) {
   return (
     <div
       role="img"
-      aria-label="Diagram of the explanation above"
+      aria-label="Diagram of the text above"
       className="mt-3 overflow-x-auto rounded-lg bg-surface p-3 [&_svg]:mx-auto [&_svg]:h-auto [&_svg]:max-w-full"
       dangerouslySetInnerHTML={{ __html: svg }}
     />

@@ -1,4 +1,4 @@
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
@@ -14,9 +14,9 @@ import { protectCurrency } from "@/lib/inline-math";
  * That collides with prices in prose, so `protectCurrency` escapes the dollars
  * that open an amount before remark-math can read a sentence as a formula.
  */
-export function Markdown({ children }: { children: string }) {
+export function Markdown({ children, components }: { children: string; components?: Components }) {
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
+    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={components}>
       {protectCurrency(children)}
     </ReactMarkdown>
   );
