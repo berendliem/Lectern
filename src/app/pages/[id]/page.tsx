@@ -123,11 +123,11 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             content:
               page.quizQuestions.length > 0 ? (
                 <div className="flex flex-col gap-5">
-                  {/* Keyed on the question set, so a drill that adds questions starts a
-                      session that includes them. Unkeyed, the runner keeps the
-                      list it mounted with and the new questions never appear. */}
+                  {/* Keyed on the oldest question: a drill appends newer ones and the
+                      runner folds them into the run in progress, while a regenerate
+                      replaces every question and has to start a fresh run. */}
                   <QuizRunner
-                    key={page.quizQuestions.map((q) => q.id).join()}
+                    key={page.quizQuestions[0].id}
                     questions={sanitizeQuizQuestions(page.quizQuestions)}
                   />
                   <DrillMissesButton pageId={page.id} missedCount={missedCount} />
