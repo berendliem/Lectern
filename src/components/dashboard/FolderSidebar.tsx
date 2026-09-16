@@ -30,6 +30,7 @@ type Folder = {
   name: string;
   color: string | null;
   _count: { pages: number };
+  dueCount: number;
 };
 
 // The global tier: everything that works across every course. Course-scoped
@@ -191,6 +192,7 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <Link
               key={folder.id}
               href={`/folders/${folder.id}`}
+              title={`${folder._count.pages} lecture${folder._count.pages === 1 ? "" : "s"}`}
               className={clsx(
                 "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors",
                 active
@@ -205,7 +207,20 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 fillOpacity={0.25}
               />
               <span className="flex-1 truncate">{folder.name}</span>
-              <span className="text-[11.5px] tabular-nums text-muted-2">{folder._count.pages}</span>
+              {/* Due cards, not lecture count: the number that tells you which
+                  course to open next. The lecture count keeps its place in
+                  the tooltip. */}
+              {folder.dueCount > 0 && (
+                <span
+                  aria-label={`${folder.dueCount} due`}
+                  className={clsx(
+                    "rounded-full px-1.5 py-px text-[11px] font-semibold leading-4",
+                    active ? "bg-brand text-white" : "bg-brand-soft text-brand-ink"
+                  )}
+                >
+                  {folder.dueCount}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -214,7 +229,6 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New course">
         <form onSubmit={handleCreate} className="flex flex-col gap-3">
           <Input
-            autoFocus
             placeholder="Course name"
             value={name}
             onChange={(e) => setName(e.target.value)}

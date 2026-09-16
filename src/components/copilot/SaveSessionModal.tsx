@@ -33,7 +33,6 @@ export function SaveSessionModal({
           This saves the live transcript as a new lecture page you can summarize, quiz yourself on, and review later.
         </p>
         <Input
-          autoFocus
           placeholder="Session title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}

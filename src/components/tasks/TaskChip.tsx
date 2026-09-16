@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Loader2, TriangleAlert, X } from "lucide-react";
 import { useTasks } from "@/components/tasks/TaskProvider";
@@ -14,6 +14,25 @@ import clsx from "@/lib/clsx";
 export function TaskChip() {
   const { tasks, dismiss } = useTasks();
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Every other popover in the shell closes on Escape or a click elsewhere;
+  // this one stayed open until its own button was clicked again.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    const onMouseDown = (e: MouseEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    document.addEventListener("mousedown", onMouseDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onMouseDown);
+    };
+  }, [open]);
 
   if (tasks.length === 0) return null;
 
@@ -21,9 +40,11 @@ export function TaskChip() {
   const failed = tasks.filter((task) => task.status === "error");
 
   return (
-    <div className="relative">
+    <div ref={rootRef} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="true"
         className={clsx(
           "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12.5px] font-medium transition-colors",
           failed.length > 0

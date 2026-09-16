@@ -62,6 +62,8 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
         status={page.status}
         folder={page.folder}
         tags={page.tags.map((t) => t.tag)}
+        flashcardCount={page.flashcards.length}
+        quizCount={page.quizQuestions.length}
       />
 
       <PipelineStatusBanner

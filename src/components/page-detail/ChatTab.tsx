@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Loader2, MessageCircleQuestion, Send } from "lucide-react";
 import { ChatBubble } from "@/components/ask/ChatBubble";
+import { useChatHistory } from "@/components/ask/useChatHistory";
 
 type Message = { role: "user" | "assistant"; content: string };
 
@@ -13,7 +14,7 @@ const SUGGESTIONS = [
 ];
 
 export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: boolean }) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages, clearMessages] = useChatHistory<Message>(`lectern:chat:page:${pageId}`);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,20 +30,26 @@ export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: 
     setSending(true);
     endRef.current?.scrollIntoView({ behavior: "smooth" });
 
-    const res = await fetch(`/api/pages/${pageId}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: nextMessages.slice(-12) }),
-    });
-    setSending(false);
-
-    if (res.ok) {
-      const { reply } = await res.json();
-      setMessages((m) => [...m, { role: "assistant", content: reply }]);
-      setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-    } else {
-      const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "The assistant couldn't reply. Try again.");
+    // A dropped connection rejects the fetch outright. Without the catch the
+    // "Thinking…" bubble never cleared and the send button stayed disabled.
+    try {
+      const res = await fetch(`/api/pages/${pageId}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: nextMessages.slice(-12) }),
+      });
+      if (res.ok) {
+        const { reply } = await res.json();
+        setMessages((m) => [...m, { role: "assistant", content: reply }]);
+        setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "The assistant couldn't reply. Try again.");
+      }
+    } catch {
+      setError("Network error talking to the local server.");
+    } finally {
+      setSending(false);
     }
   }
 
@@ -97,6 +104,11 @@ export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: 
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
+      {messages.length > 0 && !sending && (
+        <button type="button" onClick={clearMessages} className="self-end text-xs text-muted-2 hover:text-ink-soft">
+          Clear chat
+        </button>
+      )}
 
       <form
         onSubmit={(e) => {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BrainCircuit, FileText, Loader2, Presentation, Send } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { ChatBubble } from "./ChatBubble";
+import { useChatHistory } from "./useChatHistory";
 
 type Citation = { label: string; pageId: string | null; materialId: string | null };
 type Message = { role: "user" | "assistant"; content: string; citations?: Citation[] };
@@ -17,7 +18,7 @@ const SUGGESTIONS = [
 ];
 
 export function LibraryChat() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages, clearMessages] = useChatHistory<Message>("lectern:chat:library");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +127,11 @@ export function LibraryChat() {
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
+      {messages.length > 0 && !sending && (
+        <button type="button" onClick={clearMessages} className="self-end text-xs text-muted-2 hover:text-ink-soft">
+          Clear chat
+        </button>
+      )}
 
       <form
         onSubmit={(e) => {

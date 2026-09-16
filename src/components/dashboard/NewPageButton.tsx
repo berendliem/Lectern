@@ -40,7 +40,6 @@ export function NewPageButton({ folderId }: { folderId?: string }) {
       <Modal open={open} onClose={() => setOpen(false)} title="New lecture">
         <form onSubmit={handleCreate} className="flex flex-col gap-3">
           <Input
-            autoFocus
             placeholder="Lecture title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
