@@ -26,9 +26,19 @@ const DIRECTIVE = /%%\{/;
  * beacon go through them. `click`, `link`, `links` and a sequence diagram's
  * `details` wrap a node in a real `<a>` to any host, and `properties` sets an
  * `<image>` href: sanitizeUrl strips `javascript:`, not phishing or beacons.
+ * `accTitle` and `accDescr` write free text into the SVG outside any node label.
  * A statement may follow `;` on the same line, so a line anchor alone misses it.
  */
-const STATEMENT = /(^|;)\s*(style|classDef|linkStyle|click|links?|details|properties)\b/im;
+const STATEMENT = /(^|;)\s*(style|classDef|linkStyle|click|links?|details|properties|accTitle|accDescr)\b/im;
+
+/**
+ * A sequence diagram hands `$$…$$` to KaTeX and inserts the result into a
+ * foreignObject through innerHTML — a path `htmlLabels: false` does not close.
+ */
+const KATEX = /\$\$/;
+
+/** Invisible format characters, such as a zero-width space ahead of a keyword, slip past STATEMENT's anchor. */
+const FORMAT_CHARACTER = /\p{Cf}/u;
 
 /** Well past the 7-node diagram we ask for, well under mermaid's own 50k parse cap. */
 const MAX_LENGTH = 4000;
@@ -43,6 +53,7 @@ export function cleanMermaid(raw: unknown): string | null {
   if (!DIAGRAM_TYPES.test(unfenced)) return null;
   if (DIRECTIVE.test(unfenced)) return null;
   if (STATEMENT.test(unfenced)) return null;
+  if (KATEX.test(unfenced) || FORMAT_CHARACTER.test(unfenced)) return null;
   if (unfenced.length > MAX_LENGTH) return null;
   return unfenced;
 }

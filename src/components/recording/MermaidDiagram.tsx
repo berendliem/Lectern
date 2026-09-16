@@ -39,7 +39,7 @@ export function MermaidDiagram({ source }: { source: string }) {
           });
           initialized = true;
         }
-        const { svg } = await mermaid.render(`live-explain-${idCounter++}`, source);
+        const { svg } = await mermaid.render(`mermaid-diagram-${idCounter++}`, source);
         if (!cancelled) setRendered({ source, svg });
       } catch (e) {
         // Invalid diagram: leave the explanation text to stand on its own. Logged
@@ -62,7 +62,7 @@ export function MermaidDiagram({ source }: { source: string }) {
   return (
     <div
       role="img"
-      aria-label="Diagram of the explanation above"
+      aria-label="Diagram of the text above"
       className="mt-3 overflow-x-auto rounded-lg bg-surface p-3 [&_svg]:mx-auto [&_svg]:h-auto [&_svg]:max-w-full"
       dangerouslySetInnerHTML={{ __html: svg }}
     />

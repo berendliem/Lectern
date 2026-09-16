@@ -33,3 +33,9 @@ test("tables still render, so adding math did not cost us GFM", () => {
   const html = render("| a | b |\n| - | - |\n| 1 | 2 |");
   assert.match(html, /<table>/);
 });
+
+test("a dollar amount inside fenced code is left exactly as written", () => {
+  const html = render("```mermaid\nflowchart TD\n  A[Buy for $5] --> B[Sell for $10]\n```");
+  assert.match(html, /Buy for \$5\]/);
+  assert.doesNotMatch(html, /\\\$5/);
+});

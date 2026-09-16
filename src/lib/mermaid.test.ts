@@ -66,3 +66,14 @@ test("cleanMermaid keeps only the diagram types the prompt asks for", () => {
 test("cleanMermaid rejects a diagram longer than the cap", () => {
   assert.equal(cleanMermaid(`flowchart TD\n${"  A --> B\n".repeat(500)}`), null);
 });
+
+test("cleanMermaid rejects accessibility text, KaTeX, and invisible format characters", () => {
+  // accTitle and accDescr put free text into the SVG outside any node label.
+  assert.equal(cleanMermaid("flowchart TD\n  A --> B\n  accDescr: anything at all"), null);
+  assert.equal(cleanMermaid("sequenceDiagram\n  accTitle: anything\n  A->>B: hi"), null);
+  // `$$…$$` in a sequence diagram is rendered by KaTeX into a foreignObject via
+  // innerHTML, whatever htmlLabels says.
+  assert.equal(cleanMermaid("sequenceDiagram\n  Alice->>Bob: $$e^{i\\pi}+1=0$$"), null);
+  // A zero-width space ahead of a keyword slips past the statement anchor.
+  assert.equal(cleanMermaid('flowchart TD\n  A --> B\n\u200Bclick A "https://attacker.example"'), null);
+});

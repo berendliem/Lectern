@@ -1,10 +1,30 @@
+import type { Components } from "react-markdown";
 import { Markdown } from "@/components/Markdown";
+import { MermaidDiagram } from "@/components/recording/MermaidDiagram";
 import clsx from "@/lib/clsx";
+import { cleanMermaid } from "@/lib/mermaid";
 
 // Models reach for <br> inside markdown tables. react-markdown escapes raw HTML,
 // so those tags would otherwise render as literal text in the bubble; a space is
 // the safe substitution — a newline would end the table row it sits in.
 const stripHtmlBreaks = (text: string) => text.replace(/<br\s*\/?>/gi, " ");
+
+/**
+ * A ```mermaid fence in a reply is a diagram, drawn the way "Explain this" draws
+ * one: through cleanMermaid, then MermaidDiagram. A fence cleanMermaid rejects
+ * shows nothing rather than its source, as a diagram that fails to parse does.
+ */
+const replyComponents: Components = {
+  pre({ node, ...props }) {
+    const code = node?.children[0];
+    const classes = code?.type === "element" ? code.properties.className : undefined;
+    if (code?.type !== "element" || !Array.isArray(classes) || !classes.includes("language-mermaid")) {
+      return <pre {...props} />;
+    }
+    const source = cleanMermaid(code.children.map((child) => (child.type === "text" ? child.value : "")).join(""));
+    return source ? <MermaidDiagram source={source} /> : null;
+  },
+};
 
 /**
  * One chat bubble. Assistant replies arrive as markdown — headings, bold, lists,
@@ -33,7 +53,7 @@ export function ChatBubble({
       {role === "user" ? (
         content
       ) : (
-        <Markdown>{stripHtmlBreaks(content)}</Markdown>
+        <Markdown components={replyComponents}>{stripHtmlBreaks(content)}</Markdown>
       )}
     </div>
   );
