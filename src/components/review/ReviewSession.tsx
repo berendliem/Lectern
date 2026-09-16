@@ -205,7 +205,9 @@ export function ReviewSession({ folderId, pageId }: { folderId?: string; pageId?
   // grade. Typing in the answer box is never a command, and a focused button
   // keeps Enter and Space for itself, so tabbing through the deck still works.
   const latest = useRef({ flipped, grade, saving, queue, index, handleFlip, handleGrade });
-  latest.current = { flipped, grade, saving, queue, index, handleFlip, handleGrade };
+  useEffect(() => {
+    latest.current = { flipped, grade, saving, queue, index, handleFlip, handleGrade };
+  });
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const state = latest.current;
