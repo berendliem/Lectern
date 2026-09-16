@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
-import { jsonError } from "@/lib/api-utils";
+import { jsonError, markStageFailed } from "@/lib/api-utils";
 import { assertSingleParent } from "@/lib/cards";
 import { callLLMJSON } from "@/lib/llm";
 import { QUIZ_SYSTEM_PROMPT, buildQuizUserPrompt, buildMissesQuizUserPrompt } from "@/lib/prompts/quiz";
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           ? e.message
           : "Quiz generation failed";
     if (!drillMisses) {
-      await db.page.update({ where: { id }, data: { status: "ERROR", errorMessage: message } });
+      await markStageFailed(id, page.status, message);
     }
     return jsonError(message, 502);
   }
