@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, GraduationCap } from "lucide-react";
+import clsx from "@/lib/clsx";
 import { db } from "@/lib/db";
 import { courseScopeFilter, quizlessMaterialsFilter } from "@/lib/cards";
 import { RECALL_LEDGER_SINCE, cramWeight, weightedSample, type CramStats } from "@/lib/recall";
@@ -77,10 +78,24 @@ async function recallBySource(folderId: string, now: Date): Promise<Map<SourceKe
   return stats;
 }
 
-export default async function ExamCramPage({ params }: { params: Promise<{ folderId: string }> }) {
+/** Session lengths on offer. Absent from the URL means the whole course. */
+const LIMITS = [20, 50] as const;
+
+export default async function ExamCramPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ folderId: string }>;
+  searchParams: Promise<{ limit?: string }>;
+}) {
   const { folderId } = await params;
   const folder = await db.folder.findUnique({ where: { id: folderId } });
   if (!folder) notFound();
+
+  // Anything that is not one of the offered lengths is the full course; a typo
+  // in the URL should not turn a cram into a three-question quiz.
+  const requested = Number((await searchParams).limit);
+  const limit = LIMITS.find((n) => n === requested) ?? null;
 
   const now = new Date();
   const [questions, stats, quizless] = await Promise.all([
@@ -114,7 +129,9 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
           questions.length
         );
 
-  const runnerQuestions: QuizQuestionForRunner[] = ordered.map((q) => ({
+  // Sliced after the draw, so a short session still takes the weakest and
+  // stalest first rather than the first twenty in storage order.
+  const runnerQuestions: QuizQuestionForRunner[] = (limit ? ordered.slice(0, limit) : ordered).map((q) => ({
     id: q.id,
     type: q.type,
     prompt: q.prompt,
@@ -138,10 +155,34 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
         <div>
           <h1 className="text-lg font-bold tracking-tight text-ink">Exam cram · {folder.name}</h1>
           <p className="text-[13px] text-muted">
-            {runnerQuestions.length} question{runnerQuestions.length === 1 ? "" : "s"} mixed from this course&apos;s lectures and materials{stats.size > 0 ? ", weakest and stalest first" : ""}.
+            {runnerQuestions.length} of {questions.length} question{questions.length === 1 ? "" : "s"} mixed from this course&apos;s lectures and materials{stats.size > 0 ? ", weakest and stalest first" : ""}.
           </p>
         </div>
       </div>
+
+      {questions.length > LIMITS[0] && (
+        <div className="flex items-center gap-2 text-[12.5px]">
+          <span className="text-muted-2">Session length</span>
+          {[...LIMITS, null].map((n) => {
+            const active = n === limit;
+            return (
+              <Link
+                key={n ?? "all"}
+                href={n ? `/folders/${folder.id}/cram?limit=${n}` : `/folders/${folder.id}/cram`}
+                aria-current={active ? "page" : undefined}
+                className={clsx(
+                  "rounded-full border px-2.5 py-1 font-medium transition-colors",
+                  active
+                    ? "border-brand-border bg-brand-soft text-brand-ink"
+                    : "border-line text-muted hover:border-brand-border hover:text-brand-ink"
+                )}
+              >
+                {n ?? `All ${questions.length}`}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {quizless.length > 0 && (
         <CramQuestionGenerator
@@ -157,7 +198,7 @@ export default async function ExamCramPage({ params }: { params: Promise<{ folde
         // or was already filled — leaves the run in progress alone. The count
         // alone would do neither reliably, and the draw is reshuffled on every
         // render.
-        <QuizRunner key={questions.map((q) => q.id).sort().join()} questions={runnerQuestions} />
+        <QuizRunner key={`${limit ?? "all"}:${questions.map((q) => q.id).sort().join()}`} questions={runnerQuestions} />
       ) : (
         quizless.length === 0 && (
           <div className="rounded-2xl border border-dashed border-line-strong px-4 py-14 text-center text-sm text-muted-2">
