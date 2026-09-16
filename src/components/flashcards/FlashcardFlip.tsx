@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "@/lib/clsx";
+import { Markdown } from "@/components/Markdown";
 
 /**
  * Reveal-then-self-grade is the weakest form of retrieval practice: the honest
@@ -49,7 +50,10 @@ export function FlashcardFlip({
       >
         {flipped ? "Reference explanation" : "Explain in your own words"}
       </p>
-      <p className="text-lg text-ink">{flipped ? idealExplanation : prompt}</p>
+      {/* Markdown, like the quiz: a card on a maths lecture carries LaTeX. */}
+      <div className="text-lg text-ink [&_p]:m-0">
+        <Markdown>{flipped ? idealExplanation : prompt}</Markdown>
+      </div>
 
       {!flipped && (
         <div className="mt-5 flex flex-col gap-3">
