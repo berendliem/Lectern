@@ -15,6 +15,7 @@ export function ShortAnswerQuestion({
   disabled: boolean;
 }) {
   const [answer, setAnswer] = useState("");
+  const canSubmit = !disabled && answer.trim().length > 0;
 
   return (
     <div className="flex flex-col gap-3">
@@ -25,10 +26,17 @@ export function ShortAnswerQuestion({
         rows={3}
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}
-        placeholder="Type your answer…"
+        // Plain Enter stays a newline: an answer can be a paragraph.
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && canSubmit) {
+            e.preventDefault();
+            onSubmit(answer);
+          }
+        }}
+        placeholder="Type your answer… (⌘Enter to submit)"
         disabled={disabled}
       />
-      <Button onClick={() => onSubmit(answer)} disabled={disabled || !answer.trim()} className="self-start">
+      <Button onClick={() => onSubmit(answer)} disabled={!canSubmit} className="self-start">
         Submit
       </Button>
     </div>

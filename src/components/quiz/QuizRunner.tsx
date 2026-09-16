@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { ShortAnswerQuestion } from "@/components/quiz/ShortAnswerQuestion";
 import { MultipleChoiceQuestion } from "@/components/quiz/MultipleChoiceQuestion";
 import { ClozeQuestion } from "@/components/quiz/ClozeQuestion";
@@ -8,6 +8,7 @@ import { MathQuestion } from "@/components/quiz/MathQuestion";
 import { QuizResultsSummary } from "@/components/quiz/QuizResultsSummary";
 import { Button } from "@/components/ui/Button";
 import { MASTERY_SCORE, MAX_MASTERY_ATTEMPTS, shouldRequeue } from "@/lib/grading";
+import { keyInputFromEvent, sessionKey } from "@/lib/review-keys";
 
 export type QuizQuestionForRunner = {
   id: string;
@@ -97,10 +98,41 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
     setIndex((i) => i + 1);
   }
 
+  /** Back to the first question, with nothing remembered: the attempt history
+   *  on the server is what the drill button reads, and it is untouched. */
+  function restart() {
+    setQueue(questions);
+    setIndex(0);
+    setAttempts({});
+    setFeedback(null);
+    setRequeued(false);
+    setResults([]);
+    setError(null);
+  }
+
+  // Enter moves on once the mark is up. The question components own the keys
+  // before that, and a focused button keeps Enter for itself.
+  const latest = useRef({ feedback, handleNext });
+  useEffect(() => {
+    latest.current = { feedback, handleNext };
+  });
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const state = latest.current;
+      if (!state.feedback) return;
+      if (sessionKey(keyInputFromEvent(e))?.type === "enter") {
+        e.preventDefault();
+        state.handleNext();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   if (questions.length === 0) return null;
 
   if (index >= queue.length) {
-    return <QuizResultsSummary results={results} />;
+    return <QuizResultsSummary results={results} onRestart={restart} />;
   }
 
   const question = queue[index];
@@ -108,10 +140,18 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted-2">
-        Question {index + 1} of {queue.length}
-        {priorAttempts > 0 && " · second look"}
-      </p>
+      <div>
+        <p className="mb-1.5 text-sm text-muted-2">
+          Question {index + 1} of {queue.length}
+          {priorAttempts > 0 && " · second look"}
+        </p>
+        <div className="h-1 w-full overflow-hidden rounded-full bg-surface-3">
+          <div
+            className="h-full rounded-full bg-brand transition-all"
+            style={{ width: `${(index / queue.length) * 100}%` }}
+          />
+        </div>
+      </div>
 
       {/*
         Keyed on the question and the attempt, so coming back to a question
@@ -186,6 +226,9 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
           )}
           <Button size="sm" onClick={handleNext} className="mt-3">
             {index + 1 < queue.length ? "Next question" : "See results"}
+            <kbd className="font-sans text-[10px] opacity-60" aria-hidden="true">
+              Enter
+            </kbd>
           </Button>
         </div>
       )}

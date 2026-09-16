@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCheck, PartyPopper } from "lucide-react";
 import { FlashcardFlip } from "@/components/flashcards/FlashcardFlip";
-import { ReviewGradeButtons } from "@/components/review/ReviewGradeButtons";
+import { GRADES, ReviewGradeButtons } from "@/components/review/ReviewGradeButtons";
 import { cardSource } from "@/lib/cards";
 import { Button } from "@/components/ui/Button";
 import { MASTERY_SCORE, MAX_MASTERY_ATTEMPTS, scoreForQuality, shouldRequeue } from "@/lib/grading";
+import { keyInputFromEvent, sessionKey } from "@/lib/review-keys";
 
 type DueCard = {
   id: string;
@@ -25,11 +26,14 @@ type Grade = {
   grader: "llm" | "overlap";
 };
 
-export function ReviewSession({ folderId }: { folderId?: string }) {
+export function ReviewSession({ folderId, pageId }: { folderId?: string; pageId?: string }) {
   // The queue, not the due list: a card recalled below the mastery bar goes to
   // the back of it, so the session ends when the deck is known rather than
   // when the list runs out.
   const [queue, setQueue] = useState<DueCard[] | null>(null);
+  // Everything due, not just the batch loaded: the route caps a session, and
+  // "Session complete" with forty cards still waiting is a lie by omission.
+  const [total, setTotal] = useState(0);
   const [index, setIndex] = useState(0);
   const [attempts, setAttempts] = useState<Record<string, number>>({});
   const [flipped, setFlipped] = useState(false);
@@ -46,18 +50,48 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
   // longer on screen, and is dropped rather than applied to whatever is.
   const suggestSeq = useRef(0);
 
+  const load = useCallback(
+    (signal?: { ignore: boolean }) => {
+      const params = new URLSearchParams();
+      if (pageId) params.set("pageId", pageId);
+      else if (folderId) params.set("folderId", folderId);
+      const query = params.toString();
+      return fetch(`/api/review/due${query ? `?${query}` : ""}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (signal?.ignore) return;
+          const cards: DueCard[] = data.cards ?? [];
+          setQueue(cards);
+          setTotal(typeof data.total === "number" ? data.total : cards.length);
+        });
+    },
+    [folderId, pageId]
+  );
+
   useEffect(() => {
-    let ignore = false;
-    const url = folderId ? `/api/review/due?folderId=${encodeURIComponent(folderId)}` : "/api/review/due";
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!ignore) setQueue(data.cards ?? []);
-      });
+    const signal = { ignore: false };
+    load(signal);
     return () => {
-      ignore = true;
+      signal.ignore = true;
     };
-  }, [folderId]);
+  }, [load]);
+
+  /** The next batch of what is still due. The cards just graded have moved on,
+   *  so the same request now returns the ones this session never reached. */
+  function loadMore() {
+    suggestSeq.current++;
+    setQueue(null);
+    setIndex(0);
+    setAttempts({});
+    setUnmastered(0);
+    setFlipped(false);
+    setTyped("");
+    setConfidence(null);
+    setGrade(null);
+    setGrading(false);
+    setError(null);
+    void load();
+  }
 
   /**
    * Reveal, and — only if something was typed — mark that attempt. The reveal
@@ -167,6 +201,38 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
     setIndex((i) => i + 1);
   }
 
+  // Space or Enter turns the card, 1–4 grade it, Enter takes the machine's
+  // grade. Typing in the answer box is never a command, and a focused button
+  // keeps Enter and Space for itself, so tabbing through the deck still works.
+  const latest = useRef({ flipped, grade, saving, queue, index, handleFlip, handleGrade });
+  useEffect(() => {
+    latest.current = { flipped, grade, saving, queue, index, handleFlip, handleGrade };
+  });
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const state = latest.current;
+      if (state.saving || !state.queue || state.index >= state.queue.length) return;
+      const action = sessionKey(keyInputFromEvent(e));
+      if (!action) return;
+      if (!state.flipped) {
+        if (action.type === "enter" || action.type === "space") {
+          e.preventDefault();
+          void state.handleFlip();
+        }
+        return;
+      }
+      if (action.type === "digit") {
+        const pressed = GRADES[action.n - 1];
+        if (pressed) void state.handleGrade(pressed.quality, scoreForQuality(pressed.quality));
+      } else if (action.type === "enter" && state.grade) {
+        e.preventDefault();
+        void state.handleGrade(state.grade.quality, state.grade.score);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   if (queue === null) {
     return <p className="text-sm text-muted-2">Loading…</p>;
   }
@@ -187,6 +253,7 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
 
   if (index >= queue.length) {
     const reviewedCards = Object.keys(attempts).length;
+    const moreDue = Math.max(0, total - reviewedCards);
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-line-strong px-4 py-16 text-center">
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
@@ -205,11 +272,16 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
               back sooner.
             </p>
           )}
+          {moreDue > 0 && (
+            <Button size="sm" className="mt-3" onClick={loadMore}>
+              Review {moreDue} more
+            </Button>
+          )}
           <Link
-            href={folderId ? `/folders/${folderId}` : "/"}
-            className="mt-1 inline-block text-[13px] font-medium text-brand-ink hover:underline"
+            href={pageId ? `/pages/${pageId}` : folderId ? `/folders/${folderId}` : "/"}
+            className="mt-2 block text-[13px] font-medium text-brand-ink hover:underline"
           >
-            Back to your courses
+            {pageId ? "Back to the lecture" : "Back to your courses"}
           </Link>
         </div>
       </div>
@@ -218,6 +290,9 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
 
   const card = queue[index];
   const progress = (index / queue.length) * 100;
+  // Distinct cards, because a requeued card sits in the queue twice and would
+  // otherwise count against what is still waiting on the server.
+  const stillDue = total - new Set(queue.map((c) => c.id)).size;
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5">
@@ -226,6 +301,7 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
           <span>
             Card {index + 1} of {queue.length}
             {(attempts[card.id] ?? 0) > 0 && " · second look"}
+            {stillDue > 0 && ` · ${stillDue} more due after this`}
           </span>
           {(() => {
             const source = cardSource(card);
@@ -258,6 +334,23 @@ export function ReviewSession({ folderId }: { folderId?: string }) {
         onConfidence={setConfidence}
         disabled={saving}
       />
+      <p className="hidden text-[11px] text-muted-2 sm:block" aria-hidden="true">
+        {flipped ? (
+          <>
+            <kbd className="font-sans">1</kbd>–<kbd className="font-sans">4</kbd> to grade
+            {grade && (
+              <>
+                {" · "}
+                <kbd className="font-sans">Enter</kbd> to take the suggested grade
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <kbd className="font-sans">Space</kbd> to reveal · <kbd className="font-sans">⌘Enter</kbd> from the answer box
+          </>
+        )}
+      </p>
       {flipped && grading && (
         <p role="status" className="text-[13px] text-muted-2">
           Marking what you wrote…

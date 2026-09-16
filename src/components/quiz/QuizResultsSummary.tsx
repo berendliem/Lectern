@@ -1,5 +1,6 @@
 import { blankCloze } from "@/lib/cloze";
 import { Markdown } from "@/components/Markdown";
+import { Button } from "@/components/ui/Button";
 
 type Result = {
   id: string;
@@ -26,16 +27,23 @@ function lastAttempts(results: Result[]): Result[] {
   return [...byQuestion.values()];
 }
 
-export function QuizResultsSummary({ results }: { results: Result[] }) {
+export function QuizResultsSummary({ results, onRestart }: { results: Result[]; onRestart?: () => void }) {
   const final = lastAttempts(results);
   const correctCount = final.filter((r) => r.isCorrect).length;
   const retried = final.filter((r) => r.attempt > 1 && r.isCorrect).length;
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-lg font-medium text-ink">
-        You scored {correctCount} / {final.length}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-lg font-medium text-ink">
+          You scored {correctCount} / {final.length}
+        </p>
+        {onRestart && (
+          <Button size="sm" variant="secondary" onClick={onRestart}>
+            Try again
+          </Button>
+        )}
+      </div>
       {retried > 0 && (
         <p className="-mt-3 text-sm text-muted-2">
           {retried} of those took more than one go — that repetition is the part that sticks.
