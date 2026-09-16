@@ -13,11 +13,18 @@ import { protectCurrency } from "@/lib/inline-math";
  * Single-dollar inline math stays on, because `$x^2$` is what the models emit.
  * That collides with prices in prose, so `protectCurrency` escapes the dollars
  * that open an amount before remark-math can read a sentence as a formula.
+ * Fenced code is left out of that: a `$5` in a code sample or a diagram label is
+ * literal text, and an inserted backslash would show up in it.
  */
+const FENCED_CODE = /(```[\s\S]*?```)/;
+
 export function Markdown({ children, components }: { children: string; components?: Components }) {
   return (
     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={components}>
-      {protectCurrency(children)}
+      {children
+        .split(FENCED_CODE)
+        .map((part, i) => (i % 2 === 1 ? part : protectCurrency(part)))
+        .join("")}
     </ReactMarkdown>
   );
 }
