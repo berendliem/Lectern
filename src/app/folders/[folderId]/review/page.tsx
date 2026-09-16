@@ -45,7 +45,7 @@ export default async function CourseReviewPage({
         </div>
       </div>
 
-      <ReviewSession folderId={folder.id} />
+      <ReviewSession key={folder.id} folderId={folder.id} />
     </div>
   );
 }

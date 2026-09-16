@@ -23,6 +23,7 @@ export function ShortAnswerQuestion({
         <Markdown>{prompt}</Markdown>
       </div>
       <Textarea
+        aria-keyshortcuts="Control+Enter Meta+Enter"
         rows={3}
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}

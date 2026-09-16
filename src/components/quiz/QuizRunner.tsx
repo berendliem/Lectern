@@ -53,6 +53,9 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(answer: string) {
+    // Enter from the keyboard and a click can land in the same tick; the
+    // second would mark the same attempt twice.
+    if (submitting) return;
     const question = queue[index];
     // Sent along so the route records only the first go in the ledger; after
     // a miss the correct answer has been on screen.

@@ -14,9 +14,12 @@ export type KeyInput = {
   inField: boolean;
   /** Focus is on a button: Enter and Space already press it, so they are left alone. */
   onButton: boolean;
+  /** Auto-repeat from a held key: one press is one command, however long it is held. */
+  repeat?: boolean;
 };
 
-export function sessionKey({ key, metaKey, ctrlKey, inField, onButton }: KeyInput): SessionKey | null {
+export function sessionKey({ key, metaKey, ctrlKey, inField, onButton, repeat }: KeyInput): SessionKey | null {
+  if (repeat) return null;
   if (key === "Enter") {
     if (inField) return metaKey || ctrlKey ? { type: "enter" } : null;
     return onButton ? null : { type: "enter" };
@@ -34,6 +37,7 @@ export function keyInputFromEvent(e: KeyboardEvent): KeyInput {
     key: e.key,
     metaKey: e.metaKey,
     ctrlKey: e.ctrlKey,
+    repeat: e.repeat,
     inField:
       tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target?.isContentEditable === true,
     onButton: tag === "BUTTON" || tag === "A",
