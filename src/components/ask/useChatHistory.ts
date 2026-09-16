@@ -3,6 +3,31 @@
 import { useEffect, useState } from "react";
 
 const MAX_MESSAGES = 40;
+// Well under the per-origin quota even with a chat open per lecture; past it
+// the oldest messages go first, the way the count cap works.
+const MAX_BYTES = 200_000;
+
+/**
+ * Storage is written by this app but it is still outside it: a devtools edit
+ * or a reply that once arrived without `content` would otherwise hydrate a
+ * bubble that throws on every mount, with no error boundary to catch it.
+ */
+function isMessage(m: unknown): m is { role: string; content: string; citations?: unknown[] } {
+  if (typeof m !== "object" || m === null) return false;
+  const { role, content, citations } = m as Record<string, unknown>;
+  if ((role !== "user" && role !== "assistant") || typeof content !== "string") return false;
+  return citations === undefined || Array.isArray(citations);
+}
+
+function trimToBudget<T>(messages: T[]): string {
+  let kept = messages.slice(-MAX_MESSAGES);
+  let json = JSON.stringify(kept);
+  while (json.length > MAX_BYTES && kept.length > 1) {
+    kept = kept.slice(1);
+    json = JSON.stringify(kept);
+  }
+  return json;
+}
 
 /**
  * Chat messages that survive a reload or a tab switch. Session storage, not
@@ -26,8 +51,9 @@ export function useChatHistory<T extends { role: string; content: string }>(
       try {
         const raw = sessionStorage.getItem(key);
         if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) setMessages(parsed);
+          const parsed: unknown = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.every(isMessage)) setMessages(parsed as T[]);
+          else sessionStorage.removeItem(key);
         }
       } catch {
         // Unreadable or unavailable: start empty.
@@ -40,7 +66,7 @@ export function useChatHistory<T extends { role: string; content: string }>(
     if (!loaded) return;
     try {
       if (messages.length === 0) sessionStorage.removeItem(key);
-      else sessionStorage.setItem(key, JSON.stringify(messages.slice(-MAX_MESSAGES)));
+      else sessionStorage.setItem(key, trimToBudget(messages));
     } catch {
       // Quota or availability: the chat still works, it just will not persist.
     }
