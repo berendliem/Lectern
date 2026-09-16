@@ -22,6 +22,11 @@ test("typing into a field is text, not a command", () => {
   assert.equal(sessionKey({ ...inField, key: "2" }), null);
 });
 
+test("a held key repeats nothing", () => {
+  assert.equal(sessionKey({ ...free, key: "Enter", repeat: true }), null);
+  assert.equal(sessionKey({ ...free, key: "3", repeat: true }), null);
+});
+
 test("cmd or ctrl plus enter submits from inside a field", () => {
   assert.deepEqual(sessionKey({ ...free, key: "Enter", inField: true, metaKey: true }), { type: "enter" });
   assert.deepEqual(sessionKey({ ...free, key: "Enter", inField: true, ctrlKey: true }), { type: "enter" });

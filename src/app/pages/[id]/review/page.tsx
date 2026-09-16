@@ -37,7 +37,7 @@ export default async function LectureReviewPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <ReviewSession pageId={page.id} />
+      <ReviewSession key={page.id} pageId={page.id} />
     </div>
   );
 }

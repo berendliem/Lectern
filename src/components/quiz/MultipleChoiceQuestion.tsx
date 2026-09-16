@@ -52,6 +52,7 @@ export function MultipleChoiceQuestion({
             key={`${i}-${option}`}
             onClick={() => setSelected(option)}
             disabled={disabled}
+            aria-pressed={selected === option}
             aria-keyshortcuts={i < 9 ? String(i + 1) : undefined}
             className={clsx(
               "flex items-start gap-3 rounded-lg border px-4 py-2.5 text-left text-sm transition-colors [&_p]:m-0",

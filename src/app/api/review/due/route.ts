@@ -6,7 +6,8 @@ export async function GET(req: NextRequest) {
   const folderId = req.nextUrl.searchParams.get("folderId");
   const pageId = req.nextUrl.searchParams.get("pageId");
   const limitParam = req.nextUrl.searchParams.get("limit");
-  const limit = limitParam ? Math.min(100, Math.max(1, Number(limitParam))) : 20;
+  const parsedLimit = Number(limitParam);
+  const limit = limitParam && Number.isFinite(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 20;
 
   // A lecture is the narrower scope, so it wins when both are sent.
   const where = {
