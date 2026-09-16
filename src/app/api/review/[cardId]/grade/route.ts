@@ -27,10 +27,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ car
     now
   );
 
-  const updated = await db.flashcard.update({
-    where: { id: cardId },
+  // The schedule above was computed from the card as read. If another tab
+  // graded the card since, writing it would silently replace that schedule
+  // with one built on stale state, so the write only lands if lastReviewedAt
+  // is still what was read. Not updatedAt: an edit to the card's text bumps
+  // that too, and must not cost the student their grade.
+  const { count } = await db.flashcard.updateMany({
+    where: { id: cardId, lastReviewedAt: card.lastReviewedAt },
     data: { ...schedule, lastReviewedAt: now },
   });
+  if (count === 0) return jsonError("This card was just graded somewhere else.", 409);
+  const updated = await db.flashcard.findUnique({ where: { id: cardId } });
+  if (!updated) return jsonError("Flashcard not found", 404);
 
   // The ledger, not just the streak: this row is what lets a later quiz or
   // blurt on the same lecture argue with the interval just computed.

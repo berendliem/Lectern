@@ -172,7 +172,9 @@ export function ReviewSession({ folderId, pageId }: { folderId?: string; pageId?
             confidence: confidence ?? undefined,
           }),
         });
-        if (!res.ok) {
+        // 409: another tab graded this card first. Its grade stands, and
+        // retrying here would grade the card a second time, so move on.
+        if (!res.ok && res.status !== 409) {
           const data = await res.json().catch(() => ({}));
           setError(data.error ?? "That grade didn't save. Try again.");
           return;
