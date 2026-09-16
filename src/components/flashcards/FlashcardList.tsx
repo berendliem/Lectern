@@ -126,6 +126,7 @@ export function FlashcardList({
                     value={draft.prompt}
                     onChange={(e) => setDraft((d) => ({ ...d, prompt: e.target.value }))}
                     aria-label="Prompt"
+                    maxLength={2000}
                     disabled={busy}
                   />
                   <Textarea
@@ -133,6 +134,7 @@ export function FlashcardList({
                     value={draft.idealExplanation}
                     onChange={(e) => setDraft((d) => ({ ...d, idealExplanation: e.target.value }))}
                     aria-label="Reference explanation"
+                    maxLength={8000}
                     disabled={busy}
                   />
                   <div className="flex justify-end gap-2">
