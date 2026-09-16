@@ -96,7 +96,6 @@ export function TranscriptImportButton({ folderId }: { folderId?: string }) {
       <Modal open={open} onClose={close} title="Import a transcript">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Input
-            autoFocus
             placeholder="Lecture title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}

@@ -20,10 +20,12 @@ export function SearchBox({ initialQuery = "" }: { initialQuery?: string }) {
 
   // "/" focuses search, as on GitHub and most docs sites. Only when the key
   // would otherwise go nowhere: typing a slash into a chat box must still
-  // type a slash.
+  // type a slash, and a dialog's focus trap must not be pulled out from under
+  // it.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
       e.preventDefault();
       inputRef.current?.focus();
     };

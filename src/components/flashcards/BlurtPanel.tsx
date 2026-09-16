@@ -126,7 +126,6 @@ export function BlurtPanel({ pageId, className }: { pageId: string; className?: 
                 value={dump}
                 onChange={(e) => setDump(e.target.value)}
                 rows={10}
-                autoFocus
                 aria-label="What you remember"
                 className="w-full resize-y rounded-xl border border-line bg-surface px-3 py-2 text-[13px] text-ink placeholder:text-muted-2 focus:border-brand-border focus:outline-none"
                 placeholder="It started with…"

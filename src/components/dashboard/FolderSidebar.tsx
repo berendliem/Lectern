@@ -229,7 +229,6 @@ export function FolderSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New course">
         <form onSubmit={handleCreate} className="flex flex-col gap-3">
           <Input
-            autoFocus
             placeholder="Course name"
             value={name}
             onChange={(e) => setName(e.target.value)}

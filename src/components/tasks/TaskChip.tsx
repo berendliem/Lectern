@@ -44,6 +44,7 @@ export function TaskChip() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        aria-haspopup="true"
         className={clsx(
           "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12.5px] font-medium transition-colors",
           failed.length > 0

@@ -120,17 +120,21 @@ export function PageDetailHeader({
           <Trash2 className="h-4 w-4 text-muted-2" strokeWidth={2} />
         </Button>
       </div>
-      <Modal open={renaming} onClose={() => setRenaming(false)} title="Rename lecture">
+      <Modal open={renaming} onClose={() => !saving && setRenaming(false)} title="Rename lecture">
         <form onSubmit={handleRename} className="flex flex-col gap-3">
           <Input
-            autoFocus
+            aria-label="Lecture title"
             placeholder="Lecture title"
             value={next}
             onChange={(e) => setNext(e.target.value)}
           />
-          {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
+          {error && (
+            <p role="alert" className="text-[13px] font-medium text-red-700">
+              {error}
+            </p>
+          )}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setRenaming(false)}>
+            <Button type="button" variant="secondary" onClick={() => setRenaming(false)} disabled={saving}>
               Cancel
             </Button>
             <Button type="submit" disabled={saving || !next.trim()}>

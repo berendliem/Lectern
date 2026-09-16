@@ -68,17 +68,21 @@ export function FolderHeader({ folderId, name }: { folderId: string; name: strin
       <Button variant="danger" size="sm" onClick={handleDelete} disabled={busy}>
         Delete course
       </Button>
-      <Modal open={renaming} onClose={() => setRenaming(false)} title="Rename course">
+      <Modal open={renaming} onClose={() => !busy && setRenaming(false)} title="Rename course">
         <form onSubmit={handleRename} className="flex flex-col gap-3">
           <Input
-            autoFocus
+            aria-label="Course name"
             placeholder="Course name"
             value={next}
             onChange={(e) => setNext(e.target.value)}
           />
-          {error && <p className="text-[13px] font-medium text-red-700">{error}</p>}
+          {error && (
+            <p role="alert" className="text-[13px] font-medium text-red-700">
+              {error}
+            </p>
+          )}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setRenaming(false)}>
+            <Button type="button" variant="secondary" onClick={() => setRenaming(false)} disabled={busy}>
               Cancel
             </Button>
             <Button type="submit" disabled={busy || !next.trim()}>

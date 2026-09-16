@@ -228,7 +228,6 @@ export function MaterialUploadButton({ folderId }: { folderId: string }) {
           </div>
 
           <Input
-            autoFocus
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}

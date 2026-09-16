@@ -21,30 +21,32 @@ export function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
-  // Keyed on `open` alone: `onClose` is usually an inline arrow, and an effect
-  // that re-ran on every parent render would capture the panel's own button as
-  // the "opener" and hand focus back to a dead element on close.
+  // The element that opened the dialog gets focus back when it closes;
+  // otherwise focus drops to <body> and a keyboard user starts over from the
+  // top of the page. The dialog places focus itself rather than relying on a
+  // child's autoFocus: autoFocus lands before any effect runs, so by then
+  // activeElement is already the panel's own input and the opener is lost.
   useEffect(() => {
     if (!open) return;
-    const panel = panelRef.current;
-    // The element that opened the dialog gets focus back when it closes;
-    // otherwise focus drops to <body> and a keyboard user starts over from
-    // the top of the page.
     const opener = document.activeElement as HTMLElement | null;
-    // A child with autoFocus has already taken focus by the time this runs;
-    // only fill in when nothing inside the panel has it.
-    if (panel && !panel.contains(document.activeElement)) {
-      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
-      (items.find((el) => el.getAttribute("aria-label") !== "Close") ?? items[0])?.focus();
-    }
+    const items = Array.from(panelRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []);
+    (items.find((el) => el.getAttribute("aria-label") !== "Close") ?? items[0])?.focus();
     return () => opener?.focus?.();
   }, [open]);
+
+  // `onClose` is usually an inline arrow, so it lives in a ref: keying the
+  // listener on it would tear it down and re-add it on every keystroke typed
+  // into the dialog's own form.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab") return;
@@ -64,7 +66,7 @@ export function Modal({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open || typeof document === "undefined") return null;
 

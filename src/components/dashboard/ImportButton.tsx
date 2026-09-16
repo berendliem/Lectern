@@ -113,7 +113,6 @@ export function ImportButton({ folderId }: { folderId?: string }) {
       <Modal open={open} onClose={close} title="Import notes, a PDF, or slides">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Input
-            autoFocus
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
