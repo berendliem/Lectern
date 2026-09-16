@@ -32,3 +32,15 @@ test("markdown with no dollars at all is returned unchanged", () => {
   const input = "## Heading\n\n- a bullet\n- another";
   assert.equal(protectCurrency(input), input);
 });
+
+test("plain arithmetic opening on a digit is left for remark-math", () => {
+  for (const input of ["$5-1$", "$5 - 1$", "$2 * 3$", "$6/2$", "$5x+1$"]) {
+    assert.equal(protectCurrency(input), input);
+  }
+});
+
+test("price ranges and sums are still escaped", () => {
+  assert.equal(protectCurrency("It costs $5-$10."), "It costs \\$5-\\$10.");
+  assert.equal(protectCurrency("Between $5-10 and $20."), "Between \\$5-10 and \\$20.");
+  assert.equal(protectCurrency("$5 + $10 in total"), "\\$5 + \\$10 in total");
+});
