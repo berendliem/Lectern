@@ -123,7 +123,13 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             content:
               page.quizQuestions.length > 0 ? (
                 <div className="flex flex-col gap-5">
-                  <QuizRunner questions={sanitizeQuizQuestions(page.quizQuestions)} />
+                  {/* Keyed on the oldest question: a drill appends newer ones and the
+                      runner folds them into the run in progress, while a regenerate
+                      replaces every question and has to start a fresh run. */}
+                  <QuizRunner
+                    key={page.quizQuestions[0].id}
+                    questions={sanitizeQuizQuestions(page.quizQuestions)}
+                  />
                   <DrillMissesButton pageId={page.id} missedCount={missedCount} />
                 </div>
               ) : (

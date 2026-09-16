@@ -34,6 +34,15 @@ export function QuizRunner({ questions }: { questions: QuizQuestionForRunner[] }
   // bar is pushed onto the end of it, so the session lasts until the material
   // is known rather than until the list runs out.
   const [queue, setQueue] = useState<QuizQuestionForRunner[]>(questions);
+  // A drill adds questions and refreshes the page mid-session. They join the end
+  // of this run rather than restarting it: a restart would put answered questions
+  // back in front of the student, and a re-answered question reads as a fresh
+  // first attempt to the review ledger.
+  const [received, setReceived] = useState(questions);
+  if (questions !== received) {
+    setReceived(questions);
+    setQueue((q) => [...q, ...questions.filter((added) => !q.some((queued) => queued.id === added.id))]);
+  }
   const [index, setIndex] = useState(0);
   const [attempts, setAttempts] = useState<Record<string, number>>({});
   const [feedback, setFeedback] = useState<Feedback | null>(null);
