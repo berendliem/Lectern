@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createActionItemsSchema, learnMoreResponseSchema, quizResponseSchema } from "./validation.ts";
+import {
+  createActionItemsSchema,
+  learnMoreResponseSchema,
+  quizResponseSchema,
+  updateFlashcardSchema,
+} from "./validation.ts";
 
 test("a well-formed batch of action items parses", async () => {
   const parsed = await createActionItemsSchema.parseAsync({
@@ -73,4 +78,13 @@ test("an item missing a field is rejected", async () => {
 
 test("an empty item list is rejected, so an empty tab cannot look like a success", async () => {
   await assert.rejects(() => learnMoreResponseSchema.parseAsync({ items: [] }));
+});
+
+test("a flashcard edit trims both sides and refuses an empty one", async () => {
+  const parsed = await updateFlashcardSchema.parseAsync({
+    prompt: "  What is entropy?  ",
+    idealExplanation: "A measure of disorder.",
+  });
+  assert.equal(parsed.prompt, "What is entropy?");
+  await assert.rejects(() => updateFlashcardSchema.parseAsync({ prompt: "   ", idealExplanation: "x" }));
 });

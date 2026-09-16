@@ -82,6 +82,12 @@ export const updatePageSchema = z.object({
   notesMarkdown: z.string().optional(),
 });
 
+/** PATCH /api/flashcards/[id]: the student rewrites a card the model got wrong. */
+export const updateFlashcardSchema = z.object({
+  prompt: z.string().trim().min(1).max(2000),
+  idealExplanation: z.string().trim().min(1).max(8000),
+});
+
 export const tagOnPageSchema = z.object({
   pageId: z.string().trim().min(1),
   tagName: z.string().trim().min(1).max(64),
