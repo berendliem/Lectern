@@ -80,13 +80,14 @@ export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcar
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap gap-1.5">
+        <div role="radiogroup" aria-label="Filter cards" className="flex flex-wrap gap-1.5">
           {VIEWS.map((v) => (
             <button
               key={v}
               type="button"
+              role="radio"
+              aria-checked={view === v}
               onClick={() => setView(v)}
-              aria-pressed={view === v}
               className={clsx(
                 "rounded-full border px-2.5 py-1 text-[12px] transition-colors",
                 view === v
@@ -126,9 +127,7 @@ export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcar
           {regenerateError}
         </p>
       )}
-      {/* Keyed on the default so flipping it forgets every per-card toggle:
-          "Hide all" hides everything, not everything except what was opened. */}
-      <FlashcardList key={String(revealAll)} flashcards={visible} revealAll={revealAll} />
+      <FlashcardList flashcards={visible} revealAll={revealAll} disabled={regenerating} />
     </div>
   );
 }

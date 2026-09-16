@@ -1,14 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import clsx from "@/lib/clsx";
 
-export function PageTabs({
-  tabs,
-}: {
-  tabs: { id: string; label: string; content: React.ReactNode }[];
-}) {
+type Tab = { id: string; label: string; content: React.ReactNode };
+
+// useSearchParams needs a Suspense boundary above it or a statically rendered
+// route fails the build. Both host pages are force-dynamic today; the boundary
+// keeps that from being a hidden requirement of reusing this component.
+export function PageTabs({ tabs }: { tabs: Tab[] }) {
+  return (
+    <Suspense fallback={null}>
+      <UrlTabs tabs={tabs} />
+    </Suspense>
+  );
+}
+
+function UrlTabs({ tabs }: { tabs: Tab[] }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   // The tab lives in the URL so a reload, the back button and a pasted link

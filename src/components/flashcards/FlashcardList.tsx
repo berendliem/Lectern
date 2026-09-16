@@ -26,19 +26,33 @@ export function isDue(card: FlashcardListItem, now = new Date()): boolean {
 export function FlashcardList({
   flashcards,
   revealAll,
+  disabled = false,
 }: {
   flashcards: FlashcardListItem[];
   /** Flips the default: every answer shown, and a click hides one instead. */
   revealAll: boolean;
+  /** While the set is being regenerated: every card on screen is about to go. */
+  disabled?: boolean;
 }) {
   const router = useRouter();
-  // Cards whose answer is the opposite of the default. Toggling the default
-  // clears it (via the key on the parent), so "Hide all" hides everything.
+  // Cards whose answer is the opposite of the default.
   const [toggled, setToggled] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState({ prompt: "", idealExplanation: "" });
-  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const busy = saving || disabled;
+
+  // Flipping the default forgets every per-card toggle, so "Hide all" hides
+  // everything and not everything except what was opened. Adjusted during
+  // render rather than by remounting the list: a remount would also throw
+  // away an edit in progress. Same for an edit whose card left the view.
+  const [prevRevealAll, setPrevRevealAll] = useState(revealAll);
+  if (revealAll !== prevRevealAll) {
+    setPrevRevealAll(revealAll);
+    setToggled(new Set());
+  }
+  if (editing && !flashcards.some((card) => card.id === editing)) setEditing(null);
 
   function toggle(id: string) {
     setToggled((prev) => {
@@ -56,7 +70,7 @@ export function FlashcardList({
   }
 
   async function save(id: string) {
-    setBusy(true);
+    setSaving(true);
     setError(null);
     try {
       const res = await fetch(`/api/flashcards/${id}`, {
@@ -74,7 +88,7 @@ export function FlashcardList({
     } catch {
       setError("Network error talking to the local server.");
     } finally {
-      setBusy(false);
+      setSaving(false);
     }
   }
 
@@ -83,7 +97,7 @@ export function FlashcardList({
     // card's own interval and ease are what a delete throws away.
     const scheduled = card.repetitions > 0 ? " Its review schedule goes with it — the attempts you made stay on record." : "";
     if (!confirm(`Delete this card?${scheduled}\n\n“${card.prompt}”`)) return;
-    setBusy(true);
+    setSaving(true);
     setError(null);
     try {
       const res = await fetch(`/api/flashcards/${card.id}`, { method: "DELETE" });
@@ -96,7 +110,7 @@ export function FlashcardList({
     } catch {
       setError("Network error talking to the local server.");
     } finally {
-      setBusy(false);
+      setSaving(false);
     }
   }
 
