@@ -39,7 +39,7 @@ export function MermaidDiagram({ source }: { source: string }) {
           });
           initialized = true;
         }
-        const { svg } = await mermaid.render(`live-explain-${idCounter++}`, source);
+        const { svg } = await mermaid.render(`mermaid-diagram-${idCounter++}`, source);
         if (!cancelled) setRendered({ source, svg });
       } catch (e) {
         // Invalid diagram: leave the explanation text to stand on its own. Logged

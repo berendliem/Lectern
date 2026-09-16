@@ -15,10 +15,11 @@ const stripHtmlBreaks = (text: string) => text.replace(/<br\s*\/?>/gi, " ");
  * shows nothing rather than its source, as a diagram that fails to parse does.
  */
 const replyComponents: Components = {
-  pre({ node, children }) {
+  pre({ node, ...props }) {
     const code = node?.children[0];
-    if (code?.type !== "element" || !String(code.properties.className).split(",").includes("language-mermaid")) {
-      return <pre>{children}</pre>;
+    const classes = code?.type === "element" ? code.properties.className : undefined;
+    if (code?.type !== "element" || !Array.isArray(classes) || !classes.includes("language-mermaid")) {
+      return <pre {...props} />;
     }
     const source = cleanMermaid(code.children.map((child) => (child.type === "text" ? child.value : "")).join(""));
     return source ? <MermaidDiagram source={source} /> : null;
