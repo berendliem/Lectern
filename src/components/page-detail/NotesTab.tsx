@@ -42,6 +42,9 @@ export function NotesTab({
   const proseRef = useRef<HTMLDivElement>(null);
 
   const recorder = useMediaRecorder();
+  // Leaving mid-dictation releases the mic; only the app-wide recorder outlives a page.
+  const { discard } = recorder;
+  useEffect(() => discard, [discard]);
   // Dictation and the lecture recorder are two `getUserMedia()` calls on one
   // device: while a lecture is being recorded, this entry point stands down.
   const micHolder = useMicHeldByLecture();

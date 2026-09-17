@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
   Check,
@@ -13,6 +13,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import clsx from "@/lib/clsx";
+import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
 
 type Feedback = {
   score: number;
@@ -31,12 +32,6 @@ const EXAMPLES = [
   "Why is the sky blue?",
   "What does a for-loop do?",
 ];
-
-const MIME_CANDIDATES = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
-function pickMime(): string | undefined {
-  if (typeof MediaRecorder === "undefined") return undefined;
-  return MIME_CANDIDATES.find((t) => MediaRecorder.isTypeSupported(t));
-}
 
 export function FeynmanCoach({
   suggestions = EXAMPLES,
@@ -62,40 +57,20 @@ export function FeynmanCoach({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
 
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const recorder = useMediaRecorder();
+  const recording = recorder.status === "recording";
+  // Leaving mid-take releases the mic; only the app-wide recorder outlives a page.
+  const { discard } = recorder;
+  useEffect(() => discard, [discard]);
   const endRef = useRef<HTMLDivElement>(null);
 
   async function startRecording() {
     setError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = pickMime();
-      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-      chunksRef.current = [];
-      rec.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      rec.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: mime ?? "audio/webm" });
-        await transcribe(blob);
-      };
-      rec.start();
-      recorderRef.current = rec;
-      setRecording(true);
-    } catch {
+    if (!(await recorder.startRecording())) {
       setError("Microphone access was denied or is unavailable. You can type your explanation instead.");
     }
-  }
-
-  function stopRecording() {
-    recorderRef.current?.stop();
-    recorderRef.current = null;
-    setRecording(false);
   }
 
   async function transcribe(blob: Blob) {
@@ -117,6 +92,17 @@ export function FeynmanCoach({
       setTranscribing(false);
     }
   }
+
+  // When a spoken explanation finishes, transcribe it and append it to the text.
+  useEffect(() => {
+    if (!recorder.audioBlob || recorder.status !== "stopped") return;
+    const blob = recorder.audioBlob;
+    recorder.reset();
+    // Deferred, and deliberately WITHOUT a cleanup: reset() changes this
+    // effect's own deps, so the re-run's cleanup would cancel the timer.
+    setTimeout(() => void transcribe(blob), 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recorder.audioBlob, recorder.status]);
 
   async function submit() {
     const c = concept.trim();
@@ -249,7 +235,7 @@ export function FeynmanCoach({
         />
         <div className="flex items-center justify-between gap-3">
           <button
-            onClick={recording ? stopRecording : startRecording}
+            onClick={recording ? recorder.stopRecording : startRecording}
             disabled={transcribing}
             className={clsx(
               "flex items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors disabled:opacity-50",
