@@ -24,3 +24,9 @@ test("a voice saved from the old system-voice picker is not a Kokoro voice", () 
   assert.equal(isKokoroVoice("Samantha|en-US|com.apple.voice.compact.en-US.Samantha"), false);
   assert.equal(isKokoroVoice(undefined), false);
 });
+
+test("a browser voice picked by name never waits for Kokoro, ready or not", () => {
+  assert.equal(pickEngine("ready", true, false), "browser");
+  assert.equal(pickEngine("loading", true, false), "browser");
+  assert.equal(pickEngine("loading", false, false), "none");
+});

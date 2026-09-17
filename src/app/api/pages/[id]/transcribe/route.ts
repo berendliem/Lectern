@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { jsonError } from "@/lib/api-utils";
+import { jsonError, markStageFailed } from "@/lib/api-utils";
 import { absoluteAudioPath, mimeTypeForExtension } from "@/lib/audio-storage";
 import { transcribeAudio } from "@/lib/transcribe";
 import { upsertSearchIndex } from "@/lib/fts";
@@ -58,7 +58,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ page: updated });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Transcription failed";
-    await db.page.update({ where: { id }, data: { status: "ERROR", errorMessage: message } });
+    await markStageFailed(id, page.status, message);
     return jsonError(message, 502);
   }
 }
