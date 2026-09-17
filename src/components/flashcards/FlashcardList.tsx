@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { Markdown } from "@/components/Markdown";
-import { masteryOf, MASTERY_LABEL, MASTERY_CLASSES } from "@/lib/mastery";
+import { isLeech, masteryOf, MASTERY_LABEL, MASTERY_CLASSES } from "@/lib/mastery";
 import clsx from "@/lib/clsx";
 
 export type FlashcardListItem = {
@@ -17,6 +17,8 @@ export type FlashcardListItem = {
   nextReviewAt: string | Date;
   repetitions: number;
   lastReviewedAt: string | Date | null;
+  /** Failed recalls on the ledger. Four without settling makes a leech. */
+  misses: number;
 };
 
 export function isDue(card: FlashcardListItem, now = new Date()): boolean {
@@ -40,8 +42,9 @@ export function FlashcardList({
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState({ prompt: "", idealExplanation: "" });
   const [saving, setSaving] = useState(false);
+  const [rewriting, setRewriting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const busy = saving || disabled;
+  const busy = saving || rewriting !== null || disabled;
 
   // Flipping the default forgets every per-card toggle, so "Hide all" hides
   // everything and not everything except what was opened. Adjusted during
@@ -67,6 +70,29 @@ export function FlashcardList({
     setEditing(card.id);
     setDraft({ prompt: card.prompt, idealExplanation: card.idealExplanation });
     setError(null);
+  }
+
+  /**
+   * Ask for a fresh framing of a card that keeps failing. The reply lands in
+   * the edit form, not the card: the student reads it and saves or cancels.
+   */
+  async function rewrite(card: FlashcardListItem) {
+    setRewriting(card.id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/flashcards/${card.id}/rewrite`, { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.error ?? "Could not rewrite that card.");
+        return;
+      }
+      setEditing(card.id);
+      setDraft(body.draft);
+    } catch {
+      setError("Network error talking to the local server.");
+    } finally {
+      setRewriting(null);
+    }
   }
 
   async function save(id: string) {
@@ -129,6 +155,7 @@ export function FlashcardList({
         {flashcards.map((card) => {
           const due = isDue(card);
           const mastery = masteryOf(card.repetitions, card.lastReviewedAt);
+          const leech = isLeech(card.misses, card.repetitions);
           const shown = revealAll !== toggled.has(card.id);
           const isEditing = editing === card.id;
           return (
@@ -172,6 +199,9 @@ export function FlashcardList({
                       <Markdown>{card.prompt}</Markdown>
                     </div>
                     <span className="flex shrink-0 items-center gap-1.5">
+                      {leech && (
+                        <Badge tone="red">Leech · {card.misses} misses</Badge>
+                      )}
                       <span
                         className={clsx(
                           "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
@@ -183,6 +213,22 @@ export function FlashcardList({
                       <Badge tone={due ? "amber" : "neutral"}>
                         {due ? "Due now" : `Due ${new Date(card.nextReviewAt).toLocaleDateString()}`}
                       </Badge>
+                      {leech && (
+                        <button
+                          type="button"
+                          onClick={() => rewrite(card)}
+                          disabled={busy}
+                          aria-label="Rewrite card from a different angle"
+                          title="Rewrite from a different angle"
+                          className="rounded-md p-1 text-muted-2 transition-colors hover:bg-surface-3 hover:text-ink-soft disabled:opacity-50"
+                        >
+                          {rewriting === card.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2} />
+                          ) : (
+                            <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
+                          )}
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => startEdit(card)}

@@ -21,3 +21,14 @@ export const MASTERY_CLASSES: Record<Mastery, string> = {
   learning: "bg-yellow-100 text-yellow-700",
   mastered: "bg-green-100 text-green-700",
 };
+
+/**
+ * A leech, in SM-2's sense: a card that keeps failing without ever settling.
+ * `misses` counts ledger rows scored below 3 since the ledger began; a card
+ * that has since reached three consecutive passes has outgrown the label.
+ */
+export const LEECH_MISSES = 4;
+
+export function isLeech(misses: number, repetitions: number): boolean {
+  return misses >= LEECH_MISSES && repetitions < 3;
+}
