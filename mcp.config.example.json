@@ -18,6 +18,11 @@
       "env": {
         "GOOGLE_OAUTH_CREDENTIALS": "/absolute/path/to/gcp-oauth.keys.json"
       }
+    },
+    "onq": {
+      "command": "uv",
+      "args": ["run", "--directory", "/absolute/path/to/onq-mcp", "onq-mcp"],
+      "env": {}
     }
   }
 }
