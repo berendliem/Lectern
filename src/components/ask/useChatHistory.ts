@@ -66,6 +66,24 @@ export function useChatHistory<T extends { role: string; content: string }>(
     });
   }, [key, storage]);
 
+  // Local storage is shared between tabs, and each tab holds its own copy of
+  // the thread: without this, a tab that sent nothing would write its stale
+  // copy back over a message another tab just added.
+  useEffect(() => {
+    if (storage !== "local") return;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== key || e.storageArea !== localStorage) return;
+      try {
+        const parsed: unknown = e.newValue ? JSON.parse(e.newValue) : [];
+        if (Array.isArray(parsed) && parsed.every(isMessage)) setMessages(parsed as T[]);
+      } catch {
+        // Another tab wrote something unreadable: keep what this tab has.
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [key, storage]);
+
   useEffect(() => {
     if (!loaded) return;
     try {

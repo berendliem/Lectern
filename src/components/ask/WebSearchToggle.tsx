@@ -4,9 +4,10 @@ import { Globe } from "lucide-react";
 import clsx from "@/lib/clsx";
 
 /**
- * Lets one question reach the web as well as the notes. Off by default and
- * per surface: a search is billed on top of the reply, so it is a choice made
- * for the question at hand rather than a setting that quietly stays on.
+ * Lets questions reach the web as well as the notes. Off by default and per
+ * surface, not remembered: a search is billed on top of every reply while it
+ * is on, so each chat starts with it off and the student switches it on
+ * where the notes fall short.
  */
 export function WebSearchToggle({
   on,

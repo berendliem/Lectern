@@ -3,6 +3,7 @@ import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON } from "@/lib/llm";
 import { cleanMermaid } from "@/lib/mermaid";
 import { liveExplainSchema, liveExplainResponseSchema } from "@/lib/validation";
+import { WEB_SEARCH_CLAUSE } from "@/lib/prompts/shared";
 
 const SYSTEM_PROMPT = `You are a live study assistant sitting next to a student in a lecture. You receive the most recent stretch of the lecture transcript (raw speech-to-text, possibly with recognition errors). Briefly explain the concept the lecturer is currently talking about, in plain language, as if catching the student up.
 
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     const raw = await callLLMJSON({
       model,
-      systemPrompt: SYSTEM_PROMPT,
+      systemPrompt: result.data.web ? `${SYSTEM_PROMPT}\n\n${WEB_SEARCH_CLAUSE}` : SYSTEM_PROMPT,
       userPrompt: `Latest transcript excerpt:\n"""\n${result.data.context}\n"""`,
       web: result.data.web,
     });

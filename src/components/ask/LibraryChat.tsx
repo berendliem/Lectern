@@ -64,7 +64,7 @@ export function LibraryChat({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className={clsx("flex flex-col", compact ? "h-full gap-3" : "max-w-3xl gap-5")}>
+    <div className={clsx("flex flex-col", compact ? "min-h-0 flex-1 gap-3" : "max-w-3xl gap-5")}>
       {!compact && (
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
