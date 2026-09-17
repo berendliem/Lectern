@@ -11,13 +11,15 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   const markdown = await db.$transaction(async (tx) => {
     const notes = await tx.notes.findUnique({ where: { pageId: id }, select: { previousMarkdown: true } });
-    if (notes?.previousMarkdown == null) return null;
+    if (!notes) return undefined;
+    if (notes.previousMarkdown === null) return null;
     await tx.notes.update({
       where: { pageId: id },
       data: { markdown: notes.previousMarkdown, previousMarkdown: null },
     });
     return notes.previousMarkdown;
   });
+  if (markdown === undefined) return jsonError("Page not found", 404);
   if (markdown === null) return jsonError("There is no edit to undo", 409);
 
   await upsertSearchIndex(id);
