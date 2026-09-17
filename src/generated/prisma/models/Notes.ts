@@ -30,6 +30,7 @@ export type NotesMinAggregateOutputType = {
   markdown: string | null
   keyTerms: string | null
   modelUsed: string | null
+  previousMarkdown: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -40,6 +41,7 @@ export type NotesMaxAggregateOutputType = {
   markdown: string | null
   keyTerms: string | null
   modelUsed: string | null
+  previousMarkdown: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -50,6 +52,7 @@ export type NotesCountAggregateOutputType = {
   markdown: number
   keyTerms: number
   modelUsed: number
+  previousMarkdown: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -62,6 +65,7 @@ export type NotesMinAggregateInputType = {
   markdown?: true
   keyTerms?: true
   modelUsed?: true
+  previousMarkdown?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -72,6 +76,7 @@ export type NotesMaxAggregateInputType = {
   markdown?: true
   keyTerms?: true
   modelUsed?: true
+  previousMarkdown?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -82,6 +87,7 @@ export type NotesCountAggregateInputType = {
   markdown?: true
   keyTerms?: true
   modelUsed?: true
+  previousMarkdown?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -165,6 +171,7 @@ export type NotesGroupByOutputType = {
   markdown: string
   keyTerms: string
   modelUsed: string | null
+  previousMarkdown: string | null
   createdAt: Date
   updatedAt: Date
   _count: NotesCountAggregateOutputType | null
@@ -196,6 +203,7 @@ export type NotesWhereInput = {
   markdown?: Prisma.StringFilter<"Notes"> | string
   keyTerms?: Prisma.StringFilter<"Notes"> | string
   modelUsed?: Prisma.StringNullableFilter<"Notes"> | string | null
+  previousMarkdown?: Prisma.StringNullableFilter<"Notes"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Notes"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Notes"> | Date | string
   page?: Prisma.XOR<Prisma.PageScalarRelationFilter, Prisma.PageWhereInput>
@@ -207,6 +215,7 @@ export type NotesOrderByWithRelationInput = {
   markdown?: Prisma.SortOrder
   keyTerms?: Prisma.SortOrder
   modelUsed?: Prisma.SortOrderInput | Prisma.SortOrder
+  previousMarkdown?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   page?: Prisma.PageOrderByWithRelationInput
@@ -221,6 +230,7 @@ export type NotesWhereUniqueInput = Prisma.AtLeast<{
   markdown?: Prisma.StringFilter<"Notes"> | string
   keyTerms?: Prisma.StringFilter<"Notes"> | string
   modelUsed?: Prisma.StringNullableFilter<"Notes"> | string | null
+  previousMarkdown?: Prisma.StringNullableFilter<"Notes"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Notes"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Notes"> | Date | string
   page?: Prisma.XOR<Prisma.PageScalarRelationFilter, Prisma.PageWhereInput>
@@ -232,6 +242,7 @@ export type NotesOrderByWithAggregationInput = {
   markdown?: Prisma.SortOrder
   keyTerms?: Prisma.SortOrder
   modelUsed?: Prisma.SortOrderInput | Prisma.SortOrder
+  previousMarkdown?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.NotesCountOrderByAggregateInput
@@ -248,6 +259,7 @@ export type NotesScalarWhereWithAggregatesInput = {
   markdown?: Prisma.StringWithAggregatesFilter<"Notes"> | string
   keyTerms?: Prisma.StringWithAggregatesFilter<"Notes"> | string
   modelUsed?: Prisma.StringNullableWithAggregatesFilter<"Notes"> | string | null
+  previousMarkdown?: Prisma.StringNullableWithAggregatesFilter<"Notes"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Notes"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Notes"> | Date | string
 }
@@ -257,6 +269,7 @@ export type NotesCreateInput = {
   markdown: string
   keyTerms: string
   modelUsed?: string | null
+  previousMarkdown?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   page: Prisma.PageCreateNestedOneWithoutNotesInput
@@ -268,6 +281,7 @@ export type NotesUncheckedCreateInput = {
   markdown: string
   keyTerms: string
   modelUsed?: string | null
+  previousMarkdown?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -277,6 +291,7 @@ export type NotesUpdateInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   keyTerms?: Prisma.StringFieldUpdateOperationsInput | string
   modelUsed?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  previousMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   page?: Prisma.PageUpdateOneRequiredWithoutNotesNestedInput
@@ -288,6 +303,7 @@ export type NotesUncheckedUpdateInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   keyTerms?: Prisma.StringFieldUpdateOperationsInput | string
   modelUsed?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  previousMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -298,6 +314,7 @@ export type NotesCreateManyInput = {
   markdown: string
   keyTerms: string
   modelUsed?: string | null
+  previousMarkdown?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -307,6 +324,7 @@ export type NotesUpdateManyMutationInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   keyTerms?: Prisma.StringFieldUpdateOperationsInput | string
   modelUsed?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  previousMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -317,6 +335,7 @@ export type NotesUncheckedUpdateManyInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   keyTerms?: Prisma.StringFieldUpdateOperationsInput | string
   modelUsed?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  previousMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -332,6 +351,7 @@ export type NotesCountOrderByAggregateInput = {
   markdown?: Prisma.SortOrder
   keyTerms?: Prisma.SortOrder
   modelUsed?: Prisma.SortOrder
+  previousMarkdown?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -342,6 +362,7 @@ export type NotesMaxOrderByAggregateInput = {
   markdown?: Prisma.SortOrder
   keyTerms?: Prisma.SortOrder
   modelUsed?: Prisma.SortOrder
+  previousMarkdown?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -352,6 +373,7 @@ export type NotesMinOrderByAggregateInput = {
   markdown?: Prisma.SortOrder
   keyTerms?: Prisma.SortOrder
   modelUsed?: Prisma.SortOrder
+  previousMarkdown?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -393,6 +415,7 @@ export type NotesCreateWithoutPageInput = {
   markdown: string
   keyTerms: string
   modelUsed?: string | null
+  previousMarkdown?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -402,6 +425,7 @@ export type NotesUncheckedCreateWithoutPageInput = {
   markdown: string
   keyTerms: string
   modelUsed?: string | null
+  previousMarkdown?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -427,6 +451,7 @@ export type NotesUpdateWithoutPageInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   keyTerms?: Prisma.StringFieldUpdateOperationsInput | string
   modelUsed?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  previousMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -436,6 +461,7 @@ export type NotesUncheckedUpdateWithoutPageInput = {
   markdown?: Prisma.StringFieldUpdateOperationsInput | string
   keyTerms?: Prisma.StringFieldUpdateOperationsInput | string
   modelUsed?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  previousMarkdown?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -448,6 +474,7 @@ export type NotesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   markdown?: boolean
   keyTerms?: boolean
   modelUsed?: boolean
+  previousMarkdown?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
@@ -459,6 +486,7 @@ export type NotesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   markdown?: boolean
   keyTerms?: boolean
   modelUsed?: boolean
+  previousMarkdown?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
@@ -470,6 +498,7 @@ export type NotesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   markdown?: boolean
   keyTerms?: boolean
   modelUsed?: boolean
+  previousMarkdown?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
@@ -481,11 +510,12 @@ export type NotesSelectScalar = {
   markdown?: boolean
   keyTerms?: boolean
   modelUsed?: boolean
+  previousMarkdown?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type NotesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "pageId" | "markdown" | "keyTerms" | "modelUsed" | "createdAt" | "updatedAt", ExtArgs["result"]["notes"]>
+export type NotesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "pageId" | "markdown" | "keyTerms" | "modelUsed" | "previousMarkdown" | "createdAt" | "updatedAt", ExtArgs["result"]["notes"]>
 export type NotesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   page?: boolean | Prisma.PageDefaultArgs<ExtArgs>
 }
@@ -507,6 +537,12 @@ export type $NotesPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     markdown: string
     keyTerms: string
     modelUsed: string | null
+    /**
+     * The notes as they were before the last AI edit, so Undo survives a refresh.
+     * Any other write to `markdown` clears it: undoing to a snapshot older than
+     * that write would silently throw the newer notes away.
+     */
+    previousMarkdown: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["notes"]>
@@ -938,6 +974,7 @@ export interface NotesFieldRefs {
   readonly markdown: Prisma.FieldRef<"Notes", 'String'>
   readonly keyTerms: Prisma.FieldRef<"Notes", 'String'>
   readonly modelUsed: Prisma.FieldRef<"Notes", 'String'>
+  readonly previousMarkdown: Prisma.FieldRef<"Notes", 'String'>
   readonly createdAt: Prisma.FieldRef<"Notes", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Notes", 'DateTime'>
 }

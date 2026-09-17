@@ -117,7 +117,12 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             id: "notes",
             label: "Notes",
             content: page.notes ? (
-              <NotesTab pageId={page.id} markdown={page.notes.markdown} keyTerms={keyTerms} />
+              <NotesTab
+                pageId={page.id}
+                markdown={page.notes.markdown}
+                canUndo={page.notes.previousMarkdown !== null}
+                keyTerms={keyTerms}
+              />
             ) : (
               <EmptyState message="Notes will appear here once the transcript has been summarized." />
             ),
