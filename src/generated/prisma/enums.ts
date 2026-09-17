@@ -62,7 +62,8 @@ export type InterviewStatus = (typeof InterviewStatus)[keyof typeof InterviewSta
 export const ActionKind = {
   ACTION: 'ACTION',
   DECISION: 'DECISION',
-  QUESTION: 'QUESTION'
+  QUESTION: 'QUESTION',
+  EXAM_HINT: 'EXAM_HINT'
 } as const
 
 export type ActionKind = (typeof ActionKind)[keyof typeof ActionKind]
