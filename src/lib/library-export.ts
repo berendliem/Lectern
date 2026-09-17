@@ -37,7 +37,24 @@ export async function libraryStats(): Promise<{ dbBytes: number; audioBytes: num
  * The snapshot lives in a temp directory that is removed when the tar
  * process ends, however it ends.
  */
+export class ExportBusyError extends Error {}
+
+// ponytail: one export at a time, in-process. Each one is a full VACUUM of
+// the database plus a read of every recording; two at once help nobody.
+let exporting = false;
+
 export async function streamLibraryTar(): Promise<ReadableStream<Uint8Array>> {
+  if (exporting) throw new ExportBusyError("An export is already running — wait for it to finish");
+  exporting = true;
+  try {
+    return await startTar();
+  } catch (e) {
+    exporting = false;
+    throw e;
+  }
+}
+
+async function startTar(): Promise<ReadableStream<Uint8Array>> {
   const dir = await mkdtemp(path.join(tmpdir(), "lectern-export-"));
   const snapshot = path.join(dir, "lectern.db");
   try {
@@ -47,16 +64,33 @@ export async function streamLibraryTar(): Promise<ReadableStream<Uint8Array>> {
     await rm(dir, { recursive: true, force: true });
     throw e;
   }
-  const child = spawn(
-    "tar",
-    ["-cf", "-", "-C", dir, "lectern.db", "-C", path.dirname(path.dirname(AUDIO_DIR)), "storage/audio"],
-    { stdio: ["ignore", "pipe", "pipe"] }
-  );
+  // No recordings yet means no audio directory yet (it is created on the
+  // first save); tar would fail on the missing path, so leave it out.
+  const audio = await stat(AUDIO_DIR)
+    .then((s) => s.isDirectory())
+    .catch(() => false);
+  const members = audio ? ["-C", process.cwd(), path.relative(process.cwd(), AUDIO_DIR)] : [];
+  const child = spawn("tar", ["-cf", "-", "-C", dir, "lectern.db", ...members], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  const finish = () => {
+    exporting = false;
+    void rm(dir, { recursive: true, force: true });
+  };
   const stderr: Buffer[] = [];
   child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk));
+  child.on("error", (e) => {
+    // No tar on PATH, or it could not start: without a listener this event
+    // would take the server down with it.
+    console.error(`library export: could not run tar: ${e.message}`);
+    child.stdout.destroy(e);
+    finish();
+  });
+  // A client that stops downloading closes the pipe, tar dies on the write,
+  // and this runs: the lock and the temp dir are released either way.
   child.on("close", (code) => {
     if (code !== 0) console.error(`library export: tar exited ${code}: ${Buffer.concat(stderr).toString("utf8")}`);
-    void rm(dir, { recursive: true, force: true });
+    finish();
   });
   return Readable.toWeb(child.stdout) as ReadableStream<Uint8Array>;
 }
