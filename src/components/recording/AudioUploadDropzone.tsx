@@ -3,36 +3,45 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { uploadAudio, readAudioDuration, transcribePage } from "@/components/recording/upload";
+import { useTasks } from "@/components/tasks/TaskProvider";
 import { Button } from "@/components/ui/Button";
 import clsx from "@/lib/clsx";
 
 export function AudioUploadDropzone({ pageId }: { pageId: string }) {
   const [dragActive, setDragActive] = useState(false);
-  const [state, setState] = useState<"idle" | "uploading" | "transcribing">("idle");
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const uploading = state !== "idle";
+  const { run, task } = useTasks();
+  const transcribeKey = `page:${pageId}:transcribe`;
+  const transcribing = task(transcribeKey)?.status === "running";
 
   async function handleFile(file: File) {
     if (!file.type.startsWith("audio/") && !file.type.startsWith("video/")) {
       setError("Please choose an audio or video file (mp3, m4a, wav, mp4, mov…).");
       return;
     }
-    setState("uploading");
+    setUploading(true);
     setError(null);
     const duration = await readAudioDuration(file);
     const result = await uploadAudio(pageId, file, file.name, duration);
+    setUploading(false);
     if (!result.ok) {
-      setState("idle");
       setError(result.error);
       return;
     }
+    // The refresh swaps this dropzone for the pipeline banner, which owns the
+    // transcribe key and reports progress or a failure with a retry — so a long
+    // transcription survives the user leaving the page.
     router.refresh();
-    setState("transcribing");
-    const transcribed = await transcribePage(pageId);
-    setState("idle");
-    if (!transcribed.ok) setError(transcribed.error);
+    await run(
+      { key: transcribeKey, label: "Transcribing audio…", href: `/pages/${pageId}` },
+      async () => {
+        const transcribed = await transcribePage(pageId);
+        if (!transcribed.ok) throw new Error(transcribed.error);
+      }
+    );
     router.refresh();
   }
 
@@ -55,8 +64,8 @@ export function AudioUploadDropzone({ pageId }: { pageId: string }) {
       )}
     >
       <p className="text-sm text-muted">Drag an audio or video file here, or</p>
-      <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading}>
-        {state === "uploading" ? "Uploading…" : state === "transcribing" ? "Transcribing…" : "Choose file"}
+      <Button variant="secondary" size="sm" onClick={() => inputRef.current?.click()} disabled={uploading || transcribing}>
+        {uploading ? "Uploading…" : transcribing ? "Transcribing…" : "Choose file"}
       </Button>
       <input
         ref={inputRef}

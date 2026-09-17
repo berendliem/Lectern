@@ -4,55 +4,59 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Link2, Loader2 } from "lucide-react";
 import { transcribePage } from "@/components/recording/upload";
+import { useTasks } from "@/components/tasks/TaskProvider";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { postTask } from "@/lib/tasks";
 
 /**
  * Attaches a lecture that lives at a URL. The server does the fetching, so the
  * page ends up in exactly the state an upload leaves it in and the rest of the
  * pipeline is none the wiser.
+ *
+ * Both the download and the transcription run as tasks, so a long lecture keeps
+ * going when the user leaves the page and reports back in the header.
  */
 export function UrlImport({ pageId }: { pageId: string }) {
   const router = useRouter();
+  const { run, task, clear } = useTasks();
   const [url, setUrl] = useState("");
-  const [state, setState] = useState<"idle" | "fetching" | "transcribing">("idle");
-  const [error, setError] = useState<string | null>(null);
-  const busy = state !== "idle";
+  const fetchKey = `page:${pageId}:audio-from-url`;
+  const busy = task(fetchKey)?.status === "running";
+  const error = task(fetchKey)?.error ?? null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!url.trim()) return;
 
-    setState("fetching");
-    setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/audio/from-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        setError(body?.error ?? "Could not fetch that link.");
-        return;
+    clear([fetchKey]);
+    const fetched = await run(
+      { key: fetchKey, label: "Fetching the lecture audio…", href: `/pages/${pageId}` },
+      async () => {
+        await postTask(
+          `/api/pages/${pageId}/audio/from-url`,
+          "Could not fetch that link.",
+          { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) },
+          // A long download on a flaky connection rejects rather than answering.
+          "The connection dropped before the audio arrived. Try the link again."
+        );
       }
+    );
+    // `ran: false` is a double submit: the run it joined carries on from here.
+    if (!fetched.ran || fetched.status === "error") return;
 
-      setUrl("");
-      setState("transcribing");
-      const transcribed = await transcribePage(pageId);
-      if (!transcribed.ok) setError(transcribed.error);
-      // Refreshed once, at the end. The parent only renders this form while
-      // the page has no audio, so refreshing as soon as the audio landed would
-      // unmount it mid-transcribe and take any error message with it.
-      router.refresh();
-    } catch {
-      // A long download on a flaky connection rejects rather than answering.
-      // Leaving the form disabled with no message would strand the student.
-      setError("The connection dropped before the audio arrived. Try the link again.");
-    } finally {
-      setState("idle");
-    }
+    setUrl("");
+    // The refresh swaps this form for the pipeline banner, which owns the
+    // transcribe key below and shows its progress and any failure with a retry.
+    router.refresh();
+    await run(
+      { key: `page:${pageId}:transcribe`, label: "Transcribing audio…", href: `/pages/${pageId}` },
+      async () => {
+        const transcribed = await transcribePage(pageId);
+        if (!transcribed.ok) throw new Error(transcribed.error);
+      }
+    );
+    router.refresh();
   }
 
   return (
@@ -70,12 +74,12 @@ export function UrlImport({ pageId }: { pageId: string }) {
         />
         <Button type="submit" variant="secondary" size="sm" disabled={busy || !url.trim()}>
           {busy && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
-          {state === "fetching" ? "Fetching…" : state === "transcribing" ? "Transcribing…" : "Fetch"}
+          {busy ? "Fetching…" : "Fetch"}
         </Button>
       </div>
       <p className="text-[13px] text-muted-2">
-        Downloads just the audio and replaces whatever audio this page already has. A long lecture takes a while, and
-        there is no progress to watch yet.
+        Downloads just the audio and replaces whatever audio this page already has. A long lecture takes a while; it
+        keeps going if you leave this page.
       </p>
       {error && (
         <p role="alert" className="text-sm text-red-600">
