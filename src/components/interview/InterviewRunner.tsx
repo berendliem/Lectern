@@ -106,6 +106,9 @@ function VivaRunner({
   const pendingCompleteRef = useRef(false);
 
   const recorder = useMediaRecorder();
+  // Leaving mid-answer releases the mic; only the app-wide recorder outlives a page.
+  const { discard } = recorder;
+  useEffect(() => discard, [discard]);
   // One microphone: a spoken answer while a lecture is recording would revoke
   // the lecture's capture, and that audio has no second copy.
   const micHolder = useMicHeldByLecture();
