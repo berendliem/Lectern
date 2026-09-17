@@ -133,7 +133,7 @@ Open http://localhost:3000.
   - **Notion**: **Export → Sync to Notion** pushes a page's notes, key terms, action items, flashcards, and transcript to a Notion page; re-syncing updates the same page.
   - See "MCP integrations" below for setup.
 
-**Per-page Actions tab:** once a page is transcribed, the **Actions** tab extracts notetaker-style follow-ups — action items/deadlines, decisions, and open questions — as a checklist you can tick off. Regenerating keeps the checked state of unchanged items.
+**Per-page Actions tab:** once a page is transcribed, the **Actions** tab extracts notetaker-style follow-ups — action items/deadlines, decisions, open questions, and **exam hints** (the points the lecturer flagged with "this will be on the exam") — as a checklist you can tick off. Regenerating keeps the checked state of unchanged items.
 
 **Transcript tools** (on the Transcript tab): **Clean up transcript** produces a readable version — filler words removed, self-corrections collapsed ("Thursday, no actually Wednesday" → "Wednesday"), ASR errors fixed — while keeping the raw timestamped version; notes are generated from the cleaned text when it exists. **Detect chapters** divides a long lecture into named topic sections shown as jump-to chips on the synced player. Transcripts also export as **SRT/VTT subtitles**, and the whisper service filters silences with VAD to avoid hallucinated text during pauses.
 

@@ -274,14 +274,14 @@ server.registerTool(
   "create_action_items",
   {
     description:
-      "Record concrete next steps against one lecture, so they appear on that lecture's page. Use ACTION for something to do, QUESTION for something to ask. One call per lecture; keep each item to one sentence.",
+      "Record concrete next steps against one lecture, so they appear on that lecture's page. Use ACTION for something to do, QUESTION for something to ask, EXAM_HINT for a point the lecturer flagged as exam material. One call per lecture; keep each item to one sentence.",
     inputSchema: {
       ...scopeSchema,
       pageId: z.string().min(1).describe("The lecture the steps belong to"),
       items: z
         .array(
           z.object({
-            kind: z.enum(["ACTION", "DECISION", "QUESTION"]),
+            kind: z.enum(["ACTION", "DECISION", "QUESTION", "EXAM_HINT"]),
             text: z.string().min(1).max(500),
           })
         )

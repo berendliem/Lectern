@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleHelp, Gavel, ListChecks, Loader2, RefreshCw } from "lucide-react";
+import { CircleHelp, Gavel, ListChecks, Loader2, RefreshCw, Star } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { Button } from "@/components/ui/Button";
 import { useTasks } from "@/components/tasks/TaskProvider";
 import { postTask } from "@/lib/tasks";
 
-type ActionKind = "ACTION" | "DECISION" | "QUESTION";
+type ActionKind = "ACTION" | "DECISION" | "QUESTION" | "EXAM_HINT";
 
 type ActionItem = {
   id: string;
@@ -20,6 +20,7 @@ const GROUPS: { kind: ActionKind; label: string; icon: typeof ListChecks }[] = [
   { kind: "ACTION", label: "Action items", icon: ListChecks },
   { kind: "DECISION", label: "Decisions & deadlines", icon: Gavel },
   { kind: "QUESTION", label: "Open questions", icon: CircleHelp },
+  { kind: "EXAM_HINT", label: "Exam hints", icon: Star },
 ];
 
 export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTranscript: boolean }) {
@@ -100,8 +101,8 @@ export function ActionsTab({ pageId, hasTranscript }: { pageId: string; hasTrans
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Assigned work, decisions, and unresolved questions pulled from the recording — like a
-          meeting notetaker&apos;s follow-up notes.
+          Assigned work, decisions, unresolved questions, and the points the lecturer flagged as
+          exam material — pulled from the recording like a meeting notetaker&apos;s follow-up notes.
         </p>
         <Button variant="secondary" onClick={generate} disabled={loading}>
           {loading ? (
