@@ -162,6 +162,7 @@ export const NotesScalarFieldEnum = {
   markdown: 'markdown',
   keyTerms: 'keyTerms',
   modelUsed: 'modelUsed',
+  previousMarkdown: 'previousMarkdown',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
