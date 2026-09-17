@@ -310,7 +310,7 @@ export const actionItemsResponseSchema = z.object({
   items: z
     .array(
       z.object({
-        kind: z.enum(["ACTION", "DECISION", "QUESTION"]),
+        kind: z.enum(["ACTION", "DECISION", "QUESTION", "EXAM_HINT"]),
         text: z.string().min(1).max(500),
       })
     )
@@ -325,7 +325,7 @@ export const createActionItemsSchema = z.object({
   items: z
     .array(
       z.object({
-        kind: z.enum(["ACTION", "DECISION", "QUESTION"]),
+        kind: z.enum(["ACTION", "DECISION", "QUESTION", "EXAM_HINT"]),
         text: z.string().min(1).max(500),
       })
     )
