@@ -7,22 +7,24 @@ import { FlashcardList, isDue, type FlashcardListItem } from "@/components/flash
 import { Button } from "@/components/ui/Button";
 import { useTasks } from "@/components/tasks/TaskProvider";
 import { postTask } from "@/lib/tasks";
-import { masteryOf, MASTERY_LABEL, type Mastery } from "@/lib/mastery";
+import { isLeech, masteryOf, MASTERY_LABEL, type Mastery } from "@/lib/mastery";
 import clsx from "@/lib/clsx";
 
-type View = "all" | "due" | Mastery;
+type View = "all" | "due" | Mastery | "leech";
 
-const VIEWS: View[] = ["all", "due", "new", "learning", "mastered"];
+const VIEWS: View[] = ["all", "due", "new", "learning", "mastered", "leech"];
 
 const VIEW_LABEL: Record<View, string> = {
   all: "All",
   due: "Due",
   ...MASTERY_LABEL,
+  leech: "Leeches",
 };
 
 function matches(card: FlashcardListItem, view: View, now: Date): boolean {
   if (view === "all") return true;
   if (view === "due") return isDue(card, now);
+  if (view === "leech") return isLeech(card.misses, card.repetitions);
   return masteryOf(card.repetitions, card.lastReviewedAt) === view;
 }
 

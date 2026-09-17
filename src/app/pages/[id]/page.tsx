@@ -19,6 +19,7 @@ import { InterviewLaunch } from "@/components/interview/InterviewLaunch";
 import { LectureActions } from "@/components/page-detail/LectureActions";
 import { PretestReveal, type PretestRevealEntry } from "@/components/page/PretestReveal";
 import { isVideoExtension } from "@/lib/audio-storage";
+import { RECALL_LEDGER_SINCE } from "@/lib/recall";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,15 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
       folder: true,
       transcript: true,
       notes: true,
-      flashcards: { orderBy: { createdAt: "asc" } },
+      flashcards: {
+        orderBy: { createdAt: "asc" },
+        // Failed recalls since the ledger began scoring: the leech signal.
+        include: {
+          _count: {
+            select: { reviewLogs: { where: { quality: { lt: 3 }, reviewedAt: { gte: RECALL_LEDGER_SINCE } } } },
+          },
+        },
+      },
       quizQuestions: { orderBy: { createdAt: "asc" } },
       tags: { include: { tag: true } },
     },
@@ -118,7 +127,10 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
             label: `Flashcards${page.flashcards.length ? ` (${page.flashcards.length})` : ""}`,
             content:
               page.flashcards.length > 0 ? (
-                <FlashcardsTab pageId={page.id} flashcards={page.flashcards} />
+                <FlashcardsTab
+                  pageId={page.id}
+                  flashcards={page.flashcards.map(({ _count, ...card }) => ({ ...card, misses: _count.reviewLogs }))}
+                />
               ) : (
                 <EmptyState message="Flashcards will appear here once the learning guide has been generated." />
               ),
