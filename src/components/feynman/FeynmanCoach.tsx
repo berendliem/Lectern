@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   BookOpen,
   Check,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { useMediaRecorder } from "@/components/recording/useMediaRecorder";
+import { useMicHeldByLecture } from "@/components/recording/RecordingProvider";
 
 type Feedback = {
   score: number;
@@ -64,6 +66,9 @@ export function FeynmanCoach({
   // Leaving mid-take releases the mic; only the app-wide recorder outlives a page.
   const { discard } = recorder;
   useEffect(() => discard, [discard]);
+  // One microphone: speaking here while a lecture records would revoke the
+  // lecture's capture, and that audio has no second copy.
+  const micHolder = useMicHeldByLecture();
   const endRef = useRef<HTMLDivElement>(null);
 
   async function startRecording() {
@@ -236,7 +241,7 @@ export function FeynmanCoach({
         <div className="flex items-center justify-between gap-3">
           <button
             onClick={recording ? recorder.stopRecording : startRecording}
-            disabled={transcribing}
+            disabled={transcribing || (!recording && micHolder !== null)}
             className={clsx(
               "flex items-center gap-2 rounded-lg px-3.5 py-2 text-[13px] font-medium transition-colors disabled:opacity-50",
               recording
@@ -272,6 +277,15 @@ export function FeynmanCoach({
             {started ? "Score again" : "Get feedback"}
           </button>
         </div>
+        {micHolder && !recording && (
+          <p className="text-xs text-muted">
+            The mic is recording{" "}
+            <Link href={`/pages/${micHolder.pageId}`} className="font-medium text-brand-ink underline">
+              {micHolder.pageTitle}
+            </Link>
+            . Type your explanation, or stop that recording first.
+          </p>
+        )}
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
 
