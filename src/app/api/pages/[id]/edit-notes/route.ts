@@ -40,12 +40,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const markdown = revised.replace(/^```(?:markdown|md)?\s*\n/i, "").replace(/\n```\s*$/i, "").trim();
     if (!markdown) throw new Error("The model returned an empty edit. You can retry.");
 
-    await db.notes.update({ where: { pageId: id }, data: { markdown } });
+    await db.notes.update({
+      where: { pageId: id },
+      data: { markdown, previousMarkdown: page.notes.markdown },
+    });
     await upsertSearchIndex(id);
 
     await indexSourceSafely({ pageId: id });
 
-    return NextResponse.json({ markdown, previousMarkdown: page.notes.markdown });
+    return NextResponse.json({ markdown, canUndo: true });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Editing the notes failed";
     return jsonError(message, 502);

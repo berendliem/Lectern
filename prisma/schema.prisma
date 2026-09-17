@@ -190,6 +190,10 @@ model Notes {
   markdown  String
   keyTerms  String
   modelUsed String?
+  /// The notes as they were before the last AI edit, so Undo survives a refresh.
+  /// Any other write to `markdown` clears it: undoing to a snapshot older than
+  /// that write would silently throw the newer notes away.
+  previousMarkdown String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
