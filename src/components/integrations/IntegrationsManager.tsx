@@ -2,10 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, CalendarPlus, CircleCheck, CircleDashed, Loader2, Plug, RefreshCw } from "lucide-react";
+import { CalendarDays, CalendarPlus, CircleCheck, CircleDashed, Download, Loader2, Plug, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 type ServerStatus = { name: string; command: string; connected: boolean };
+type LibraryStats = { dbBytes: number; audioBytes: number; audioFiles: number };
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
 type ParsedEvent = { title: string; start: string; end?: string; location?: string };
 
 export function IntegrationsManager() {
@@ -22,6 +29,7 @@ export function IntegrationsManager() {
   const [importedPages, setImportedPages] = useState<Record<string, string>>({});
   const [scheduling, setScheduling] = useState(false);
   const [scheduleResult, setScheduleResult] = useState<string | null>(null);
+  const [library, setLibrary] = useState<LibraryStats | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -35,6 +43,12 @@ export function IntegrationsManager() {
       .catch(() => {
         if (!ignore) setServers([]);
       });
+    fetch("/api/library")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!ignore) setLibrary(data);
+      })
+      .catch(() => {});
     return () => {
       ignore = true;
     };
@@ -233,6 +247,38 @@ export function IntegrationsManager() {
           ) : null}
         </section>
       )}
+
+      {/* Backup */}
+      <section className="flex flex-col gap-2">
+        <h2 className="text-[12px] font-semibold uppercase tracking-wider text-muted-2">Library backup</h2>
+        <p className="text-sm text-muted">
+          Transcripts, notes, cards and review history live in one SQLite file on this machine, and the recordings
+          beside it. Export takes a consistent snapshot of both as a single archive
+          {library ? (
+            <>
+              {" "}
+              — about{" "}
+              <span className="font-medium text-ink-soft">{formatBytes(library.dbBytes + library.audioBytes)}</span>
+              {" "}({formatBytes(library.dbBytes)} database, {library.audioFiles} recording
+              {library.audioFiles === 1 ? "" : "s"})
+            </>
+          ) : null}
+          . Restore with the app stopped:
+        </p>
+        <pre className="overflow-x-auto rounded-lg border border-line bg-surface-2 px-3 py-2 text-[12px] text-ink-soft">
+          npm run db:restore -- lectern-YYYYMMDD.tar
+        </pre>
+        <p className="text-[12px] text-muted-2">
+          Restore snapshots the current database to <code>prisma/backups/</code> first and only adds recordings, never
+          removes them.
+        </p>
+        <div>
+          <Button variant="secondary" onClick={() => window.location.assign("/api/library/export")}>
+            <Download className="h-4 w-4" strokeWidth={2.2} />
+            Export library
+          </Button>
+        </div>
+      </section>
 
       {/* Notion */}
       {hasNotion && (
