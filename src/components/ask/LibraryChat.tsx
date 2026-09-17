@@ -17,8 +17,14 @@ const SUGGESTIONS = [
   "Quiz me on the hardest concept in my notes",
 ];
 
-export function LibraryChat() {
-  const [messages, setMessages, clearMessages] = useChatHistory<Message>("lectern:chat:library");
+/**
+ * One thread across every lecture. `compact` is the librarian dock: no page
+ * heading, the messages scroll inside the panel and the input stays pinned.
+ * Both surfaces read the same stored thread, so a question asked from the
+ * dock is still there on the full page.
+ */
+export function LibraryChat({ compact = false }: { compact?: boolean }) {
+  const [messages, setMessages, clearMessages] = useChatHistory<Message>("lectern:chat:library", "local");
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,18 +62,25 @@ export function LibraryChat() {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-5">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <BrainCircuit className="h-6 w-6 text-brand-ink" strokeWidth={2.2} />
-          Ask all courses
-        </h1>
-        <p className="mt-0.5 text-[13px] text-muted">
-          One assistant across every lecture you&apos;ve captured. It finds the relevant notes and answers with citations.
-        </p>
-      </div>
+    <div className={clsx("flex flex-col", compact ? "h-full gap-3" : "max-w-3xl gap-5")}>
+      {!compact && (
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+            <BrainCircuit className="h-6 w-6 text-brand-ink" strokeWidth={2.2} />
+            Ask all courses
+          </h1>
+          <p className="mt-0.5 text-[13px] text-muted">
+            One assistant across every lecture you&apos;ve captured. It finds the relevant notes and answers with citations.
+          </p>
+        </div>
+      )}
 
-      <div className="flex min-h-[24rem] flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-4">
+      <div
+        className={clsx(
+          "flex flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-4",
+          compact ? "min-h-0 flex-1 overflow-y-auto" : "min-h-[24rem]"
+        )}
+      >
         {messages.length === 0 && (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
