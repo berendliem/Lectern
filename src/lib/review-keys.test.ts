@@ -42,3 +42,10 @@ test("a focused button keeps enter and space, digits still work", () => {
 test("modified digits are shortcuts for something else", () => {
   assert.equal(sessionKey({ ...free, key: "1", metaKey: true }), null);
 });
+
+test("arrow keys step through a deck, except while typing", () => {
+  assert.deepEqual(sessionKey({ ...free, key: "ArrowLeft" }), { type: "prev" });
+  assert.deepEqual(sessionKey({ ...free, key: "ArrowRight", onButton: true }), { type: "next" });
+  assert.equal(sessionKey({ ...free, key: "ArrowRight", inField: true }), null);
+  assert.equal(sessionKey({ ...free, key: "ArrowUp" }), null);
+});
