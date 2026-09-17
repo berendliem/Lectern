@@ -400,14 +400,18 @@ export function CourseOverview({
                 )}
               </div>
               <button
-                onClick={() =>
-                  send(
-                    topic.id,
-                    `/api/topics/${topic.id}`,
-                    { method: "DELETE" },
-                    "Could not delete that topic."
+                onClick={() => {
+                  // Review rows only lose their link to the topic (SetNull), but
+                  // that is what coverage, mastery and the pretest reveal read.
+                  if (
+                    !window.confirm(
+                      `Delete "${topic.title}" from the course outline? Its coverage and mastery go with it, ` +
+                        "and pretest answers held for it will no longer be revealed. Your review history is kept."
+                    )
                   )
-                }
+                    return;
+                  send(topic.id, `/api/topics/${topic.id}`, { method: "DELETE" }, "Could not delete that topic.");
+                }}
                 disabled={busy === topic.id}
                 aria-label={`Delete ${topic.title}`}
                 className="rounded-md p-1.5 text-muted-2 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
