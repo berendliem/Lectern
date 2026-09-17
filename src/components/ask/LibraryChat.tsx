@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BrainCircuit, FileText, Loader2, Presentation, Send } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { ChatBubble } from "./ChatBubble";
+import { WebSearchToggle } from "@/components/ask/WebSearchToggle";
 import { useChatHistory } from "./useChatHistory";
 
 type Citation = { label: string; pageId: string | null; materialId: string | null };
@@ -26,6 +27,7 @@ const SUGGESTIONS = [
 export function LibraryChat({ compact = false }: { compact?: boolean }) {
   const [messages, setMessages, clearMessages] = useChatHistory<Message>("lectern:chat:library", "local");
   const [input, setInput] = useState("");
+  const [web, setWeb] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -44,7 +46,7 @@ export function LibraryChat({ compact = false }: { compact?: boolean }) {
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify({ messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })), web }),
       });
       if (res.ok) {
         const { reply, citations } = await res.json();
@@ -159,6 +161,7 @@ export function LibraryChat({ compact = false }: { compact?: boolean }) {
           placeholder="Ask across all your lectures…"
           className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
         />
+        <WebSearchToggle on={web} onChange={setWeb} />
         <button
           type="submit"
           disabled={sending || !input.trim()}

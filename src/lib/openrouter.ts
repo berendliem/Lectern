@@ -39,10 +39,20 @@ export function modelField(model: string): { model: string } | { models: string[
   return model === FREE_ROUTER ? { models: FREE_CHAT_MODELS } : { model };
 }
 
+/**
+ * OpenRouter's web plugin: the request gets a web search whose results are
+ * prepended to the prompt before the model sees it. Off unless the student
+ * switched it on, since every search is billed on top of the completion.
+ */
+export function webPluginField(web?: boolean): { plugins: { id: "web" }[] } | Record<string, never> {
+  return web ? { plugins: [{ id: "web" }] } : {};
+}
+
 async function callOpenRouter(opts: {
   model: string;
   messages: ApiMessage[];
   jsonMode?: boolean;
+  web?: boolean;
 }): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
@@ -59,6 +69,7 @@ async function callOpenRouter(opts: {
       },
       body: JSON.stringify({
         ...modelField(opts.model),
+        ...webPluginField(opts.web),
         messages: opts.messages,
         ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
       }),
@@ -84,6 +95,7 @@ async function callOpenRouter(opts: {
 export async function callOpenRouterText(opts: {
   model: string;
   messages: ChatMessage[];
+  web?: boolean;
 }): Promise<string> {
   return (await callOpenRouter(opts)).trim();
 }
@@ -119,6 +131,7 @@ export async function callOpenRouterJSON(opts: {
   model: string;
   systemPrompt: string;
   userPrompt: string;
+  web?: boolean;
 }): Promise<unknown> {
   const content = await callOpenRouter({
     model: opts.model,
@@ -127,6 +140,7 @@ export async function callOpenRouterJSON(opts: {
       { role: "user", content: opts.userPrompt },
     ],
     jsonMode: true,
+    web: opts.web,
   });
 
   // Some smaller free models wrap JSON in markdown code fences despite

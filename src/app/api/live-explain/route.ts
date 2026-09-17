@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       model,
       systemPrompt: SYSTEM_PROMPT,
       userPrompt: `Latest transcript excerpt:\n"""\n${result.data.context}\n"""`,
+      web: result.data.web,
     });
     const parsed = await liveExplainResponseSchema.safeParseAsync(raw);
     if (!parsed.success) throw new Error("The model returned no explanation. You can retry this step.");
