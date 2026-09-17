@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, Layers, List, Loader2, RefreshCw } from "lucide-react";
 import { FlashcardList, isDue, type FlashcardListItem } from "@/components/flashcards/FlashcardList";
+import { StudyDeck } from "@/components/flashcards/StudyDeck";
 import { Button } from "@/components/ui/Button";
 import { useTasks } from "@/components/tasks/TaskProvider";
 import { postTask } from "@/lib/tasks";
@@ -20,6 +21,11 @@ const VIEW_LABEL: Record<View, string> = {
   ...MASTERY_LABEL,
 };
 
+const MODES = [
+  { value: "deck", label: "Cards", icon: Layers },
+  { value: "list", label: "List", icon: List },
+] as const;
+
 function matches(card: FlashcardListItem, view: View, now: Date): boolean {
   if (view === "all") return true;
   if (view === "due") return isDue(card, now);
@@ -27,15 +33,17 @@ function matches(card: FlashcardListItem, view: View, now: Date): boolean {
 }
 
 /**
- * The lecture's card set as a self-test: answers hidden until asked for, a view
- * per mastery state, and the two edits the list used to lack — fixing one card
- * the model got wrong, and rewriting the whole set.
+ * The lecture's card set as a self-test: one card at a time by default, turned
+ * with a click or Space and stepped with the arrow keys; or the full list with
+ * answers hidden until asked for, where a card can be edited or deleted. A view
+ * per mastery state, and a rewrite of the whole set.
  */
 export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcards: FlashcardListItem[] }) {
   const router = useRouter();
   const { run, task, clear } = useTasks();
   const [view, setView] = useState<View>("all");
   const [revealAll, setRevealAll] = useState(false);
+  const [mode, setMode] = useState<"deck" | "list">("deck");
 
   // Same key the pipeline banner uses, so the two never run the same
   // generation twice.
@@ -49,10 +57,14 @@ export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcar
   ) as Record<View, number>;
 
   // Due first within the view: the cards asking for attention are the reason
-  // to open this tab.
-  const visible = flashcards
-    .filter((card) => matches(card, view, now))
-    .sort((a, b) => Number(isDue(b, now)) - Number(isDue(a, now)));
+  // to open this tab. Memoised because the deck treats a new array as a new
+  // set and starts over on it.
+  const visible = useMemo(() => {
+    const at = new Date();
+    return flashcards
+      .filter((card) => matches(card, view, at))
+      .sort((a, b) => Number(isDue(b, at)) - Number(isDue(a, at)));
+  }, [flashcards, view]);
 
   async function regenerate() {
     // The route deletes every card before writing new ones. Intervals, ease and
@@ -100,18 +112,38 @@ export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcar
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setRevealAll((r) => !r)}
-            className="flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2"
-          >
-            {revealAll ? (
-              <EyeOff className="h-3.5 w-3.5" strokeWidth={2.2} />
-            ) : (
-              <Eye className="h-3.5 w-3.5" strokeWidth={2.2} />
-            )}
-            {revealAll ? "Hide all" : "Show all"}
-          </button>
+          <div role="radiogroup" aria-label="Layout" className="flex rounded-lg border border-line p-0.5">
+            {MODES.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                role="radio"
+                aria-checked={mode === value}
+                onClick={() => setMode(value)}
+                className={clsx(
+                  "flex items-center gap-1 rounded-md px-2 py-1 text-[12.5px] font-medium transition-colors",
+                  mode === value ? "bg-brand-soft text-brand-ink" : "text-muted hover:text-ink-soft"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
+                {label}
+              </button>
+            ))}
+          </div>
+          {mode === "list" && (
+            <button
+              type="button"
+              onClick={() => setRevealAll((r) => !r)}
+              className="flex items-center gap-1.5 rounded-lg border border-line px-2.5 py-1.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-line-strong hover:bg-surface-2"
+            >
+              {revealAll ? (
+                <EyeOff className="h-3.5 w-3.5" strokeWidth={2.2} />
+              ) : (
+                <Eye className="h-3.5 w-3.5" strokeWidth={2.2} />
+              )}
+              {revealAll ? "Hide all" : "Show all"}
+            </button>
+          )}
           <Button variant="secondary" size="sm" onClick={regenerate} disabled={regenerating}>
             {regenerating ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -127,7 +159,11 @@ export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcar
           {regenerateError}
         </p>
       )}
-      <FlashcardList flashcards={visible} revealAll={revealAll} disabled={regenerating} />
+      {mode === "deck" ? (
+        <StudyDeck flashcards={visible} />
+      ) : (
+        <FlashcardList flashcards={visible} revealAll={revealAll} disabled={regenerating} />
+      )}
     </div>
   );
 }

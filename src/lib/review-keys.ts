@@ -4,7 +4,12 @@
  * the one rule that matters: a key typed into a text field is text, not a
  * command — except Cmd/Ctrl+Enter, which is how a field is submitted.
  */
-export type SessionKey = { type: "enter" } | { type: "space" } | { type: "digit"; n: number };
+export type SessionKey =
+  | { type: "enter" }
+  | { type: "space" }
+  | { type: "digit"; n: number }
+  | { type: "prev" }
+  | { type: "next" };
 
 export type KeyInput = {
   key: string;
@@ -27,6 +32,8 @@ export function sessionKey({ key, metaKey, ctrlKey, inField, onButton, repeat }:
   if (inField || metaKey || ctrlKey) return null;
   if (key === " ") return onButton ? null : { type: "space" };
   if (/^[1-9]$/.test(key)) return { type: "digit", n: Number(key) };
+  if (key === "ArrowLeft") return { type: "prev" };
+  if (key === "ArrowRight") return { type: "next" };
   return null;
 }
 
