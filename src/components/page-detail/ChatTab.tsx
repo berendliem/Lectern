@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Loader2, MessageCircleQuestion, Send } from "lucide-react";
 import { ChatBubble } from "@/components/ask/ChatBubble";
+import { WebSearchToggle } from "@/components/ask/WebSearchToggle";
 import { useChatHistory } from "@/components/ask/useChatHistory";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -16,6 +17,7 @@ const SUGGESTIONS = [
 export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: boolean }) {
   const [messages, setMessages, clearMessages] = useChatHistory<Message>(`lectern:chat:page:${pageId}`);
   const [input, setInput] = useState("");
+  const [web, setWeb] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -36,7 +38,7 @@ export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: 
       const res = await fetch(`/api/pages/${pageId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages.slice(-12) }),
+        body: JSON.stringify({ messages: nextMessages.slice(-12), web }),
       });
       if (res.ok) {
         const { reply } = await res.json();
@@ -123,6 +125,7 @@ export function ChatTab({ pageId, hasMaterial }: { pageId: string; hasMaterial: 
           placeholder="Ask about this lecture…"
           className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
         />
+        <WebSearchToggle on={web} onChange={setWeb} />
         <button
           type="submit"
           disabled={sending || !input.trim()}

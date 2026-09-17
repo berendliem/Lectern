@@ -114,6 +114,7 @@ export const quizAnswerSchema = z.object({
 
 export const liveExplainSchema = z.object({
   context: z.string().trim().min(10).max(8000),
+  web: z.boolean().optional(),
 });
 
 /** What the live-explain model call returns. The diagram is checked by cleanMermaid. */
@@ -132,6 +133,7 @@ export const chatRequestSchema = z.object({
     )
     .min(1)
     .max(30),
+  web: z.boolean().optional(),
 });
 
 export const blurtSubmitSchema = z.object({

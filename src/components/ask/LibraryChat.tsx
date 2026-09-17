@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BrainCircuit, FileText, Loader2, Presentation, Send } from "lucide-react";
 import clsx from "@/lib/clsx";
 import { ChatBubble } from "./ChatBubble";
+import { WebSearchToggle } from "@/components/ask/WebSearchToggle";
 import { useChatHistory } from "./useChatHistory";
 
 type Citation = { label: string; pageId: string | null; materialId: string | null };
@@ -17,9 +18,16 @@ const SUGGESTIONS = [
   "Quiz me on the hardest concept in my notes",
 ];
 
-export function LibraryChat() {
-  const [messages, setMessages, clearMessages] = useChatHistory<Message>("lectern:chat:library");
+/**
+ * One thread across every lecture. `compact` is the librarian dock: no page
+ * heading, the messages scroll inside the panel and the input stays pinned.
+ * Both surfaces read the same stored thread, so a question asked from the
+ * dock is still there on the full page.
+ */
+export function LibraryChat({ compact = false }: { compact?: boolean }) {
+  const [messages, setMessages, clearMessages] = useChatHistory<Message>("lectern:chat:library", "local");
   const [input, setInput] = useState("");
+  const [web, setWeb] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -38,7 +46,7 @@ export function LibraryChat() {
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify({ messages: nextMessages.slice(-12).map(({ role, content }) => ({ role, content })), web }),
       });
       if (res.ok) {
         const { reply, citations } = await res.json();
@@ -56,18 +64,25 @@ export function LibraryChat() {
   }
 
   return (
-    <div className="flex max-w-3xl flex-col gap-5">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <BrainCircuit className="h-6 w-6 text-brand-ink" strokeWidth={2.2} />
-          Ask all courses
-        </h1>
-        <p className="mt-0.5 text-[13px] text-muted">
-          One assistant across every lecture you&apos;ve captured. It finds the relevant notes and answers with citations.
-        </p>
-      </div>
+    <div className={clsx("flex flex-col", compact ? "min-h-0 flex-1 gap-3" : "max-w-3xl gap-5")}>
+      {!compact && (
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+            <BrainCircuit className="h-6 w-6 text-brand-ink" strokeWidth={2.2} />
+            Ask all courses
+          </h1>
+          <p className="mt-0.5 text-[13px] text-muted">
+            One assistant across every lecture you&apos;ve captured. It finds the relevant notes and answers with citations.
+          </p>
+        </div>
+      )}
 
-      <div className="flex min-h-[24rem] flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-4">
+      <div
+        className={clsx(
+          "flex flex-col gap-3 rounded-2xl border border-line/80 bg-surface p-4",
+          compact ? "min-h-0 flex-1 overflow-y-auto" : "min-h-[24rem]"
+        )}
+      >
         {messages.length === 0 && (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10 text-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand-ink">
@@ -146,6 +161,7 @@ export function LibraryChat() {
           placeholder="Ask across all your lectures…"
           className="w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-2 focus:border-brand focus:outline-none focus:ring-2 focus:ring-gold"
         />
+        <WebSearchToggle on={web} onChange={setWeb} />
         <button
           type="submit"
           disabled={sending || !input.trim()}

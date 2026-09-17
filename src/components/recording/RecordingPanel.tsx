@@ -9,6 +9,7 @@ import { confirmDiscard, useRecording } from "@/components/recording/RecordingPr
 import type { RecorderStatus } from "@/components/recording/useMediaRecorder";
 import { Button } from "@/components/ui/Button";
 import { formatElapsed } from "@/lib/format";
+import { WebSearchToggle } from "@/components/ask/WebSearchToggle";
 
 export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitle: string }) {
   const {
@@ -83,6 +84,7 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
   const [explanation, setExplanation] = useState<string | null>(null);
   const [diagram, setDiagram] = useState<string | null>(null);
   const [explaining, setExplaining] = useState(false);
+  const [web, setWeb] = useState(false);
   const [explainError, setExplainError] = useState<string | null>(null);
   const liveEndRef = useRef<HTMLDivElement>(null);
   // Bumped by every explain request and by every clear. A reply whose number is
@@ -115,7 +117,7 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
       const res = await fetch("/api/live-explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ context }),
+        body: JSON.stringify({ context, web }),
       });
       if (seq !== explainSeq.current) return;
       if (res.ok) {
@@ -238,19 +240,22 @@ export function RecordingPanel({ pageId, pageTitle }: { pageId: string; pageTitl
               {liveBusy && <Loader2 className="ml-1.5 inline h-3 w-3 animate-spin text-brand-ink" strokeWidth={2.5} />}
             </p>
             {inSession && (
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={handleExplain}
-                disabled={explaining || liveTranscript.length < 10}
-              >
-                {explaining ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.2} />
-                ) : (
-                  <Sparkles className="h-3.5 w-3.5 text-brand-ink" strokeWidth={2.2} />
-                )}
-                Explain this
-              </Button>
+              <div className="flex items-center gap-2">
+                <WebSearchToggle on={web} onChange={setWeb} small />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleExplain}
+                  disabled={explaining || liveTranscript.length < 10}
+                >
+                  {explaining ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.2} />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5 text-brand-ink" strokeWidth={2.2} />
+                  )}
+                  Explain this
+                </Button>
+              </div>
             )}
           </div>
 
