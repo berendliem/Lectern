@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Target } from "lucide-react";
+import { useTasks } from "@/components/tasks/TaskProvider";
 import { Button } from "@/components/ui/Button";
+import { postTask } from "@/lib/tasks";
 
 /**
  * Writes fresh questions about the concepts this lecture has already been
@@ -13,29 +14,24 @@ import { Button } from "@/components/ui/Button";
  */
 export function DrillMissesButton({ pageId, missedCount }: { pageId: string; missedCount: number }) {
   const router = useRouter();
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { run, task, clear } = useTasks();
+  const taskKey = `page:${pageId}:drill-misses`;
+  const running = task(taskKey)?.status === "running";
+  const error = task(taskKey)?.error ?? null;
 
   if (missedCount === 0) return null;
 
   async function drill() {
-    setRunning(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/generate-quiz?misses=1`, { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        setError(body?.error ?? "Could not write the drill questions. Try again.");
-        return;
-      }
-      router.refresh();
-    } catch {
-      // A dropped connection rejects the fetch outright. Without this the
-      // button would spin for ever with nothing said.
-      setError("Could not reach Lectern. Check it is still running, then try again.");
-    } finally {
-      setRunning(false);
-    }
+    clear([taskKey]);
+    await run({ key: taskKey, label: "Writing drill questions…", href: `/pages/${pageId}` }, async () => {
+      await postTask(
+        `/api/pages/${pageId}/generate-quiz?misses=1`,
+        "Could not write the drill questions. Try again.",
+        undefined,
+        "Could not reach Lectern. Check it is still running, then try again."
+      );
+    });
+    router.refresh();
   }
 
   return (

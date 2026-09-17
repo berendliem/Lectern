@@ -2,31 +2,25 @@
 
 import { useState } from "react";
 import { Captions, ChevronDown, FileDown, FileText, Loader2, Send } from "lucide-react";
+import { useTasks } from "@/components/tasks/TaskProvider";
 import clsx from "@/lib/clsx";
+import { postTask } from "@/lib/tasks";
 
 export function ExportMenu({ pageId }: { pageId: string }) {
   const [open, setOpen] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [synced, setSynced] = useState<string | null>(null);
+  const { run, task, clear } = useTasks();
+  const syncKey = `page:${pageId}:sync-notion`;
+  const syncing = task(syncKey)?.status === "running";
+  const syncMessage = syncing ? null : (task(syncKey)?.error ?? synced);
 
   async function syncToNotion() {
-    setSyncing(true);
-    setSyncMessage(null);
-    try {
-      const res = await fetch(`/api/pages/${pageId}/sync-notion`, { method: "POST" });
-      const body = await res.json().catch(() => ({}));
-      setSyncMessage(
-        res.ok
-          ? body.updated
-            ? "Notion page updated ✓"
-            : "Synced to Notion ✓"
-          : (body.error ?? "Sync failed")
-      );
-    } catch {
-      setSyncMessage("Sync failed");
-    } finally {
-      setSyncing(false);
-    }
+    clear([syncKey]);
+    setSynced(null);
+    await run({ key: syncKey, label: "Syncing to Notion…", href: `/pages/${pageId}` }, async () => {
+      const body = (await postTask(`/api/pages/${pageId}/sync-notion`, "Sync failed")) as { updated?: boolean };
+      setSynced(body.updated ? "Notion page updated ✓" : "Synced to Notion ✓");
+    });
   }
 
   return (
