@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Layers, List, Loader2, RefreshCw } from "lucide-react";
 import { FlashcardList, isDue, type FlashcardListItem } from "@/components/flashcards/FlashcardList";
@@ -57,10 +57,14 @@ export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcar
   ) as Record<View, number>;
 
   // Due first within the view: the cards asking for attention are the reason
-  // to open this tab.
-  const visible = flashcards
-    .filter((card) => matches(card, view, now))
-    .sort((a, b) => Number(isDue(b, now)) - Number(isDue(a, now)));
+  // to open this tab. Memoised because the deck treats a new array as a new
+  // set and starts over on it.
+  const visible = useMemo(() => {
+    const at = new Date();
+    return flashcards
+      .filter((card) => matches(card, view, at))
+      .sort((a, b) => Number(isDue(b, at)) - Number(isDue(a, at)));
+  }, [flashcards, view]);
 
   async function regenerate() {
     // The route deletes every card before writing new ones. Intervals, ease and
