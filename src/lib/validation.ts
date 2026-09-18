@@ -10,7 +10,8 @@ export const createFolderSchema = z.object({
 
 export const updateFolderSchema = createFolderSchema.partial().extend({
   // The onQ course this Lectern course imports from; null unlinks it.
-  onqCourseId: z.number().int().positive().nullable().optional(),
+  // Brightspace ids are 32-bit.
+  onqCourseId: z.number().int().positive().max(2_147_483_647).nullable().optional(),
 });
 
 export const createPageSchema = z.object({
@@ -57,7 +58,7 @@ export const createMaterialSchema = z.object({
 
 /** One onQ topic to import. The module title only feeds the kind guess. */
 export const importOnqTopicSchema = z.object({
-  topicId: z.number().int().positive(),
+  topicId: z.number().int().positive().max(2_147_483_647),
   moduleTitle: z.string().trim().max(300).default(""),
 });
 

@@ -19,8 +19,11 @@ export type OnqTopicText = OnqTopic & {
   sourceFileName: string | null;
 };
 
+// Length caps: these strings are stored and shown as-is, and onq-mcp relays
+// whatever the course author typed.
 const title = z
   .string()
+  .max(300)
   .nullish()
   .transform((t) => t?.trim() || "Untitled");
 
@@ -32,17 +35,17 @@ const courseSchema = z.object({ course_id: z.number().int(), name: z.string() })
 const topicSchema = z.object({
   topic_id: z.number().int(),
   title,
-  extension: z.string().nullish().default(null),
+  extension: z.string().max(300).nullish().default(null),
   downloadable: z.boolean().default(false),
-  last_modified: z.string().nullish().default(null),
+  last_modified: z.string().max(64).nullish().default(null),
 });
 
 const moduleSchema = z.object({ module_id: z.number().int(), title, topics: z.array(topicSchema) });
 
 const topicTextSchema = topicSchema.extend({
   text: z.string().nullable(),
-  note: z.string().nullish().default(null),
-  source_file_name: z.string().nullish().default(null),
+  note: z.string().max(2000).nullish().default(null),
+  source_file_name: z.string().max(300).nullish().default(null),
 });
 
 function toTopic(t: z.output<typeof topicSchema>): OnqTopic {

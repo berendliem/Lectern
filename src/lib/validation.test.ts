@@ -96,6 +96,7 @@ test("a folder can be linked to and unlinked from an onQ course", async () => {
   assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: null }), { onqCourseId: null });
   await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: "1180369" }));
   await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: 1.5 }));
+  await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: 2 ** 40 }));
 });
 
 test("an onQ import names one topic by integer id", async () => {
@@ -106,5 +107,6 @@ test("an onQ import names one topic by integer id", async () => {
   assert.deepEqual(await importOnqTopicSchema.parseAsync({ topicId: 7 }), { topicId: 7, moduleTitle: "" });
   await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: "7" }));
   await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: -1 }));
+  await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: 2 ** 40 }));
   await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: 7, moduleTitle: "x".repeat(301) }));
 });
