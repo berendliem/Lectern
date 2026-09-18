@@ -1869,6 +1869,7 @@ export const FolderScalarFieldEnum = {
   name: 'name',
   description: 'description',
   color: 'color',
+  onqCourseId: 'onqCourseId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1884,6 +1885,8 @@ export const MaterialScalarFieldEnum = {
   sourceFileName: 'sourceFileName',
   text: 'text',
   slideCount: 'slideCount',
+  onqTopicId: 'onqTopicId',
+  onqLastModified: 'onqLastModified',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2160,6 +2163,13 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -2170,13 +2180,6 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'MaterialKind'
  */
 export type EnumMaterialKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaterialKind'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
     
 
 

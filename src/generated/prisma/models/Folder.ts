@@ -20,8 +20,18 @@ export type FolderModel = runtime.Types.Result.DefaultSelection<Prisma.$FolderPa
 
 export type AggregateFolder = {
   _count: FolderCountAggregateOutputType | null
+  _avg: FolderAvgAggregateOutputType | null
+  _sum: FolderSumAggregateOutputType | null
   _min: FolderMinAggregateOutputType | null
   _max: FolderMaxAggregateOutputType | null
+}
+
+export type FolderAvgAggregateOutputType = {
+  onqCourseId: number | null
+}
+
+export type FolderSumAggregateOutputType = {
+  onqCourseId: number | null
 }
 
 export type FolderMinAggregateOutputType = {
@@ -29,6 +39,7 @@ export type FolderMinAggregateOutputType = {
   name: string | null
   description: string | null
   color: string | null
+  onqCourseId: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -38,6 +49,7 @@ export type FolderMaxAggregateOutputType = {
   name: string | null
   description: string | null
   color: string | null
+  onqCourseId: number | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -47,17 +59,27 @@ export type FolderCountAggregateOutputType = {
   name: number
   description: number
   color: number
+  onqCourseId: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
 
+export type FolderAvgAggregateInputType = {
+  onqCourseId?: true
+}
+
+export type FolderSumAggregateInputType = {
+  onqCourseId?: true
+}
+
 export type FolderMinAggregateInputType = {
   id?: true
   name?: true
   description?: true
   color?: true
+  onqCourseId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -67,6 +89,7 @@ export type FolderMaxAggregateInputType = {
   name?: true
   description?: true
   color?: true
+  onqCourseId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -76,6 +99,7 @@ export type FolderCountAggregateInputType = {
   name?: true
   description?: true
   color?: true
+  onqCourseId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -119,6 +143,18 @@ export type FolderAggregateArgs<ExtArgs extends runtime.Types.Extensions.Interna
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: FolderAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: FolderSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: FolderMinAggregateInputType
@@ -149,6 +185,8 @@ export type FolderGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   _count?: FolderCountAggregateInputType | true
+  _avg?: FolderAvgAggregateInputType
+  _sum?: FolderSumAggregateInputType
   _min?: FolderMinAggregateInputType
   _max?: FolderMaxAggregateInputType
 }
@@ -158,9 +196,12 @@ export type FolderGroupByOutputType = {
   name: string
   description: string | null
   color: string | null
+  onqCourseId: number | null
   createdAt: Date
   updatedAt: Date
   _count: FolderCountAggregateOutputType | null
+  _avg: FolderAvgAggregateOutputType | null
+  _sum: FolderSumAggregateOutputType | null
   _min: FolderMinAggregateOutputType | null
   _max: FolderMaxAggregateOutputType | null
 }
@@ -188,6 +229,7 @@ export type FolderWhereInput = {
   name?: Prisma.StringFilter<"Folder"> | string
   description?: Prisma.StringNullableFilter<"Folder"> | string | null
   color?: Prisma.StringNullableFilter<"Folder"> | string | null
+  onqCourseId?: Prisma.IntNullableFilter<"Folder"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Folder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Folder"> | Date | string
   pages?: Prisma.PageListRelationFilter
@@ -201,6 +243,7 @@ export type FolderOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrderInput | Prisma.SortOrder
+  onqCourseId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   pages?: Prisma.PageOrderByRelationAggregateInput
@@ -217,6 +260,7 @@ export type FolderWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"Folder"> | string
   description?: Prisma.StringNullableFilter<"Folder"> | string | null
   color?: Prisma.StringNullableFilter<"Folder"> | string | null
+  onqCourseId?: Prisma.IntNullableFilter<"Folder"> | number | null
   createdAt?: Prisma.DateTimeFilter<"Folder"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Folder"> | Date | string
   pages?: Prisma.PageListRelationFilter
@@ -230,11 +274,14 @@ export type FolderOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   color?: Prisma.SortOrderInput | Prisma.SortOrder
+  onqCourseId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.FolderCountOrderByAggregateInput
+  _avg?: Prisma.FolderAvgOrderByAggregateInput
   _max?: Prisma.FolderMaxOrderByAggregateInput
   _min?: Prisma.FolderMinOrderByAggregateInput
+  _sum?: Prisma.FolderSumOrderByAggregateInput
 }
 
 export type FolderScalarWhereWithAggregatesInput = {
@@ -245,6 +292,7 @@ export type FolderScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Folder"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Folder"> | string | null
   color?: Prisma.StringNullableWithAggregatesFilter<"Folder"> | string | null
+  onqCourseId?: Prisma.IntNullableWithAggregatesFilter<"Folder"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Folder"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Folder"> | Date | string
 }
@@ -254,6 +302,7 @@ export type FolderCreateInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pages?: Prisma.PageCreateNestedManyWithoutFolderInput
@@ -267,6 +316,7 @@ export type FolderUncheckedCreateInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pages?: Prisma.PageUncheckedCreateNestedManyWithoutFolderInput
@@ -280,6 +330,7 @@ export type FolderUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUpdateManyWithoutFolderNestedInput
@@ -293,6 +344,7 @@ export type FolderUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUncheckedUpdateManyWithoutFolderNestedInput
@@ -306,6 +358,7 @@ export type FolderCreateManyInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -315,6 +368,7 @@ export type FolderUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -324,6 +378,7 @@ export type FolderUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -333,8 +388,13 @@ export type FolderCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
+  onqCourseId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type FolderAvgOrderByAggregateInput = {
+  onqCourseId?: Prisma.SortOrder
 }
 
 export type FolderMaxOrderByAggregateInput = {
@@ -342,6 +402,7 @@ export type FolderMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
+  onqCourseId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -351,8 +412,13 @@ export type FolderMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   description?: Prisma.SortOrder
   color?: Prisma.SortOrder
+  onqCourseId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type FolderSumOrderByAggregateInput = {
+  onqCourseId?: Prisma.SortOrder
 }
 
 export type FolderScalarRelationFilter = {
@@ -371,6 +437,14 @@ export type StringFieldUpdateOperationsInput = {
 
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -442,6 +516,7 @@ export type FolderCreateWithoutMaterialsInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pages?: Prisma.PageCreateNestedManyWithoutFolderInput
@@ -454,6 +529,7 @@ export type FolderUncheckedCreateWithoutMaterialsInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pages?: Prisma.PageUncheckedCreateNestedManyWithoutFolderInput
@@ -482,6 +558,7 @@ export type FolderUpdateWithoutMaterialsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUpdateManyWithoutFolderNestedInput
@@ -494,6 +571,7 @@ export type FolderUncheckedUpdateWithoutMaterialsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUncheckedUpdateManyWithoutFolderNestedInput
@@ -506,6 +584,7 @@ export type FolderCreateWithoutTopicsInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pages?: Prisma.PageCreateNestedManyWithoutFolderInput
@@ -518,6 +597,7 @@ export type FolderUncheckedCreateWithoutTopicsInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pages?: Prisma.PageUncheckedCreateNestedManyWithoutFolderInput
@@ -546,6 +626,7 @@ export type FolderUpdateWithoutTopicsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUpdateManyWithoutFolderNestedInput
@@ -558,6 +639,7 @@ export type FolderUncheckedUpdateWithoutTopicsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUncheckedUpdateManyWithoutFolderNestedInput
@@ -570,6 +652,7 @@ export type FolderCreateWithoutPagesInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   materials?: Prisma.MaterialCreateNestedManyWithoutFolderInput
@@ -582,6 +665,7 @@ export type FolderUncheckedCreateWithoutPagesInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   materials?: Prisma.MaterialUncheckedCreateNestedManyWithoutFolderInput
@@ -610,6 +694,7 @@ export type FolderUpdateWithoutPagesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   materials?: Prisma.MaterialUpdateManyWithoutFolderNestedInput
@@ -622,6 +707,7 @@ export type FolderUncheckedUpdateWithoutPagesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   materials?: Prisma.MaterialUncheckedUpdateManyWithoutFolderNestedInput
@@ -634,6 +720,7 @@ export type FolderCreateWithoutCalendarEventsInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pages?: Prisma.PageCreateNestedManyWithoutFolderInput
@@ -646,6 +733,7 @@ export type FolderUncheckedCreateWithoutCalendarEventsInput = {
   name: string
   description?: string | null
   color?: string | null
+  onqCourseId?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   pages?: Prisma.PageUncheckedCreateNestedManyWithoutFolderInput
@@ -674,6 +762,7 @@ export type FolderUpdateWithoutCalendarEventsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUpdateManyWithoutFolderNestedInput
@@ -686,6 +775,7 @@ export type FolderUncheckedUpdateWithoutCalendarEventsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   color?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onqCourseId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   pages?: Prisma.PageUncheckedUpdateManyWithoutFolderNestedInput
@@ -756,6 +846,7 @@ export type FolderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name?: boolean
   description?: boolean
   color?: boolean
+  onqCourseId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   pages?: boolean | Prisma.Folder$pagesArgs<ExtArgs>
@@ -770,6 +861,7 @@ export type FolderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   name?: boolean
   description?: boolean
   color?: boolean
+  onqCourseId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["folder"]>
@@ -779,6 +871,7 @@ export type FolderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   name?: boolean
   description?: boolean
   color?: boolean
+  onqCourseId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["folder"]>
@@ -788,11 +881,12 @@ export type FolderSelectScalar = {
   name?: boolean
   description?: boolean
   color?: boolean
+  onqCourseId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type FolderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "color" | "createdAt" | "updatedAt", ExtArgs["result"]["folder"]>
+export type FolderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "description" | "color" | "onqCourseId" | "createdAt" | "updatedAt", ExtArgs["result"]["folder"]>
 export type FolderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   pages?: boolean | Prisma.Folder$pagesArgs<ExtArgs>
   materials?: boolean | Prisma.Folder$materialsArgs<ExtArgs>
@@ -816,6 +910,10 @@ export type $FolderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     name: string
     description: string | null
     color: string | null
+    /**
+     * The onQ (Brightspace) course offering this course imports material from.
+     */
+    onqCourseId: number | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["folder"]>
@@ -1249,6 +1347,7 @@ export interface FolderFieldRefs {
   readonly name: Prisma.FieldRef<"Folder", 'String'>
   readonly description: Prisma.FieldRef<"Folder", 'String'>
   readonly color: Prisma.FieldRef<"Folder", 'String'>
+  readonly onqCourseId: Prisma.FieldRef<"Folder", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Folder", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Folder", 'DateTime'>
 }

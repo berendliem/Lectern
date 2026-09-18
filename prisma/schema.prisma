@@ -98,6 +98,8 @@ model Folder {
   name        String
   description String?
   color       String?
+  /// The onQ (Brightspace) course offering this course imports material from.
+  onqCourseId Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -115,6 +117,11 @@ model Material {
   sourceFileName String?
   text           String
   slideCount     Int?
+  /// Set when the material was imported from onQ: which topic it is, and the
+  /// topic's LastModifiedDate at import, so a re-import can tell "already
+  /// here" from "changed on onQ".
+  onqTopicId      Int?
+  onqLastModified String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -125,6 +132,7 @@ model Material {
   reviewLogs    ReviewLog[]
 
   @@index([folderId, kind])
+  @@unique([folderId, onqTopicId])
 }
 
 model CourseTopic {

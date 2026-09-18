@@ -8,7 +8,10 @@ export const createFolderSchema = z.object({
   color: z.string().trim().max(32).optional(),
 });
 
-export const updateFolderSchema = createFolderSchema.partial();
+export const updateFolderSchema = createFolderSchema.partial().extend({
+  // The onQ course this Lectern course imports from; null unlinks it.
+  onqCourseId: z.number().int().positive().nullable().optional(),
+});
 
 export const createPageSchema = z.object({
   title: z.string().trim().min(1).max(300),
@@ -50,6 +53,12 @@ export const createMaterialSchema = z.object({
   text: z.string().trim().min(1).max(MAX_TEXT_CHARS),
   sourceFileName: z.string().trim().max(300).optional(),
   slideCount: z.number().int().min(0).max(10_000).optional(),
+});
+
+/** One onQ topic to import. The module title only feeds the kind guess. */
+export const importOnqTopicSchema = z.object({
+  topicId: z.number().int().positive(),
+  moduleTitle: z.string().trim().max(300).default(""),
 });
 
 /**

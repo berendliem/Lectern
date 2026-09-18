@@ -90,6 +90,7 @@ export const FolderScalarFieldEnum = {
   name: 'name',
   description: 'description',
   color: 'color',
+  onqCourseId: 'onqCourseId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -105,6 +106,8 @@ export const MaterialScalarFieldEnum = {
   sourceFileName: 'sourceFileName',
   text: 'text',
   slideCount: 'slideCount',
+  onqTopicId: 'onqTopicId',
+  onqLastModified: 'onqLastModified',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

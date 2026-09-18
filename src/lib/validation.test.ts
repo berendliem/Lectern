@@ -2,9 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   createActionItemsSchema,
+  importOnqTopicSchema,
   learnMoreResponseSchema,
   quizResponseSchema,
   updateFlashcardSchema,
+  updateFolderSchema,
 } from "./validation.ts";
 
 test("a well-formed batch of action items parses", async () => {
@@ -87,4 +89,22 @@ test("a flashcard edit trims both sides and refuses an empty one", async () => {
   });
   assert.equal(parsed.prompt, "What is entropy?");
   await assert.rejects(() => updateFlashcardSchema.parseAsync({ prompt: "   ", idealExplanation: "x" }));
+});
+
+test("a folder can be linked to and unlinked from an onQ course", async () => {
+  assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: 1180369 }), { onqCourseId: 1180369 });
+  assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: null }), { onqCourseId: null });
+  await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: "1180369" }));
+  await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: 1.5 }));
+});
+
+test("an onQ import names one topic by integer id", async () => {
+  assert.deepEqual(await importOnqTopicSchema.parseAsync({ topicId: 7, moduleTitle: " Unit 1 " }), {
+    topicId: 7,
+    moduleTitle: "Unit 1",
+  });
+  assert.deepEqual(await importOnqTopicSchema.parseAsync({ topicId: 7 }), { topicId: 7, moduleTitle: "" });
+  await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: "7" }));
+  await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: -1 }));
+  await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: 7, moduleTitle: "x".repeat(301) }));
 });

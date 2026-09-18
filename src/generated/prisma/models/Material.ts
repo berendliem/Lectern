@@ -28,10 +28,12 @@ export type AggregateMaterial = {
 
 export type MaterialAvgAggregateOutputType = {
   slideCount: number | null
+  onqTopicId: number | null
 }
 
 export type MaterialSumAggregateOutputType = {
   slideCount: number | null
+  onqTopicId: number | null
 }
 
 export type MaterialMinAggregateOutputType = {
@@ -42,6 +44,8 @@ export type MaterialMinAggregateOutputType = {
   sourceFileName: string | null
   text: string | null
   slideCount: number | null
+  onqTopicId: number | null
+  onqLastModified: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -54,6 +58,8 @@ export type MaterialMaxAggregateOutputType = {
   sourceFileName: string | null
   text: string | null
   slideCount: number | null
+  onqTopicId: number | null
+  onqLastModified: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -66,6 +72,8 @@ export type MaterialCountAggregateOutputType = {
   sourceFileName: number
   text: number
   slideCount: number
+  onqTopicId: number
+  onqLastModified: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -74,10 +82,12 @@ export type MaterialCountAggregateOutputType = {
 
 export type MaterialAvgAggregateInputType = {
   slideCount?: true
+  onqTopicId?: true
 }
 
 export type MaterialSumAggregateInputType = {
   slideCount?: true
+  onqTopicId?: true
 }
 
 export type MaterialMinAggregateInputType = {
@@ -88,6 +98,8 @@ export type MaterialMinAggregateInputType = {
   sourceFileName?: true
   text?: true
   slideCount?: true
+  onqTopicId?: true
+  onqLastModified?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -100,6 +112,8 @@ export type MaterialMaxAggregateInputType = {
   sourceFileName?: true
   text?: true
   slideCount?: true
+  onqTopicId?: true
+  onqLastModified?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -112,6 +126,8 @@ export type MaterialCountAggregateInputType = {
   sourceFileName?: true
   text?: true
   slideCount?: true
+  onqTopicId?: true
+  onqLastModified?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -211,6 +227,8 @@ export type MaterialGroupByOutputType = {
   sourceFileName: string | null
   text: string
   slideCount: number | null
+  onqTopicId: number | null
+  onqLastModified: string | null
   createdAt: Date
   updatedAt: Date
   _count: MaterialCountAggregateOutputType | null
@@ -246,6 +264,8 @@ export type MaterialWhereInput = {
   sourceFileName?: Prisma.StringNullableFilter<"Material"> | string | null
   text?: Prisma.StringFilter<"Material"> | string
   slideCount?: Prisma.IntNullableFilter<"Material"> | number | null
+  onqTopicId?: Prisma.IntNullableFilter<"Material"> | number | null
+  onqLastModified?: Prisma.StringNullableFilter<"Material"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   folder?: Prisma.XOR<Prisma.FolderScalarRelationFilter, Prisma.FolderWhereInput>
@@ -263,6 +283,8 @@ export type MaterialOrderByWithRelationInput = {
   sourceFileName?: Prisma.SortOrderInput | Prisma.SortOrder
   text?: Prisma.SortOrder
   slideCount?: Prisma.SortOrderInput | Prisma.SortOrder
+  onqTopicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  onqLastModified?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   folder?: Prisma.FolderOrderByWithRelationInput
@@ -274,6 +296,7 @@ export type MaterialOrderByWithRelationInput = {
 
 export type MaterialWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  folderId_onqTopicId?: Prisma.MaterialFolderIdOnqTopicIdCompoundUniqueInput
   AND?: Prisma.MaterialWhereInput | Prisma.MaterialWhereInput[]
   OR?: Prisma.MaterialWhereInput[]
   NOT?: Prisma.MaterialWhereInput | Prisma.MaterialWhereInput[]
@@ -283,6 +306,8 @@ export type MaterialWhereUniqueInput = Prisma.AtLeast<{
   sourceFileName?: Prisma.StringNullableFilter<"Material"> | string | null
   text?: Prisma.StringFilter<"Material"> | string
   slideCount?: Prisma.IntNullableFilter<"Material"> | number | null
+  onqTopicId?: Prisma.IntNullableFilter<"Material"> | number | null
+  onqLastModified?: Prisma.StringNullableFilter<"Material"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   folder?: Prisma.XOR<Prisma.FolderScalarRelationFilter, Prisma.FolderWhereInput>
@@ -290,7 +315,7 @@ export type MaterialWhereUniqueInput = Prisma.AtLeast<{
   flashcards?: Prisma.FlashcardListRelationFilter
   quizQuestions?: Prisma.QuizQuestionListRelationFilter
   reviewLogs?: Prisma.ReviewLogListRelationFilter
-}, "id">
+}, "id" | "folderId_onqTopicId">
 
 export type MaterialOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -300,6 +325,8 @@ export type MaterialOrderByWithAggregationInput = {
   sourceFileName?: Prisma.SortOrderInput | Prisma.SortOrder
   text?: Prisma.SortOrder
   slideCount?: Prisma.SortOrderInput | Prisma.SortOrder
+  onqTopicId?: Prisma.SortOrderInput | Prisma.SortOrder
+  onqLastModified?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.MaterialCountOrderByAggregateInput
@@ -320,6 +347,8 @@ export type MaterialScalarWhereWithAggregatesInput = {
   sourceFileName?: Prisma.StringNullableWithAggregatesFilter<"Material"> | string | null
   text?: Prisma.StringWithAggregatesFilter<"Material"> | string
   slideCount?: Prisma.IntNullableWithAggregatesFilter<"Material"> | number | null
+  onqTopicId?: Prisma.IntNullableWithAggregatesFilter<"Material"> | number | null
+  onqLastModified?: Prisma.StringNullableWithAggregatesFilter<"Material"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Material"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Material"> | Date | string
 }
@@ -331,6 +360,8 @@ export type MaterialCreateInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
@@ -348,6 +379,8 @@ export type MaterialUncheckedCreateInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
@@ -363,6 +396,8 @@ export type MaterialUpdateInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
@@ -380,6 +415,8 @@ export type MaterialUncheckedUpdateInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
@@ -396,6 +433,8 @@ export type MaterialCreateManyInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -407,6 +446,8 @@ export type MaterialUpdateManyMutationInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -419,6 +460,8 @@ export type MaterialUncheckedUpdateManyInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -433,6 +476,11 @@ export type MaterialOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type MaterialFolderIdOnqTopicIdCompoundUniqueInput = {
+  folderId: string
+  onqTopicId: number
+}
+
 export type MaterialCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   folderId?: Prisma.SortOrder
@@ -441,12 +489,15 @@ export type MaterialCountOrderByAggregateInput = {
   sourceFileName?: Prisma.SortOrder
   text?: Prisma.SortOrder
   slideCount?: Prisma.SortOrder
+  onqTopicId?: Prisma.SortOrder
+  onqLastModified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type MaterialAvgOrderByAggregateInput = {
   slideCount?: Prisma.SortOrder
+  onqTopicId?: Prisma.SortOrder
 }
 
 export type MaterialMaxOrderByAggregateInput = {
@@ -457,6 +508,8 @@ export type MaterialMaxOrderByAggregateInput = {
   sourceFileName?: Prisma.SortOrder
   text?: Prisma.SortOrder
   slideCount?: Prisma.SortOrder
+  onqTopicId?: Prisma.SortOrder
+  onqLastModified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -469,12 +522,15 @@ export type MaterialMinOrderByAggregateInput = {
   sourceFileName?: Prisma.SortOrder
   text?: Prisma.SortOrder
   slideCount?: Prisma.SortOrder
+  onqTopicId?: Prisma.SortOrder
+  onqLastModified?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
 export type MaterialSumOrderByAggregateInput = {
   slideCount?: Prisma.SortOrder
+  onqTopicId?: Prisma.SortOrder
 }
 
 export type MaterialNullableScalarRelationFilter = {
@@ -526,14 +582,6 @@ export type MaterialUncheckedUpdateManyWithoutFolderNestedInput = {
 
 export type EnumMaterialKindFieldUpdateOperationsInput = {
   set?: $Enums.MaterialKind
-}
-
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type MaterialCreateNestedOneWithoutFlashcardsInput = {
@@ -607,6 +655,8 @@ export type MaterialCreateWithoutFolderInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkCreateNestedManyWithoutMaterialInput
@@ -622,6 +672,8 @@ export type MaterialUncheckedCreateWithoutFolderInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
@@ -666,6 +718,8 @@ export type MaterialScalarWhereInput = {
   sourceFileName?: Prisma.StringNullableFilter<"Material"> | string | null
   text?: Prisma.StringFilter<"Material"> | string
   slideCount?: Prisma.IntNullableFilter<"Material"> | number | null
+  onqTopicId?: Prisma.IntNullableFilter<"Material"> | number | null
+  onqLastModified?: Prisma.StringNullableFilter<"Material"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Material"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Material"> | Date | string
 }
@@ -677,6 +731,8 @@ export type MaterialCreateWithoutFlashcardsInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
@@ -693,6 +749,8 @@ export type MaterialUncheckedCreateWithoutFlashcardsInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
@@ -723,6 +781,8 @@ export type MaterialUpdateWithoutFlashcardsInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
@@ -739,6 +799,8 @@ export type MaterialUncheckedUpdateWithoutFlashcardsInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
@@ -753,6 +815,8 @@ export type MaterialCreateWithoutReviewLogsInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
@@ -769,6 +833,8 @@ export type MaterialUncheckedCreateWithoutReviewLogsInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
@@ -799,6 +865,8 @@ export type MaterialUpdateWithoutReviewLogsInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
@@ -815,6 +883,8 @@ export type MaterialUncheckedUpdateWithoutReviewLogsInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
@@ -829,6 +899,8 @@ export type MaterialCreateWithoutQuizQuestionsInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
@@ -845,6 +917,8 @@ export type MaterialUncheckedCreateWithoutQuizQuestionsInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   chunks?: Prisma.ChunkUncheckedCreateNestedManyWithoutMaterialInput
@@ -875,6 +949,8 @@ export type MaterialUpdateWithoutQuizQuestionsInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
@@ -891,6 +967,8 @@ export type MaterialUncheckedUpdateWithoutQuizQuestionsInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
@@ -905,6 +983,8 @@ export type MaterialCreateWithoutChunksInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   folder: Prisma.FolderCreateNestedOneWithoutMaterialsInput
@@ -921,6 +1001,8 @@ export type MaterialUncheckedCreateWithoutChunksInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   flashcards?: Prisma.FlashcardUncheckedCreateNestedManyWithoutMaterialInput
@@ -951,6 +1033,8 @@ export type MaterialUpdateWithoutChunksInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   folder?: Prisma.FolderUpdateOneRequiredWithoutMaterialsNestedInput
@@ -967,6 +1051,8 @@ export type MaterialUncheckedUpdateWithoutChunksInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   flashcards?: Prisma.FlashcardUncheckedUpdateManyWithoutMaterialNestedInput
@@ -981,6 +1067,8 @@ export type MaterialCreateManyFolderInput = {
   sourceFileName?: string | null
   text: string
   slideCount?: number | null
+  onqTopicId?: number | null
+  onqLastModified?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -992,6 +1080,8 @@ export type MaterialUpdateWithoutFolderInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUpdateManyWithoutMaterialNestedInput
@@ -1007,6 +1097,8 @@ export type MaterialUncheckedUpdateWithoutFolderInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.ChunkUncheckedUpdateManyWithoutMaterialNestedInput
@@ -1022,6 +1114,8 @@ export type MaterialUncheckedUpdateManyWithoutFolderInput = {
   sourceFileName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   text?: Prisma.StringFieldUpdateOperationsInput | string
   slideCount?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqTopicId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  onqLastModified?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -1092,6 +1186,8 @@ export type MaterialSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   sourceFileName?: boolean
   text?: boolean
   slideCount?: boolean
+  onqTopicId?: boolean
+  onqLastModified?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
@@ -1110,6 +1206,8 @@ export type MaterialSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   sourceFileName?: boolean
   text?: boolean
   slideCount?: boolean
+  onqTopicId?: boolean
+  onqLastModified?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
@@ -1123,6 +1221,8 @@ export type MaterialSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   sourceFileName?: boolean
   text?: boolean
   slideCount?: boolean
+  onqTopicId?: boolean
+  onqLastModified?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
@@ -1136,11 +1236,13 @@ export type MaterialSelectScalar = {
   sourceFileName?: boolean
   text?: boolean
   slideCount?: boolean
+  onqTopicId?: boolean
+  onqLastModified?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type MaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "folderId" | "kind" | "title" | "sourceFileName" | "text" | "slideCount" | "createdAt" | "updatedAt", ExtArgs["result"]["material"]>
+export type MaterialOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "folderId" | "kind" | "title" | "sourceFileName" | "text" | "slideCount" | "onqTopicId" | "onqLastModified" | "createdAt" | "updatedAt", ExtArgs["result"]["material"]>
 export type MaterialInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   folder?: boolean | Prisma.FolderDefaultArgs<ExtArgs>
   chunks?: boolean | Prisma.Material$chunksArgs<ExtArgs>
@@ -1173,6 +1275,13 @@ export type $MaterialPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     sourceFileName: string | null
     text: string
     slideCount: number | null
+    /**
+     * Set when the material was imported from onQ: which topic it is, and the
+     * topic's LastModifiedDate at import, so a re-import can tell "already
+     * here" from "changed on onQ".
+     */
+    onqTopicId: number | null
+    onqLastModified: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["material"]>
@@ -1610,6 +1719,8 @@ export interface MaterialFieldRefs {
   readonly sourceFileName: Prisma.FieldRef<"Material", 'String'>
   readonly text: Prisma.FieldRef<"Material", 'String'>
   readonly slideCount: Prisma.FieldRef<"Material", 'Int'>
+  readonly onqTopicId: Prisma.FieldRef<"Material", 'Int'>
+  readonly onqLastModified: Prisma.FieldRef<"Material", 'String'>
   readonly createdAt: Prisma.FieldRef<"Material", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Material", 'DateTime'>
 }
