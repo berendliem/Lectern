@@ -54,6 +54,9 @@ test("a missing claude binary says how to fix it", async () => {
         // drained only so the generator runs
       }
     }, /was not found/);
+    // A failed spawn never emits "exit", so a timer tied to it would outlive
+    // the run and hold the process open for the whole timeout.
+    assert.equal(process.getActiveResourcesInfo().includes("Timeout"), false);
   } finally {
     if (previous === undefined) delete process.env.CLAUDE_BIN;
     else process.env.CLAUDE_BIN = previous;
