@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { indexSourceSafely } from "@/lib/embeddings";
@@ -29,22 +30,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if ("skip" in made) return NextResponse.json({ outcome: "skipped", reason: made.skip });
   const { draft } = made;
 
-  const existing = await db.material.findUnique({
-    where: { folderId_onqTopicId: { folderId: id, onqTopicId: topicId } },
-    select: { id: true },
-  });
-
+  const where = { folderId_onqTopicId: { folderId: id, onqTopicId: topicId } };
   // A re-import refreshes what came from onQ and leaves what the student may
   // have edited since — the title and the kind — alone.
-  const material = existing
-    ? await db.material.update({
-        where: { id: existing.id },
-        data: { text: draft.text, sourceFileName: draft.sourceFileName, onqLastModified: draft.onqLastModified },
-        select: { id: true },
-      })
-    : await db.material.create({ data: { folderId: id, ...draft }, select: { id: true } });
+  const refresh = { text: draft.text, sourceFileName: draft.sourceFileName, onqLastModified: draft.onqLastModified };
+
+  const existing = await db.material.findUnique({ where, select: { id: true } });
+  let created: { id: string } | null = null;
+  if (!existing) {
+    try {
+      created = await db.material.create({ data: { folderId: id, ...draft, onqTopicId: topicId }, select: { id: true } });
+    } catch (e) {
+      // Two imports of one topic raced past the lookup; the loser refreshes instead.
+      if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")) throw e;
+    }
+  }
+  const material = created ?? (await db.material.update({ where, data: refresh, select: { id: true } }));
 
   await indexSourceSafely({ materialId: material.id });
 
-  return NextResponse.json({ outcome: existing ? "updated" : "imported" });
+  return NextResponse.json({ outcome: created ? "imported" : "updated" });
 }

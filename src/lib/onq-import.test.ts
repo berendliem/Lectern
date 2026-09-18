@@ -8,6 +8,7 @@ import {
   isSessionError,
   materialFromTopic,
   runImport,
+  type ImportOutcome,
   type ImportTarget,
 } from "./onq-import.ts";
 import type { OnqModule, OnqTopicText } from "./mcp/onq-parse.ts";
@@ -183,4 +184,32 @@ test("stops at a dead session: every later file would fail the same way", async 
   assert.deepEqual(seen, [1, 2]);
   assert.equal(summary.updated, 1);
   assert.match(summary.aborted ?? "", /session expired/);
+});
+
+test("does not guess between two sections of one course", () => {
+  const courses = [
+    { courseId: 1, name: "CISC102 Discrete Mathematics section 001 F26" },
+    { courseId: 2, name: "CISC102 Discrete Mathematics section 002 F26" },
+  ];
+  assert.equal(bestCourseMatch("CISC 102 Discrete Mathematics", courses), null);
+});
+
+test("a year is not a course number", () => {
+  const courses = [{ courseId: 1, name: "PHIL 111 Introduction to Philosophy 2026" }];
+  assert.equal(bestCourseMatch("Ethics 2026", courses), null);
+  assert.equal(bestCourseMatch("PHIL 111 2026", courses), 1);
+});
+
+test("an outcome it does not know is a skip, not a crash", async () => {
+  const summary = await runImport(
+    targets.slice(0, 1),
+    async () => ({ outcome: "done" }) as unknown as ImportOutcome,
+    () => undefined
+  );
+  assert.deepEqual(summary, {
+    imported: 0,
+    updated: 0,
+    skipped: [{ topicId: 1, title: "A", reason: "Lectern returned an unexpected result." }],
+    aborted: null,
+  });
 });

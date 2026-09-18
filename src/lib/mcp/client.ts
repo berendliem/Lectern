@@ -14,6 +14,8 @@ const clients: Map<string, Entry> = (globalForMcp.__mcpClients ??= new Map());
 
 const CALL_TIMEOUT_MS = 60_000;
 
+type CallOptions = { timeoutMs?: number };
+
 async function connectServer(name: string): Promise<Client> {
   const servers = await loadMcpServers();
   const entry = servers[name];
@@ -84,23 +86,15 @@ export async function disconnectMcpClient(name: string): Promise<void> {
   if (entry?.client) await entry.client.close().catch(() => undefined);
 }
 
-async function callRaw(
-  serverName: string,
-  toolName: string,
-  args: Record<string, unknown>,
-  opts?: { timeoutMs?: number }
-) {
+async function callRaw(serverName: string, toolName: string, args: Record<string, unknown>, opts?: CallOptions) {
   const client = await getMcpClient(serverName);
 
-  // Cast at the SDK boundary: callTool's return type is a union with a legacy
-  // CompatibilityCallToolResult branch (`{ toolResult: unknown }`, no content
-  // field) that TS can't structurally match against ToolResultLike. We never
-  // pass a CompatibilityCallToolResultSchema, so that branch never occurs here.
-  let result: ToolResultLike & { isError?: boolean };
+  let result: ToolResultLike & { isError: boolean };
   try {
-    result = (await client.callTool({ name: toolName, arguments: args }, undefined, {
+    const raw = await client.callTool({ name: toolName, arguments: args }, undefined, {
       timeout: opts?.timeoutMs ?? CALL_TIMEOUT_MS,
-    })) as ToolResultLike & { isError?: boolean };
+    });
+    result = { content: raw.content, structuredContent: raw.structuredContent, isError: raw.isError === true };
   } catch (e) {
     // A dead child process (server crashed, laptop slept) leaves a wedged
     // client; drop it so the next call reconnects fresh. Per-call failures
@@ -124,7 +118,7 @@ export async function callMcpTool(
   serverName: string,
   toolName: string,
   args: Record<string, unknown>,
-  opts?: { timeoutMs?: number }
+  opts?: CallOptions
 ): Promise<string> {
   return toolResultText(await callRaw(serverName, toolName, args, opts));
 }
@@ -134,7 +128,7 @@ export async function callMcpToolJson(
   serverName: string,
   toolName: string,
   args: Record<string, unknown>,
-  opts?: { timeoutMs?: number }
+  opts?: CallOptions
 ): Promise<unknown> {
   return toolResultJson(await callRaw(serverName, toolName, args, opts));
 }

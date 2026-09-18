@@ -3,9 +3,9 @@
  * so they can be tested directly: what kind a file probably is, which topics
  * are new, what becomes a material, and how a batch proceeds.
  */
+import type { MaterialKind } from "./drop-intake.ts";
 import type { OnqCourse, OnqModule, OnqTopic, OnqTopicText } from "./mcp/onq-parse.ts";
 
-export type MaterialKind = "SYLLABUS" | "SLIDES" | "READING" | "OTHER";
 export type TopicStatus = "new" | "imported" | "changed" | "unavailable";
 export type AnnotatedTopic = OnqTopic & { status: TopicStatus };
 export type AnnotatedModule = { moduleId: number; title: string; topics: AnnotatedTopic[] };
@@ -69,21 +69,27 @@ export function defaultSelection(modules: AnnotatedModule[]): number[] {
 // "CISC102" and "CISC 102" have to meet, so letters and digits split apart.
 const tokens = (name: string): string[] => name.toLowerCase().match(/[a-z]+|\d+/g) ?? [];
 
+// Three or more digits, but not a year: "F2026" tokenises to "2026" and
+// would match every course of that term.
+const isCourseNumber = (t: string) => /^\d{3,}$/.test(t) && !/^(19|20)\d\d$/.test(t);
+
 /**
  * The onQ course a Lectern course most likely is, or null. A shared course
  * number is required: two intro courses share most of their words, and a
- * wrong pre-selection is worse than none.
+ * wrong pre-selection is worse than none. A tie (two sections of one course)
+ * is no answer either.
  */
 export function bestCourseMatch(folderName: string, courses: OnqCourse[]): number | null {
   const wanted = new Set(tokens(folderName));
-  let best: { courseId: number; score: number } | null = null;
+  let best: { courseId: number; score: number; tied: boolean } | null = null;
   for (const course of courses) {
     const shared = tokens(course.name).filter((t) => wanted.has(t));
-    if (!shared.some((t) => /^\d{3,}$/.test(t))) continue;
+    if (!shared.some(isCourseNumber)) continue;
     const score = new Set(shared).size;
-    if (!best || score > best.score) best = { courseId: course.courseId, score };
+    if (!best || score > best.score) best = { courseId: course.courseId, score, tied: false };
+    else if (score === best.score) best.tied = true;
   }
-  return best?.courseId ?? null;
+  return best && !best.tied ? best.courseId : null;
 }
 
 export function materialFromTopic(
@@ -123,12 +129,17 @@ export async function runImport(
   for (const target of targets) {
     try {
       const result = await importOne(target);
-      if (result.outcome === "skipped") {
-        summary.skipped.push({ topicId: target.topicId, title: target.title, reason: result.reason ?? "Skipped." });
-      } else {
+      if (result.outcome === "imported" || result.outcome === "updated") {
         summary[result.outcome] += 1;
+        onStep(`${target.title} — ${result.outcome}`);
+        continue;
       }
-      onStep(`${target.title} — ${result.outcome}`);
+      // The route's reply is parsed loosely, so anything but the three known
+      // outcomes is reported rather than tallied under an undefined key.
+      const reason =
+        result.outcome === "skipped" ? (result.reason ?? "Skipped.") : "Lectern returned an unexpected result.";
+      summary.skipped.push({ topicId: target.topicId, title: target.title, reason });
+      onStep(`${target.title} — skipped`);
     } catch (e) {
       const message = e instanceof Error ? e.message : "That file could not be imported.";
       // One bad file is that file's problem. A dead session is every
