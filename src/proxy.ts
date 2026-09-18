@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isLocalRequest } from "@/lib/local-request";
 
 /**
- * Guards (Next proxy convention) for the unauthenticated localhost API.
+ * Guards (Next proxy convention) for the unauthenticated localhost app.
  *
  * First, every request must come from this machine: the app binds to
  * 127.0.0.1, but a forwarded hostname or a page on another site could still
@@ -14,11 +14,16 @@ import { isLocalRequest } from "@/lib/local-request";
  * the whisper sidecar) send neither header and are unaffected.
  */
 export function proxy(req: NextRequest) {
-  if (!isLocalRequest(req.headers.get("host"), req.headers.get("sec-fetch-site"))) {
+  const isApi = req.nextUrl.pathname === "/api" || req.nextUrl.pathname.startsWith("/api/");
+
+  // Pages get the Host check only. Following a link to Lectern from another
+  // site is a legitimate cross-site navigation; a foreign Host is DNS
+  // rebinding, and the pages render the same course content the API serves.
+  if (!isLocalRequest(req.headers.get("host"), isApi ? req.headers.get("sec-fetch-site") : null)) {
     return NextResponse.json({ error: "Lectern only answers requests from this machine." }, { status: 403 });
   }
 
-  if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
+  if (!isApi || req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
     return NextResponse.next();
   }
 
@@ -43,4 +48,6 @@ export function proxy(req: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: "/api/:path*" };
+// Everything except Next's own static output, which carries no course content
+// and is fetched on every page load.
+export const config = { matcher: "/((?!_next/static|_next/image|favicon.ico).*)" };
