@@ -161,8 +161,8 @@ test("tallies outcomes and keeps going past one bad file", async () => {
     imported: 1,
     updated: 0,
     skipped: [
-      { title: "B", reason: "Request timed out" },
-      { title: "C", reason: "no text" },
+      { topicId: 2, title: "B", reason: "Request timed out" },
+      { topicId: 3, title: "C", reason: "no text" },
     ],
     aborted: null,
   });

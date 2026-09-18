@@ -23,7 +23,7 @@ export type ImportOutcome = { outcome: "imported" | "updated" | "skipped"; reaso
 export type ImportSummary = {
   imported: number;
   updated: number;
-  skipped: { title: string; reason: string }[];
+  skipped: { topicId: number; title: string; reason: string }[];
   aborted: string | null;
 };
 
@@ -124,7 +124,7 @@ export async function runImport(
     try {
       const result = await importOne(target);
       if (result.outcome === "skipped") {
-        summary.skipped.push({ title: target.title, reason: result.reason ?? "Skipped." });
+        summary.skipped.push({ topicId: target.topicId, title: target.title, reason: result.reason ?? "Skipped." });
       } else {
         summary[result.outcome] += 1;
       }
@@ -137,7 +137,7 @@ export async function runImport(
         summary.aborted = message;
         return summary;
       }
-      summary.skipped.push({ title: target.title, reason: message });
+      summary.skipped.push({ topicId: target.topicId, title: target.title, reason: message });
       onStep(`${target.title} — skipped`);
     }
   }

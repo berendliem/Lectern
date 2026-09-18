@@ -37,7 +37,12 @@ async function getJson<T>(url: string): Promise<{ ok: true; data: T } | { ok: fa
   try {
     const res = await fetch(url);
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) return { ok: false, status: res.status, error: body.error ?? "Could not reach onQ." };
+    if (!res.ok)
+      return {
+        ok: false,
+        status: res.status,
+        error: body.error ?? "Could not reach onQ. Check Lectern's mcp.config.json, then try again.",
+      };
     return { ok: true, data: body as T };
   } catch {
     return { ok: false, status: 0, error: UNREACHABLE };
@@ -58,7 +63,10 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
   const taskKey = `folder:${folderId}:onq-import`;
   const current = task(taskKey);
   const running = current?.status === "running";
-  const summary = current?.status === "done" ? (current.data as ImportSummary | undefined) : undefined;
+  const summary =
+    current?.status === "done" || current?.status === "error"
+      ? (current.data as ImportSummary | undefined)
+      : undefined;
 
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>({ step: "loading" });
@@ -103,7 +111,7 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body.error ?? "Could not link that course.");
+        setError(body.error ?? "Could not link that course. Try again.");
         return;
       }
       await loadTree();
@@ -185,7 +193,7 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
           {summary.skipped.length > 0 && (
             <ul className="mt-1 flex flex-col gap-0.5">
               {summary.skipped.map((s) => (
-                <li key={s.title}>
+                <li key={s.topicId}>
                   {s.title}: {s.reason}
                 </li>
               ))}
@@ -203,7 +211,7 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
           )}
 
           {!error && view.step === "loading" && (
-            <p className="flex items-center gap-2 text-[13px] text-muted-2">
+            <p role="status" aria-live="polite" className="flex items-center gap-2 text-[13px] text-muted-2">
               <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
               Asking onQ…
             </p>
