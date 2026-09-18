@@ -36,7 +36,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <FolderSidebar onNavigate={() => setSidebarOpen(false)} />
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
-            <header className="flex items-center gap-3 border-b border-line/80 bg-surface/90 px-4 py-2.5 backdrop-blur sm:px-8">
+            {/* backdrop-blur makes the header its own stacking context, so
+                without a z-index the page below painted over its popovers. */}
+            <header className="relative z-20 flex items-center gap-3 border-b border-line/80 bg-surface/90 px-4 py-2.5 backdrop-blur sm:px-8">
               <button
                 onClick={() => setSidebarOpen((o) => !o)}
                 className="rounded-lg p-1.5 text-muted hover:bg-surface-3 md:hidden"
