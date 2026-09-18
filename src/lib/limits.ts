@@ -5,7 +5,7 @@
  * extracting megabytes of PDF text only to have the API reject it, without
  * pulling zod (and every schema in validation.ts) into the client bundle.
  */
-export const MAX_TEXT_CHARS = 500_000;
+export const MAX_TEXT_CHARS = 600_000;
 
 /** Longest edge, in pixels, a scanned page is downscaled to before it is sent
  *  to a vision model. A phone photo is far larger than any model reads at, and

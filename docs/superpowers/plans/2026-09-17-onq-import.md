@@ -19,7 +19,7 @@
 - Migrations are hand-authored SQL (the FTS5 tables make `prisma migrate dev` propose destructive diffs — see the comment in `prisma/migrations/20260911180000_calendar_events/migration.sql`). Apply with `npx prisma migrate deploy`, then `npx prisma generate`.
 - onq-mcp tool-result field names are a contract: `course_id`, `name`, `module_id`, `title`, `topics`, `topic_id`, `extension`, `downloadable`, `last_modified`, `source_file_name`, `text`, `note`. Parse with zod, ignore unknown keys.
 - FastMCP returns a `list[...]` tool result as **one text block per element** plus `structuredContent: { result: [...] }` (verified against mcp 1.30). `callMcpTool` joins blocks with `\n`, which is not valid JSON for lists — use the new `callMcpToolJson` for every onq call.
-- Material text limit is `MAX_TEXT_CHARS` from `src/lib/limits.ts` (500 000). Over-limit topics are skipped with a reason, never truncated.
+- Material text limit is `MAX_TEXT_CHARS` from `src/lib/limits.ts` (600 000). Over-limit topics are skipped with a reason, never truncated.
 - Copy is sentence case, plain, no exclamation marks; errors say what to do next. Match `MaterialUploadButton.tsx`'s tone and Tailwind classes.
 - Leave the tree clean: no commented-out code, no unused imports, no stray files.
 
