@@ -179,8 +179,16 @@ the dialog lists the course's files, pre-ticks the ones that are new or have
 changed on onQ, and imports the ticked ones as materials.
 
 onq-mcp reads your onQ session from Brave's cookies — log in to onQ there
-first. Links, videos and quizzes are listed but cannot be imported; only files
-have text to import.
+first. The first onQ call makes the child process read Brave's cookie store,
+which on macOS shows a Keychain prompt for "Brave Safe Storage". Links, videos
+and quizzes are listed but cannot be imported; only files have text to import.
+
+Lectern must only be reachable from the machine it runs on — these routes
+read your onQ course files with your own session, and the app now binds to
+127.0.0.1 and refuses API requests from other hosts. Unlike drag-and-drop
+uploads (parsed in the browser), onQ files are downloaded and converted by
+onq-mcp on your machine, so they are trusted only as far as you trust the
+course.
 
 ## Lectern as an MCP server (asking Claude about your lectures)
 
