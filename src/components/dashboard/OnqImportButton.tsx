@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CloudDownload, Loader2 } from "lucide-react";
 import { useTasks } from "@/components/tasks/TaskProvider";
@@ -23,7 +23,7 @@ const STATUS_NOTE: Record<TopicStatus, string | null> = {
   new: null,
   imported: "Already imported",
   changed: "Changed on onQ",
-  unavailable: "Not a file",
+  unavailable: "Can't import",
 };
 
 const UNREACHABLE = "Could not reach Lectern. Check it is still running, then try again.";
@@ -36,12 +36,16 @@ type View =
 async function getJson<T>(url: string): Promise<{ ok: true; data: T } | { ok: false; status: number; error: string }> {
   try {
     const res = await fetch(url);
-    const body = await res.json().catch(() => ({}));
+    const body: { error?: string } = await res.json().catch(() => ({}));
     if (!res.ok)
       return {
         ok: false,
         status: res.status,
-        error: body.error ?? "Could not reach onQ. Check Lectern's mcp.config.json, then try again.",
+        error:
+          body.error ??
+          (res.status >= 500
+            ? "Lectern hit an error handling that request. Check its terminal output."
+            : "Could not reach onQ. Check Lectern's mcp.config.json, then try again."),
       };
     return { ok: true, data: body as T };
   } catch {
@@ -50,7 +54,7 @@ async function getJson<T>(url: string): Promise<{ ok: true; data: T } | { ok: fa
 }
 
 function summaryLine(summary: ImportSummary): string {
-  const parts = [];
+  const parts: string[] = [];
   if (summary.imported) parts.push(`${summary.imported} imported`);
   if (summary.updated) parts.push(`${summary.updated} updated`);
   if (summary.skipped.length) parts.push(`${summary.skipped.length} skipped`);
@@ -72,11 +76,14 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
   const [view, setView] = useState<View>({ step: "loading" });
   const [error, setError] = useState<string | null>(null);
   const [linking, setLinking] = useState(false);
+  const requestIdRef = useRef(0);
 
   async function loadCourses() {
+    const requestId = ++requestIdRef.current;
     setError(null);
     setView({ step: "loading" });
     const list = await getJson<{ courses: OnqCourse[] }>("/api/onq/courses");
+    if (requestId !== requestIdRef.current) return;
     if (!list.ok) {
       setError(list.error);
       return;
@@ -85,9 +92,11 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
   }
 
   async function loadTree() {
+    const requestId = ++requestIdRef.current;
     setError(null);
     setView({ step: "loading" });
     const tree = await getJson<{ modules: AnnotatedModule[] }>(`/api/folders/${folderId}/onq`);
+    if (requestId !== requestIdRef.current) return;
     if (tree.ok) {
       setView({ step: "pick", modules: tree.data.modules, selected: new Set(defaultSelection(tree.data.modules)) });
       return;
@@ -157,8 +166,9 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
           step
         );
         emit(result);
-        // Whatever landed before the session died is saved; say why it stopped.
-        if (result.aborted) throw new Error(`${summaryLine(result)} before onQ stopped answering. ${result.aborted}`);
+        // Whatever landed before the session died is saved (the summary below shows it);
+        // the thrown error only needs to say why it stopped.
+        if (result.aborted) throw new Error(`onQ stopped answering before the import finished. ${result.aborted}`);
       }
     );
     router.refresh();
@@ -205,9 +215,16 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
       <Modal open={open} onClose={() => setOpen(false)} title="Import from onQ">
         <div className="flex flex-col gap-3">
           {error && (
-            <p role="alert" className="text-[13px] text-red-600">
-              {error}
-            </p>
+            <div className="flex flex-col items-start gap-2">
+              <p role="alert" className="text-[13px] text-red-600">
+                {error}
+              </p>
+              {view.step !== "link" && (
+                <button type="button" className="text-[13px] text-muted-2 underline" onClick={() => void loadCourses()}>
+                  Wrong onQ course?
+                </button>
+              )}
+            </div>
           )}
 
           {!error && view.step === "loading" && (
@@ -230,9 +247,10 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
                 <select
                   className="rounded-lg border border-line bg-transparent px-2 py-1.5 text-[14px]"
                   value={view.courseId ?? ""}
-                  onChange={(e) =>
-                    setView({ ...view, courseId: e.target.value ? Number(e.target.value) : null })
-                  }
+                  onChange={(e) => {
+                    const courseId = e.target.value ? Number(e.target.value) : null;
+                    setView((v) => (v.step === "link" ? { ...v, courseId } : v));
+                  }}
                 >
                   <option value="">Choose a course</option>
                   {view.courses.map((c) => (
