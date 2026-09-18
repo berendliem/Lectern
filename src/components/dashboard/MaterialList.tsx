@@ -115,10 +115,12 @@ export function MaterialList({
     router.refresh();
   }
 
-  /** A lecture page from a deck, for a lecture with no recording. The material
-   *  itself is left as it is; the page gets a copy of its text. Under a task
-   *  key like the generators, so two clicks make one page, not two. */
-  async function makeLecturePage(id: string, title: string) {
+  /** A lecture page from a deck or a reading, for a lecture with no recording.
+   *  The material itself is left as it is; the page gets a copy of its text.
+   *  Under a task key like the generators, so two clicks make one page, not two.
+   *  A reading goes in as a plain import: the slide prompt assumes a deck. */
+  async function makeLecturePage(id: string, title: string, kind: string) {
+    const noun = kind === "SLIDES" ? "those slides" : "that reading";
     setError(null);
     let pageId: string | null = null;
     const outcome = await run(
@@ -130,21 +132,21 @@ export function MaterialList({
         if (!res.ok) throw new Error("Could not load that material's text.");
         const text = (await res.json()).material?.text;
         if (typeof text !== "string" || !text.trim()) {
-          throw new Error("Those slides have no extracted text to make notes from.");
+          throw new Error(`There is no extracted text in ${noun} to make notes from.`);
         }
         const data = (await postTask(
           "/api/pages/from-text",
-          "Could not make a lecture page from those slides.",
+          `Could not make a lecture page from ${noun}.`,
           {
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title, text, folderId, source: "slides" }),
+            body: JSON.stringify({ title, text, folderId, source: kind === "SLIDES" ? "slides" : "import" }),
           },
           "Network error talking to the local server."
         )) as { page?: { id?: string } };
         pageId = data.page?.id ?? null;
       }
     );
-    if (outcome.status === "error") setError(outcome.error ?? "Could not make a lecture page from those slides.");
+    if (outcome.status === "error") setError(outcome.error ?? `Could not make a lecture page from ${noun}.`);
     else if (outcome.ran && pageId) router.push(`/pages/${pageId}`);
   }
 
@@ -220,11 +222,11 @@ export function MaterialList({
                     {` · ${shortDate(material.createdAt)}`}
                   </p>
                 </button>
-                {material.kind === "SLIDES" && (
+                {(material.kind === "SLIDES" || material.kind === "READING") && (
                   <button
-                    onClick={() => makeLecturePage(material.id, material.title)}
+                    onClick={() => makeLecturePage(material.id, material.title, material.kind)}
                     disabled={makingNotes}
-                    title="Make a lecture page from these slides, for a lecture with no recording"
+                    title={`Make a lecture page from this ${material.kind === "SLIDES" ? "deck" : "reading"}, for a lecture with no recording`}
                     className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
                   >
                     {makingNotes ? "Creating…" : "Lecture notes"}
