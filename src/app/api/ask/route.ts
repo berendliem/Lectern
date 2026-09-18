@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
-import { CHAT_DIAGRAM_CLAUSE, UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+import { CHAT_DIAGRAM_CLAUSE, UNTRUSTED_CONTENT_CLAUSE, WEB_SEARCH_CLAUSE } from "@/lib/prompts/shared";
 import { chatRequestSchema } from "@/lib/validation";
 import { searchPages } from "@/lib/fts";
 import { retrieve, CONTEXT_CHARS } from "@/lib/retrieval";
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const result = await withValidation(chatRequestSchema, body);
   if ("error" in result) return result.error;
 
-  const messages = result.data.messages;
+  const { messages, web } = result.data;
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return jsonError("No question to answer", 422);
 
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     ? blocks.join("\n\n---\n\n")
     : "(No lectures in the library matched this question.)";
 
-  const systemPrompt = `You are a study assistant with access to the student's personal lecture library. Answer their question using the lecture excerpts below. When you use a fact from a lecture, name the lecture it came from (e.g. "In your Photosynthesis lecture…"). Be concise and concrete. If the library doesn't cover the question, say so plainly — you may then add general knowledge, clearly labeled as outside their lectures. ${CHAT_DIAGRAM_CLAUSE}\n\n${UNTRUSTED_CONTENT_CLAUSE}\n\nLECTURE EXCERPTS:\n${context}`;
+  const systemPrompt = `You are a study assistant with access to the student's personal lecture library. Answer their question using the lecture excerpts below. When you use a fact from a lecture, name the lecture it came from (e.g. "In your Photosynthesis lecture…"). Be concise and concrete. If the library doesn't cover the question, say so plainly — you may then add general knowledge, clearly labeled as outside their lectures. ${CHAT_DIAGRAM_CLAUSE}${web ? ` ${WEB_SEARCH_CLAUSE}` : ""}\n\n${UNTRUSTED_CONTENT_CLAUSE}\n\nLECTURE EXCERPTS:\n${context}`;
 
   const model =
     process.env.OPENROUTER_MODEL_CHAT ??
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
   const chatMessages: ChatMessage[] = [{ role: "system", content: systemPrompt }, ...messages];
 
   try {
-    const reply = await callLLMText({ model, messages: chatMessages });
+    const reply = await callLLMText({ model, messages: chatMessages, web });
     return NextResponse.json({ reply, citations });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Ask failed";

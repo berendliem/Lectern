@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
-import { CHAT_DIAGRAM_CLAUSE, UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+import { CHAT_DIAGRAM_CLAUSE, UNTRUSTED_CONTENT_CLAUSE, WEB_SEARCH_CLAUSE } from "@/lib/prompts/shared";
 import { chatRequestSchema } from "@/lib/validation";
 import { searchPages } from "@/lib/fts";
 import { dedupeCitations, formatCitation, type Citation } from "@/lib/citations";
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const result = await withValidation(chatRequestSchema, body);
   if ("error" in result) return result.error;
 
-  const messages = result.data.messages;
+  const { messages, web } = result.data;
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
   if (!lastUser) return jsonError("No question to answer", 422);
 
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     ? blocks.join("\n\n---\n\n")
     : `(Nothing in ${folder.name} matched this question.)`;
 
-  const systemPrompt = `You are a study assistant for the course "${folder.name}". Answer using only the course excerpts below. When you use a fact, name the lecture or material it came from. Be concise and concrete. Format with plain markdown only — no HTML tags, and prefer short lists over wide tables. If the course material does not cover the question, say so plainly — you may then add general knowledge, clearly labeled as outside this course. ${CHAT_DIAGRAM_CLAUSE}\n\n${UNTRUSTED_CONTENT_CLAUSE}\n\nCOURSE EXCERPTS:\n${context}`;
+  const systemPrompt = `You are a study assistant for the course "${folder.name}". Answer using only the course excerpts below. When you use a fact, name the lecture or material it came from. Be concise and concrete. Format with plain markdown only — no HTML tags, and prefer short lists over wide tables. If the course material does not cover the question, say so plainly — you may then add general knowledge, clearly labeled as outside this course. ${CHAT_DIAGRAM_CLAUSE}${web ? ` ${WEB_SEARCH_CLAUSE}` : ""}\n\n${UNTRUSTED_CONTENT_CLAUSE}\n\nCOURSE EXCERPTS:\n${context}`;
 
   const chatMessages: ChatMessage[] = [{ role: "system", content: systemPrompt }, ...messages];
 
@@ -102,6 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       model: reasoningModel(),
       messages: chatMessages,
       stage: "reasoning",
+      web,
     });
     return NextResponse.json({ reply, citations, retrieval: mode });
   } catch (e) {

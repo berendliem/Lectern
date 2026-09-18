@@ -111,6 +111,7 @@ Open http://localhost:3000.
    - The **Concept map** tab draws an AI-generated map of the lecture's key concepts and how they relate — hover a concept to spotlight its connections.
 7. Organize with courses (sidebar) and tags (page header); **Search** looks across transcripts, notes, and flashcards. **Home** opens on today: cards due, your streak, the week's exams, deadlines and classes from Google Calendar, and one card per course with how much of it you have mastered.
 8. **Export** a page to Markdown or PDF from the page header.
+9. **Back up the whole library** from **Integrations → Export library**: one `.tar` holding a consistent snapshot of `prisma/dev.db` and every recording in `storage/audio/`. Put it back with the app stopped — `npm run db:restore -- lectern-YYYYMMDD.tar` snapshots the current database to `prisma/backups/` first, replaces it, and adds any recordings that are missing without removing any.
 
 **Per course** (open a course from the sidebar):
 

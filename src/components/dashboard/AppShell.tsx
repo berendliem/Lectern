@@ -10,6 +10,7 @@ import { TaskProvider } from "@/components/tasks/TaskProvider";
 import { TaskChip } from "@/components/tasks/TaskChip";
 import { RecordingProvider } from "@/components/recording/RecordingProvider";
 import { RecordingBar } from "@/components/recording/RecordingBar";
+import { LibrarianDock } from "@/components/ask/LibrarianDock";
 import clsx from "@/lib/clsx";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -63,6 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </main>
           </div>
           <CommandPalette />
+          <LibrarianDock />
         </div>
       </RecordingProvider>
     </TaskProvider>

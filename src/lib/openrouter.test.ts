@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { modelField } from "./openrouter.ts";
+import { modelField, webPluginField } from "./openrouter.ts";
 
 test("the free default is sent as a chat-model chain, not the router", () => {
   const field = modelField("openrouter/free");
@@ -15,4 +15,10 @@ test("an explicitly named model is sent untouched", () => {
   assert.deepEqual(modelField("nvidia/nemotron-3-super-120b-a12b:free"), {
     model: "nvidia/nemotron-3-super-120b-a12b:free",
   });
+});
+
+test("web search is a plugin field only when the toggle is on", () => {
+  assert.deepEqual(webPluginField(true), { plugins: [{ id: "web" }] });
+  assert.deepEqual(webPluginField(false), {});
+  assert.deepEqual(webPluginField(undefined), {});
 });

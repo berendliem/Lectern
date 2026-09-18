@@ -77,7 +77,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
     await db.notes.upsert({
       where: { pageId: id },
-      update: { markdown: parsed.markdown, keyTerms: JSON.stringify(parsed.keyTerms), modelUsed },
+      update: {
+        markdown: parsed.markdown,
+        keyTerms: JSON.stringify(parsed.keyTerms),
+        modelUsed,
+        previousMarkdown: null,
+      },
       create: {
         pageId: id,
         markdown: parsed.markdown,

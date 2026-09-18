@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMText, type ChatMessage } from "@/lib/llm";
-import { CHAT_DIAGRAM_CLAUSE, UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+import { CHAT_DIAGRAM_CLAUSE, UNTRUSTED_CONTENT_CLAUSE, WEB_SEARCH_CLAUSE } from "@/lib/prompts/shared";
 import { retrieve } from "@/lib/retrieval";
 import { chatRequestSchema } from "@/lib/validation";
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           .join("\n\n")
           .slice(0, MAX_CONTEXT_CHARS);
 
-  const systemPrompt = `You are a study assistant for the lecture "${page.title}". Answer the student's questions using the lecture material below. Be concise and concrete. If the material doesn't cover something, say so plainly instead of inventing an answer — you may then add general knowledge, clearly labeled as outside the lecture. ${CHAT_DIAGRAM_CLAUSE}\n\n${UNTRUSTED_CONTENT_CLAUSE}\n\n${context}`;
+  const systemPrompt = `You are a study assistant for the lecture "${page.title}". Answer the student's questions using the lecture material below. Be concise and concrete. If the material doesn't cover something, say so plainly instead of inventing an answer — you may then add general knowledge, clearly labeled as outside the lecture. ${CHAT_DIAGRAM_CLAUSE}${result.data.web ? ` ${WEB_SEARCH_CLAUSE}` : ""}\n\n${UNTRUSTED_CONTENT_CLAUSE}\n\n${context}`;
 
   const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt },
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     "openrouter/free";
 
   try {
-    const reply = await callLLMText({ model, messages });
+    const reply = await callLLMText({ model, messages, web: result.data.web });
     return NextResponse.json({ reply });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Chat failed";

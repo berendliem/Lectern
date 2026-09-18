@@ -42,18 +42,25 @@ export function llmModelLabel(openrouterModel: string, stage?: LLMStage): string
   return resolveProvider(stage) === "ollama" ? `ollama:${ollamaModel()}` : openrouterModel;
 }
 
+// Ollama has no search step, so a web request there fails loudly rather than
+// answering from the model alone while the toggle in the UI says otherwise.
+const WEB_NEEDS_OPENROUTER =
+  "Web search runs through OpenRouter; this step is set to Ollama (LLM_PROVIDER). Turn web search off or switch the provider.";
+
 export async function callLLMText(opts: {
   model: string;
   messages: ChatMessage[];
   stage?: LLMStage;
+  web?: boolean;
 }): Promise<string> {
   if (resolveProvider(opts.stage) === "ollama") {
+    if (opts.web) throw new Error(WEB_NEEDS_OPENROUTER);
     return callOllama({
       messages: opts.messages,
       model: opts.stage === "reasoning" ? ollamaReasoningModel() : undefined,
     });
   }
-  return callOpenRouterText({ model: opts.model, messages: opts.messages });
+  return callOpenRouterText({ model: opts.model, messages: opts.messages, web: opts.web });
 }
 
 export async function callLLMJSON(opts: {
@@ -61,8 +68,10 @@ export async function callLLMJSON(opts: {
   systemPrompt: string;
   userPrompt: string;
   stage?: LLMStage;
+  web?: boolean;
 }): Promise<unknown> {
   if (resolveProvider(opts.stage) === "ollama") {
+    if (opts.web) throw new Error(WEB_NEEDS_OPENROUTER);
     const content = await callOllama({
       messages: [
         { role: "system", content: opts.systemPrompt },
@@ -84,6 +93,7 @@ export async function callLLMJSON(opts: {
     model: opts.model,
     systemPrompt: opts.systemPrompt,
     userPrompt: opts.userPrompt,
+    web: opts.web,
   });
 }
 

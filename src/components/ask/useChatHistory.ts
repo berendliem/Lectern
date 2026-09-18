@@ -30,14 +30,17 @@ function trimToBudget<T>(messages: T[]): string {
 }
 
 /**
- * Chat messages that survive a reload or a tab switch. Session storage, not
- * local: a conversation about a lecture is scratch work for this sitting, and
- * a stale thread reappearing a week later would be noise. Storage can be
- * missing or throw (private windows, blocked site data), so every access is
- * guarded and the chat simply starts empty.
+ * Chat messages that survive a reload or a tab switch. Session storage by
+ * default: a conversation about a lecture is scratch work for this sitting, and
+ * a stale thread reappearing a week later would be noise. The library-wide
+ * thread opts into local storage instead, because the librarian is meant to be
+ * picked up where it was left. Storage can be missing or throw (private
+ * windows, blocked site data), so every access is guarded and the chat simply
+ * starts empty.
  */
 export function useChatHistory<T extends { role: string; content: string }>(
-  key: string
+  key: string,
+  storage: "session" | "local" = "session"
 ): [T[], (update: T[] | ((prev: T[]) => T[])) => void, () => void] {
   const [messages, setMessages] = useState<T[]>([]);
   // Read after mount, never during render: the server renders an empty chat
@@ -49,28 +52,48 @@ export function useChatHistory<T extends { role: string; content: string }>(
   useEffect(() => {
     queueMicrotask(() => {
       try {
-        const raw = sessionStorage.getItem(key);
+        const store = storage === "local" ? localStorage : sessionStorage;
+        const raw = store.getItem(key);
         if (raw) {
           const parsed: unknown = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.every(isMessage)) setMessages(parsed as T[]);
-          else sessionStorage.removeItem(key);
+          else store.removeItem(key);
         }
       } catch {
         // Unreadable or unavailable: start empty.
       }
       setLoaded(true);
     });
-  }, [key]);
+  }, [key, storage]);
+
+  // Local storage is shared between tabs, and each tab holds its own copy of
+  // the thread: without this, a tab that sent nothing would write its stale
+  // copy back over a message another tab just added.
+  useEffect(() => {
+    if (storage !== "local") return;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== key || e.storageArea !== localStorage) return;
+      try {
+        const parsed: unknown = e.newValue ? JSON.parse(e.newValue) : [];
+        if (Array.isArray(parsed) && parsed.every(isMessage)) setMessages(parsed as T[]);
+      } catch {
+        // Another tab wrote something unreadable: keep what this tab has.
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [key, storage]);
 
   useEffect(() => {
     if (!loaded) return;
     try {
-      if (messages.length === 0) sessionStorage.removeItem(key);
-      else sessionStorage.setItem(key, trimToBudget(messages));
+      const store = storage === "local" ? localStorage : sessionStorage;
+      if (messages.length === 0) store.removeItem(key);
+      else store.setItem(key, trimToBudget(messages));
     } catch {
       // Quota or availability: the chat still works, it just will not persist.
     }
-  }, [key, messages, loaded]);
+  }, [key, storage, messages, loaded]);
 
   const clear = () => setMessages([]);
 

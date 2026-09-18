@@ -12,6 +12,7 @@
     "test": "node --import tsx --test \"src/lib/**/*.test.ts\"",
     "db:backup": "bash scripts/backup-db.sh",
     "db:migrate": "bash scripts/backup-db.sh && prisma migrate deploy",
+    "db:restore": "bash scripts/restore-library.sh",
     "db:studio": "prisma studio",
     "reindex": "node --import tsx scripts/reindex.ts"
   },

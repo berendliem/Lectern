@@ -22,10 +22,13 @@ import type { KeyTerm } from "@/types";
 export function NotesTab({
   pageId,
   markdown: initialMarkdown,
+  canUndo: initialCanUndo,
   keyTerms,
 }: {
   pageId: string;
   markdown: string;
+  /** The server holds a pre-edit snapshot, so Undo works after a refresh too. */
+  canUndo: boolean;
   keyTerms: KeyTerm[];
 }) {
   const router = useRouter();
@@ -36,12 +39,15 @@ export function NotesTab({
   const [undoBusy, setUndoBusy] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previousMarkdown, setPreviousMarkdown] = useState<string | null>(null);
+  const [canUndo, setCanUndo] = useState(initialCanUndo);
   const notesRef = useRef<HTMLDivElement>(null);
   // The prose only — the read-aloud bar should not narrate the key-term cards.
   const proseRef = useRef<HTMLDivElement>(null);
 
   const recorder = useMediaRecorder();
+  // Leaving mid-dictation releases the mic; only the app-wide recorder outlives a page.
+  const { discard } = recorder;
+  useEffect(() => discard, [discard]);
   // Dictation and the lecture recorder are two `getUserMedia()` calls on one
   // device: while a lecture is being recorded, this entry point stands down.
   const micHolder = useMicHeldByLecture();
@@ -50,17 +56,17 @@ export function NotesTab({
   const editTask = task(editKey);
   const busy = editTask?.status === "running" || undoBusy;
 
-  // Server refreshes (router.refresh after other pipeline steps) can change
-  // the prop; adopt it unless we're mid-edit. Adjusting state during render
-  // (not in an effect) is the sanctioned pattern for derived resets.
-  const [prevInitialMarkdown, setPrevInitialMarkdown] = useState(initialMarkdown);
-  if (initialMarkdown !== prevInitialMarkdown) {
-    setPrevInitialMarkdown(initialMarkdown);
+  // Server refreshes (router.refresh after an edit or another pipeline step)
+  // can change the props; adopt them unless we're mid-edit. The server clears
+  // its snapshot on any other notes write, so its canUndo is authoritative.
+  // Adjusting state during render (not in an effect) is the sanctioned
+  // pattern for derived resets.
+  const [prevProps, setPrevProps] = useState({ markdown: initialMarkdown, canUndo: initialCanUndo });
+  if (initialMarkdown !== prevProps.markdown || initialCanUndo !== prevProps.canUndo) {
+    setPrevProps({ markdown: initialMarkdown, canUndo: initialCanUndo });
     if (!busy) {
       setMarkdown(initialMarkdown);
-      // The notes changed server-side; an undo to the pre-edit snapshot would
-      // silently clobber that newer content.
-      setPreviousMarkdown(null);
+      setCanUndo(initialCanUndo);
     }
   }
 
@@ -115,9 +121,7 @@ export function NotesTab({
     // A plain `let` reassigned only inside the closure below narrows to `never`
     // at the read site (a real TS 5.9 control-flow gap, not a bug in this code —
     // confirmed with an isolated repro); a boxed property sidesteps it.
-    const result: { applied: { markdown: string; previousMarkdown: string | null } | null } = {
-      applied: null,
-    };
+    const result: { applied: { markdown: string } | null } = { applied: null };
     await run(
       { key: editKey, label: "Applying your edit to the notes…", href: `/pages/${pageId}` },
       async () => {
@@ -131,13 +135,13 @@ export function NotesTab({
               ...(selectedText ? { selectedText } : {}),
             }),
           }
-        )) as { markdown?: string; previousMarkdown?: string | null };
+        )) as { markdown?: string };
         if (!body.markdown) throw new Error("Editing the notes failed. Try again.");
-        result.applied = { markdown: body.markdown, previousMarkdown: body.previousMarkdown ?? null };
+        result.applied = { markdown: body.markdown };
       }
     );
     if (result.applied) {
-      setPreviousMarkdown(result.applied.previousMarkdown);
+      setCanUndo(true);
       setMarkdown(result.applied.markdown);
       setInstruction("");
       setSelectedText(null);
@@ -146,22 +150,24 @@ export function NotesTab({
   }
 
   async function undo() {
-    if (!previousMarkdown) return;
+    if (!canUndo) return;
     setUndoBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/pages/${pageId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notesMarkdown: previousMarkdown }),
-      });
-      if (res.ok) {
-        setMarkdown(previousMarkdown);
-        setPreviousMarkdown(null);
+      const res = await fetch(`/api/pages/${pageId}/edit-notes/undo`, { method: "POST" });
+      const body = (await res.json().catch(() => null)) as { markdown?: string; error?: string } | null;
+      if (res.ok && body?.markdown !== undefined) {
+        setMarkdown(body.markdown);
+        setCanUndo(false);
         router.refresh();
       } else {
-        setError("Could not undo the edit.");
+        // A 409 means the snapshot is already gone (another tab undid it, or
+        // the notes were rewritten since): stop offering an undo that can't run.
+        if (res.status === 409) setCanUndo(false);
+        setError(body?.error ?? "Could not undo the edit.");
       }
+    } catch {
+      setError("Could not undo the edit.");
     } finally {
       setUndoBusy(false);
     }
@@ -211,7 +217,7 @@ export function NotesTab({
           <Button type="submit" size="sm" disabled={busy || !instruction.trim()}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
           </Button>
-          {previousMarkdown && !busy && (
+          {canUndo && !busy && (
             <Button type="button" size="sm" variant="secondary" onClick={undo}>
               <Undo2 className="h-3.5 w-3.5" strokeWidth={2.2} />
               Undo

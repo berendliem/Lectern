@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (notesMarkdown !== undefined) {
     await db.notes.upsert({
       where: { pageId: id },
-      update: { markdown: notesMarkdown },
+      update: { markdown: notesMarkdown, previousMarkdown: null },
       create: { pageId: id, markdown: notesMarkdown, keyTerms: "[]" },
     });
 

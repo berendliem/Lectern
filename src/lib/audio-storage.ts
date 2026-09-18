@@ -2,7 +2,7 @@ import { mkdir, writeFile, unlink } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 
-const AUDIO_DIR = path.join(process.cwd(), "storage", "audio");
+export const AUDIO_DIR = path.join(process.cwd(), "storage", "audio");
 
 /**
  * Reduce an untrusted string to a safe filename segment. Some callers pass

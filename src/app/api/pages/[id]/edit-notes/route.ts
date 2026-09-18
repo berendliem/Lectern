@@ -40,12 +40,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const markdown = revised.replace(/^```(?:markdown|md)?\s*\n/i, "").replace(/\n```\s*$/i, "").trim();
     if (!markdown) throw new Error("The model returned an empty edit. You can retry.");
 
-    await db.notes.update({ where: { pageId: id }, data: { markdown } });
+    // Compare-and-set: the model call can take seconds, and a save, undo or
+    // second edit landing in that gap would otherwise be overwritten — with the
+    // snapshot pointing past it, so not even Undo could bring it back.
+    const { count } = await db.notes.updateMany({
+      where: { pageId: id, markdown: page.notes.markdown },
+      data: { markdown, previousMarkdown: page.notes.markdown },
+    });
+    if (count === 0) {
+      return jsonError("The notes changed while this edit was running. Nothing was overwritten; try again.", 409);
+    }
     await upsertSearchIndex(id);
 
     await indexSourceSafely({ pageId: id });
 
-    return NextResponse.json({ markdown, previousMarkdown: page.notes.markdown });
+    return NextResponse.json({ markdown, canUndo: true });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Editing the notes failed";
     return jsonError(message, 502);
