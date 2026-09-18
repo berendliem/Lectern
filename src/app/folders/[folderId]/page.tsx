@@ -20,6 +20,7 @@ import { TranscriptImportButton } from "@/components/dashboard/TranscriptImportB
 import { FolderHeader } from "@/components/dashboard/FolderHeader";
 import { PageTabs } from "@/components/page-detail/PageTabs";
 import { MaterialUploadButton } from "@/components/dashboard/MaterialUploadButton";
+import { OnqImportButton } from "@/components/dashboard/OnqImportButton";
 import { MaterialList } from "@/components/dashboard/MaterialList";
 import { CourseChat } from "@/components/ask/CourseChat";
 import { CourseDropZone } from "@/components/dashboard/CourseDropZone";
@@ -182,7 +183,8 @@ export default async function FolderPage({
               label: `Materials (${materials.length})`,
               content: (
                 <div className="flex flex-col gap-4">
-                  <div className="flex justify-end">
+                  <div className="flex items-start justify-end gap-2">
+                    <OnqImportButton folderId={folder.id} folderName={folder.name} />
                     <MaterialUploadButton folderId={folder.id} />
                   </div>
                   <MaterialList
