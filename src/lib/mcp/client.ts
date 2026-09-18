@@ -1,6 +1,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { loadMcpServers } from "@/lib/mcp/config";
+import { toolResultJson, toolResultText, type ToolResultLike } from "@/lib/mcp/tool-json";
 
 // MCP servers are spawned child processes (npx cold starts take seconds), so
 // clients are cached for the app's lifetime. The globalThis indirection keeps
@@ -12,6 +13,8 @@ const globalForMcp = globalThis as unknown as { __mcpClients?: Map<string, Entry
 const clients: Map<string, Entry> = (globalForMcp.__mcpClients ??= new Map());
 
 const CALL_TIMEOUT_MS = 60_000;
+
+type CallOptions = { timeoutMs?: number };
 
 async function connectServer(name: string): Promise<Client> {
   const servers = await loadMcpServers();
@@ -83,20 +86,15 @@ export async function disconnectMcpClient(name: string): Promise<void> {
   if (entry?.client) await entry.client.close().catch(() => undefined);
 }
 
-/** Calls a tool and returns the concatenated text content blocks. */
-export async function callMcpTool(
-  serverName: string,
-  toolName: string,
-  args: Record<string, unknown>,
-  opts?: { timeoutMs?: number }
-): Promise<string> {
+async function callRaw(serverName: string, toolName: string, args: Record<string, unknown>, opts?: CallOptions) {
   const client = await getMcpClient(serverName);
 
-  let result;
+  let result: ToolResultLike & { isError: boolean };
   try {
-    result = await client.callTool({ name: toolName, arguments: args }, undefined, {
+    const raw = await client.callTool({ name: toolName, arguments: args }, undefined, {
       timeout: opts?.timeoutMs ?? CALL_TIMEOUT_MS,
     });
+    result = { content: raw.content, structuredContent: raw.structuredContent, isError: raw.isError === true };
   } catch (e) {
     // A dead child process (server crashed, laptop slept) leaves a wedged
     // client; drop it so the next call reconnects fresh. Per-call failures
@@ -109,16 +107,30 @@ export async function callMcpTool(
     throw e;
   }
 
-  const blocks = Array.isArray(result.content) ? result.content : [];
-  const text = blocks
-    .filter((b): b is { type: "text"; text: string } => b?.type === "text" && typeof b.text === "string")
-    .map((b) => b.text)
-    .join("\n");
-
   if (result.isError) {
-    throw new Error(text || `The ${serverName} MCP tool "${toolName}" returned an error.`);
+    throw new Error(toolResultText(result) || `The ${serverName} MCP tool "${toolName}" returned an error.`);
   }
-  return text;
+  return result;
+}
+
+/** Calls a tool and returns the concatenated text content blocks. */
+export async function callMcpTool(
+  serverName: string,
+  toolName: string,
+  args: Record<string, unknown>,
+  opts?: CallOptions
+): Promise<string> {
+  return toolResultText(await callRaw(serverName, toolName, args, opts));
+}
+
+/** Calls a tool whose result is JSON and returns it parsed. See toolResultJson. */
+export async function callMcpToolJson(
+  serverName: string,
+  toolName: string,
+  args: Record<string, unknown>,
+  opts?: CallOptions
+): Promise<unknown> {
+  return toolResultJson(await callRaw(serverName, toolName, args, opts));
 }
 
 /** True when a live (cached) client exists for the server. */

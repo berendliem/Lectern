@@ -39,10 +39,13 @@ export async function* runStudyPlan(opts: {
   const fake = process.env.AGENT_FAKE_SCRIPT;
   const child = spawn(claudeBinary(), fake ? [fake] : args, {
     stdio: ["ignore", "pipe", "pipe"],
-    timeout: timeoutMs(),
     signal: opts.signal,
     cwd: process.cwd(),
   });
+  // Not spawn's own `timeout` option: Node clears that timer on "exit", and a
+  // spawn that fails (a missing binary) never emits "exit" — so the timer
+  // would hold the process open for the full five minutes.
+  const wedged = setTimeout(() => child.kill("SIGTERM"), timeoutMs());
 
   const stderr: Buffer[] = [];
   child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk));
@@ -80,6 +83,7 @@ export async function* runStudyPlan(opts: {
       yield event;
     }
   } finally {
+    clearTimeout(wedged);
     lines.close();
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
   }

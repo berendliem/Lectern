@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "setup": "bash scripts/setup.sh",
     "dev:all": "bash scripts/dev.sh",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 127.0.0.1",
     "lint": "eslint",
     "test": "node --import tsx --test \"src/lib/**/*.test.ts\"",
     "db:backup": "bash scripts/backup-db.sh",
