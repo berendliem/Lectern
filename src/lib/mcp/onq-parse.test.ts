@@ -90,10 +90,10 @@ test("names the tool when the shape is wrong", () => {
 });
 
 test("rejects over-long strings, naming the tool", () => {
-  const module = (topic: Record<string, unknown>) => [{ module_id: 1, title: "U", topics: [{ topic_id: 2, ...topic }] }];
-  assert.throws(() => parseOnqModules(module({ title: "t".repeat(301) })), /course_content/);
-  assert.throws(() => parseOnqModules(module({ title: "T", extension: "e".repeat(301) })), /course_content/);
-  assert.throws(() => parseOnqModules(module({ title: "T", last_modified: "d".repeat(65) })), /course_content/);
+  const withTopic = (topic: Record<string, unknown>) => [{ module_id: 1, title: "U", topics: [{ topic_id: 2, ...topic }] }];
+  assert.throws(() => parseOnqModules(withTopic({ title: "t".repeat(301) })), /course_content/);
+  assert.throws(() => parseOnqModules(withTopic({ title: "T", extension: "e".repeat(301) })), /course_content/);
+  assert.throws(() => parseOnqModules(withTopic({ title: "T", last_modified: "d".repeat(65) })), /course_content/);
   const read = (over: Record<string, unknown>) => ({ topic_id: 2, title: "T", text: "x", ...over });
   assert.throws(() => parseOnqTopicText(read({ note: "n".repeat(2001) })), /read_topic/);
   assert.throws(() => parseOnqTopicText(read({ source_file_name: "f".repeat(301) })), /read_topic/);
