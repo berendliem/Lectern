@@ -103,27 +103,27 @@ model Folder {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  pages            Page[]
-  materials        Material[]
-  topics           CourseTopic[]
-  calendarEvents   CalendarEvent[]
+  pages          Page[]
+  materials      Material[]
+  topics         CourseTopic[]
+  calendarEvents CalendarEvent[]
 }
 
 model Material {
-  id             String       @id @default(cuid())
-  folderId       String
-  kind           MaterialKind
-  title          String
-  sourceFileName String?
-  text           String
-  slideCount     Int?
+  id              String       @id @default(cuid())
+  folderId        String
+  kind            MaterialKind
+  title           String
+  sourceFileName  String?
+  text            String
+  slideCount      Int?
   /// Set when the material was imported from onQ: which topic it is, and the
   /// topic's LastModifiedDate at import, so a re-import can tell "already
   /// here" from "changed on onQ".
   onqTopicId      Int?
   onqLastModified String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   folder        Folder         @relation(fields: [folderId], references: [id], onDelete: Cascade)
   chunks        Chunk[]
@@ -131,8 +131,8 @@ model Material {
   quizQuestions QuizQuestion[]
   reviewLogs    ReviewLog[]
 
-  @@index([folderId, kind])
   @@unique([folderId, onqTopicId])
+  @@index([folderId, kind])
 }
 
 model CourseTopic {
@@ -308,9 +308,9 @@ model InterviewSession {
   pageId    String?
   topicText String?
 
-  mode InterviewMode @default(VIVA)
+  mode          InterviewMode @default(VIVA)
   /// Free text: the agent's brief. Null on a plain viva.
-  persona String?
+  persona       String?
   /// The syllabus topic a course-scoped session argues about or recites. Debate
   /// and recitation write ledger events against it, so without this column their
   /// events land with no target and the scheduler cannot see them.
