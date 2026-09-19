@@ -92,9 +92,9 @@ test("a flashcard edit trims both sides and refuses an empty one", async () => {
 });
 
 test("a folder can be linked to and unlinked from an onQ course", async () => {
-  assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: 1180369 }), { onqCourseId: 1180369 });
+  assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: 100001 }), { onqCourseId: 100001 });
   assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: null }), { onqCourseId: null });
-  await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: "1180369" }));
+  await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: "100001" }));
   await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: 1.5 }));
   await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: 2 ** 40 }));
 });

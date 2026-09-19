@@ -8,11 +8,11 @@
 
 **Tech Stack:** Next.js (app router), Prisma 7 + SQLite, zod, `@modelcontextprotocol/sdk` 1.30, node:test via tsx, Tailwind, lucide-react.
 
-**Spec:** `/Users/Work/onq-mcp/docs/superpowers/specs/2026-09-17-lectern-import-design.md`. The onq-mcp side is planned in `/Users/Work/onq-mcp/docs/superpowers/plans/2026-09-17-lectern-import-onq.md`; this plan does not depend on it landing first — everything here is tested against mocked tool results, and only Task 8 (manual check) needs the real server.
+**Spec:** `../onq-mcp/docs/superpowers/specs/2026-09-17-lectern-import-design.md`. The onq-mcp side is planned in `../onq-mcp/docs/superpowers/plans/2026-09-17-lectern-import-onq.md`; this plan does not depend on it landing first — everything here is tested against mocked tool results, and only Task 8 (manual check) needs the real server.
 
 ## Global Constraints
 
-- **Work only in this worktree:** `/Users/Work/Documents/Dev/Lectern/.claude/worktrees/feat+onq-import`, branch `feat/onq-import`. Other agents are building in the main checkout and sibling worktrees. Never `cd` to `/Users/Work/Documents/Dev/Lectern` itself, never touch its `prisma/dev.db`, never run a dev server on port 3000 or 3100.
+- **Work only in this worktree:** `Lectern/.claude/worktrees/feat+onq-import`, branch `feat/onq-import`. Other agents are building in the main checkout and sibling worktrees. Never `cd` to `../Lectern` itself, never touch its `prisma/dev.db`, never run a dev server on port 3000 or 3100.
 - This worktree's `.env` uses the relative `DATABASE_URL="file:./prisma/dev.db"`, which resolves to a database private to the worktree. Do not point it anywhere else.
 - Pure modules under `src/lib` that have tests import siblings with **relative paths and the `.ts` extension** (`"./onq-parse.ts"`) and never import `@/…` — node:test runs them without the Next alias. See `src/lib/mcp/notion-parse.ts` / `calendar-schema.ts`.
 - Tests are node:test: `import { test } from "node:test"; import assert from "node:assert/strict";`. Run one file with `node --import tsx --test <path>`; all with `npm test`. There are no route or component tests in this repo — do not add a framework for them.
@@ -52,7 +52,7 @@ One deliberate change from the spec's first draft: the import route takes **one*
 - [ ] **Step 1: Install and create the private database**
 
 ```bash
-cd "/Users/Work/Documents/Dev/Lectern/.claude/worktrees/feat+onq-import"
+cd "Lectern/.claude/worktrees/feat+onq-import"
 cp .env.example .env
 npm ci
 npx prisma migrate deploy
@@ -289,8 +289,8 @@ import assert from "node:assert/strict";
 import { parseOnqCourses, parseOnqModules, parseOnqTopicText } from "./onq-parse.ts";
 
 test("reads courses and drops fields Lectern does not use", () => {
-  const out = parseOnqCourses([{ course_id: 1180369, name: "CISC 102", code: "X", active: true }]);
-  assert.deepEqual(out, [{ courseId: 1180369, name: "CISC 102" }]);
+  const out = parseOnqCourses([{ course_id: 100001, name: "CISC 102", code: "X", active: true }]);
+  assert.deepEqual(out, [{ courseId: 100001, name: "CISC 102" }]);
 });
 
 test("reads a module tree", () => {
@@ -932,9 +932,9 @@ Add to `src/lib/validation.test.ts` (create the file with the node:test imports 
 
 ```ts
 test("a folder can be linked to and unlinked from an onQ course", async () => {
-  assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: 1180369 }), { onqCourseId: 1180369 });
+  assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: 100001 }), { onqCourseId: 100001 });
   assert.deepEqual(await updateFolderSchema.parseAsync({ onqCourseId: null }), { onqCourseId: null });
-  await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: "1180369" }));
+  await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: "100001" }));
   await assert.rejects(updateFolderSchema.parseAsync({ onqCourseId: 1.5 }));
 });
 
@@ -1535,7 +1535,7 @@ git commit -m "feat(onq): import a course's onQ files from the materials tab"
 
 - [ ] **Step 1: Document it**
 
-Add beside the Notion/calendar MCP setup notes (take the repo URL from `git -C /Users/Work/onq-mcp remote get-url origin`):
+Add beside the Notion/calendar MCP setup notes (take the repo URL from `git -C ../onq-mcp remote get-url origin`):
 
 ```markdown
 ### onQ import
@@ -1566,7 +1566,7 @@ Needs the onq-mcp plan's Tasks 1-3 landed and a live onQ session in Brave. If ei
 
 - [ ] **Step 1: Configure**
 
-Create `mcp.config.json` in this worktree (gitignored) with only the `onq` entry from `mcp.config.example.json`, the path set to `/Users/Work/onq-mcp`.
+Create `mcp.config.json` in this worktree (gitignored) with only the `onq` entry from `mcp.config.example.json`, the path set to `../onq-mcp`.
 
 - [ ] **Step 2: Run on a private port**
 
