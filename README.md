@@ -120,6 +120,8 @@ Open http://localhost:3000.
 - **Ask** — a question answered from that course's lectures *and* materials, with citations.
 - **Review**, **Exam cram**, **Feynman**, and **Interview** buttons, each pre-seeded with that course's content.
 
+**Talk it through (live).** On any interview page, *Talk it through* turns the session into a spoken one, like a voice call: the tutor speaks, you answer out loud, a short pause ends your turn, and talking over the tutor cuts it off. When you're wrong it names the slip, walks through a worked example from your course material, and gives you one variant to retry. Captions highlight each word as it is spoken (CC toggles them). When the session ends you get the transcript plus a *What to fix* sheet you can copy or download as Markdown. Your answers are transcribed locally (Whisper or mac-speech); in Chrome, the live preview of your words uses Chrome's own speech service. The tutor speaks in your read-aloud voice; debaters use two fixed voices.
+
 **Per lecture** (under the lecture header): **Feynman coach** with the lecture's key terms as concepts and its notes as the reference answer, **Focus timer** bound to that lecture, **Dictionary** offering the lecture's key terms as one-click additions, and **Schedule review** to book just that lecture's due cards into your calendar.
 
 **Study tools (in the sidebar):**
