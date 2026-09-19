@@ -234,3 +234,20 @@ Manual browser checklist, in the plan: hands-free turn with speakers, with
 headphones, barge-in, a false-trigger cough, Firefox with no
 `SpeechRecognition`, mic denied, Kokoro still loading, and a Debate
 interjection.
+
+## Adjustments made during implementation
+
+- **Stream drops.** A reply that drops mid-stream stops the speech at once and
+  shows Try again, rather than finishing what arrived. Try again replays a
+  reply the server already saved.
+- **Mic denied.** The live screen shows a notice with a Switch to typing
+  button. It does not switch to typing on its own.
+- **Debate.** After an interjection, the next agent corrects or concedes it,
+  one agent per request.
+- **Schemas.** The zod schemas live in `src/lib/live-interview.ts`, not
+  `src/lib/validation.ts`.
+- **From the plan.** The five adjustments recorded in the plan also stand:
+  the Talk it through button is the entry point, both routes stream NDJSON,
+  the debate streams through its own `debate/live` route, the reducer goes
+  straight from speaking to listening on a barge-in, and debate interjections
+  don't record their transcript source.
