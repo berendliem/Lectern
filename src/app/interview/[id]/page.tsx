@@ -6,6 +6,8 @@ import { InterviewRunner } from "@/components/interview/InterviewRunner";
 import { GoLiveButton } from "@/components/interview/GoLiveButton";
 import { LiveSession } from "@/components/interview/live/LiveSession";
 import { LiveDebate } from "@/components/interview/live/LiveDebate";
+import { LiveTranscript } from "@/components/interview/live/LiveTranscript";
+import { fixCards, transcriptLines, tutorName } from "@/lib/live-transcript";
 import { MAX_INTERVIEW_QUESTIONS } from "@/lib/interview";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +28,26 @@ export default async function InterviewSessionPage({ params }: { params: Promise
   const open = session.turns.find((t) => t.speaker === null && t.feedback === null);
 
   let body: React.ReactNode;
-  if (session.live && active && session.mode === "DEBATE") {
+  if (session.live && !active) {
+    const turns = session.turns.map((t) => ({
+      id: t.id,
+      order: t.order,
+      speaker: t.speaker,
+      question: t.question,
+      answer: t.answer,
+      feedback: t.feedback,
+      spoken: t.spoken,
+      interruptedAt: t.interruptedAt,
+      retryOf: t.retryOf,
+    }));
+    body = (
+      <LiveTranscript
+        title={session.title}
+        lines={transcriptLines(turns, tutorName(session.mode))}
+        cards={fixCards(turns)}
+      />
+    );
+  } else if (session.live && active && session.mode === "DEBATE") {
     body = <LiveDebate sessionId={session.id} concept={session.topic?.title ?? session.title} />;
   } else if (session.live && active) {
     body = (
