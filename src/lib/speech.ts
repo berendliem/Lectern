@@ -1,3 +1,5 @@
+import { charToWordIndex, wordIndexAt, wordSchedule } from "@/lib/live-text";
+
 /**
  * One voice for everything the app reads aloud.
  *
@@ -239,6 +241,8 @@ export type SayOptions = {
   lang: string;
   /** The sentence after this one, rendered in the background so it starts without a gap. */
   next?: string;
+  /** Called with the index of the word being spoken, for captions that follow the voice. */
+  onWord?: (index: number) => void;
 };
 
 // Bumped by silence(); a sentence that started under an older generation is cancelled.
@@ -267,7 +271,7 @@ export async function say(text: string, options: SayOptions): Promise<Outcome> {
     try {
       const buffer = await audio;
       if (gen !== generation) return "cancelled";
-      return await playBuffer(buffer, gen);
+      return await playBuffer(buffer, gen, options.onWord && { text, onWord: options.onWord });
     } catch {
       if (gen !== generation) return "cancelled";
       if (!localVoice(options.lang)) return "failed";
@@ -289,7 +293,11 @@ export function setVolume(next: number) {
   if (gain) gain.gain.value = volume;
 }
 
-function playBuffer(buffer: AudioBuffer, gen: number): Promise<Outcome> {
+function playBuffer(
+  buffer: AudioBuffer,
+  gen: number,
+  words?: { text: string; onWord: (index: number) => void }
+): Promise<Outcome> {
   const ctx = audioCtx;
   if (!ctx) return Promise.resolve("failed");
   if (!gain) {
@@ -308,10 +316,27 @@ function playBuffer(buffer: AudioBuffer, gen: number): Promise<Outcome> {
     };
     source = node;
     node.start();
+    if (words) {
+      // Kokoro gives no word timings, so the caption follows an estimate
+      // clocked off the audio context, which also stops while it is suspended.
+      const schedule = wordSchedule(words.text, buffer.duration);
+      const startedAt = ctx.currentTime;
+      let shown = -1;
+      const tick = () => {
+        if (source !== node) return;
+        const index = wordIndexAt(schedule, ctx.currentTime - startedAt);
+        if (index !== shown) {
+          shown = index;
+          words.onWord(index);
+        }
+        requestAnimationFrame(tick);
+      };
+      tick();
+    }
   });
 }
 
-function speakWithBrowser(text: string, { voice: wanted, rate, lang }: SayOptions, gen: number): Promise<Outcome> {
+function speakWithBrowser(text: string, { voice: wanted, rate, lang, onWord }: SayOptions, gen: number): Promise<Outcome> {
   return new Promise((resolve) => {
     // Chrome drops a speak() issued in the same tick as a cancel().
     setTimeout(() => {
@@ -332,6 +357,12 @@ function speakWithBrowser(text: string, { voice: wanted, rate, lang }: SayOption
       u.onend = () => settle("ended");
       u.onerror = (event) =>
         settle(event.error === "interrupted" || event.error === "canceled" ? "cancelled" : "failed");
+      if (onWord) {
+        u.onstart = () => onWord(0);
+        u.onboundary = (event) => {
+          if (event.name === "word") onWord(charToWordIndex(text, event.charIndex));
+        };
+      }
       utterance = u;
       window.speechSynthesis.speak(u);
     }, 0);
