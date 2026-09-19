@@ -55,6 +55,8 @@ export function LiveSession({
   const [voice] = useState(tutorVoice);
   const [student, setStudent] = useState<{ text: string; interim: boolean } | null>(null);
   const [ending, setEnding] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
   const speech = useSpeechQueue();
   const recognition = useBrowserRecognition();
   const lectureMic = useMicHeldByLecture();
@@ -67,6 +69,8 @@ export function LiveSession({
   const replyRef = useRef<Promise<unknown> | null>(null);
   const lastAnswerRef = useRef<Answer | null>(null);
   const onVadRef = useRef<(event: "start" | "end") => void>(() => {});
+  // False once torn down, so a reply still streaming in from a dead session is ignored rather than acted on.
+  const aliveRef = useRef(true);
 
   const mic = useLiveMic(sensitivityToThreshold(prefs.sensitivity), {
     onsetMs: () => (now() === "listening" ? LISTEN_ONSET_MS : now() === "speaking" ? BARGE_IN_MS : Infinity),
@@ -80,10 +84,19 @@ export function LiveSession({
   }
 
   function shutDown() {
+    aliveRef.current = false;
     speech.stopAll();
     recognition.end();
     closeMic();
   }
+
+  // Stops audio and the mic on unmount, not just on End/Switch-to-typing.
+  // Re-arms `alive` on mount: StrictMode unmounts and remounts once in dev.
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => shutDown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function finish() {
     setEnding(true);
@@ -95,7 +108,10 @@ export function LiveSession({
 
   async function switchToTyping() {
     shutDown();
+    act({ type: "end" }); // nothing should resume listening once we're leaving live mode
+    setSwitchError(null);
     if (await setLive(sessionId, false)) router.refresh();
+    else setSwitchError("Couldn't switch back to typing. Try again.");
   }
 
   async function sendAnswer(answer: Answer) {
@@ -108,6 +124,7 @@ export function LiveSession({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ turnId: turn.id, answer: answer.text, transcriptSource: answer.source }),
     }).catch(() => null);
+    if (now() !== "thinking") return; // ended or switched to typing while this was in flight
     if (!res?.ok || !res.body) {
       const data = res ? ((await res.json().catch(() => ({}))) as { error?: string }) : {};
       act({ type: "failed", message: data.error ?? "Couldn't reach the tutor." });
@@ -115,23 +132,32 @@ export function LiveSession({
     }
 
     replyTurnRef.current = turn.id;
+    if (!aliveRef.current) return; // torn down while the fetch was in flight
     speech.begin(tutor, voice);
     const body = res.body;
     const reply = (async () => {
       let final = null as LiveTurnEvent | null;
       let started = false;
-      for await (const raw of ndjsonEvents(body)) {
-        const event = raw as LiveTurnEvent;
-        if (event.type === "text") {
-          if (!started) {
-            started = true;
-            setStudent(null);
-            act({ type: "replyStarted" });
+      try {
+        for await (const raw of ndjsonEvents(body)) {
+          if (!aliveRef.current) break; // torn down mid-stream: stop feeding a dead session
+          const event = raw as LiveTurnEvent;
+          if (event.type === "text") {
+            if (!started) {
+              started = true;
+              setStudent(null);
+              act({ type: "replyStarted" });
+            }
+            speech.push(event.delta);
+          } else {
+            final = event;
           }
-          speech.push(event.delta);
-        } else {
-          final = event;
         }
+      } catch {
+        // A dropped connection mid-stream: report it like any other lost reply
+        // instead of leaving an unhandled rejection and a stuck phase.
+        speech.end();
+        return null;
       }
       speech.end();
       if (final?.type === "done") turnRef.current = final.nextTurn;
@@ -142,14 +168,28 @@ export function LiveSession({
 
     if (!final || final.type !== "done") {
       speech.stopAll();
+      const wasListening = now() === "listening";
       act({ type: "failed", message: final?.type === "error" ? final.message : "Lost the tutor mid-reply." });
+      if (wasListening) {
+        // The barge-in already opened a new listening turn; abandon it, we're bailing to the error screen.
+        recognition.end();
+        void take();
+      }
       return;
     }
     if (now() === "thinking") act({ type: "replyStarted" });
     // Cut in: the student's words are already the answer to the next turn.
-    if (now() !== "speaking") return;
+    if (now() !== "speaking") {
+      // Barged into what turned out to be the last reply: there's nothing left to answer.
+      if (final.completed && now() === "listening") void finish();
+      return;
+    }
     await speech.whenIdle();
-    if (now() !== "speaking") return;
+    if (now() !== "speaking") {
+      if (final.completed && now() === "listening") void finish();
+      return;
+    }
+    replyTurnRef.current = null;
     act({ type: "replyDone", completed: final.completed });
     if (final.completed) void finish();
     else listen();
@@ -163,11 +203,13 @@ export function LiveSession({
     recognition.end();
     const blob = await take();
     await replyRef.current;
+    if (now() !== "transcribing") return; // a stale reply just failed or ended the session
     const turn = turnRef.current;
     const answer = heardAnswer(await transcribe(sessionId, blob, turn?.id ?? null), preview);
 
     if (!answer) {
       act({ type: "empty" });
+      replyTurnRef.current = null; // "I didn't catch that" isn't a reply to whatever a barge-in interrupted
       await speech.speakAll(tutor, voice, NOT_HEARD);
       if (now() !== "speaking") return;
       act({ type: "replyDone", completed: false });
@@ -205,9 +247,14 @@ export function LiveSession({
 
   async function begin() {
     if (!openTurn) return void finish();
+    if (starting) return; // a double-click would otherwise open the mic twice and leak a stream
+    setStarting(true);
     // Both need the click: Kokoro's AudioContext and the mic prompt.
     loadKokoro();
-    if (!(await openMic())) return;
+    if (!(await openMic())) {
+      setStarting(false);
+      return;
+    }
     act({ type: "start" });
     await speech.speakAll(tutor, voice, openTurn.question);
     if (now() !== "speaking") return;
@@ -244,7 +291,7 @@ export function LiveSession({
             </p>
           )}
           {micError && <p className="text-[13px] font-medium text-red-700">{micError}</p>}
-          <Button variant="brand" onClick={() => void begin()} disabled={!!lectureMic}>
+          <Button variant="brand" onClick={() => void begin()} disabled={!!lectureMic || starting}>
             <Mic className="h-4 w-4" strokeWidth={2} />
             Start talking
           </Button>
@@ -276,6 +323,11 @@ export function LiveSession({
         onSwitchToTyping={() => void switchToTyping()}
         ending={ending}
       />
+      {switchError && (
+        <p role="alert" className="text-[13px] font-medium text-red-700">
+          {switchError}
+        </p>
+      )}
       {!recognition.supported && state.phase !== "idle" && (
         <p className="text-[12.5px] text-muted">
           This browser can&apos;t preview speech, so your words appear once they&apos;re transcribed.

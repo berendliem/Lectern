@@ -198,6 +198,8 @@ export function liveReducer(state: LiveState, action: LiveAction): LiveState {
     case "listening":
       if (action.type === "speechEnd") return to("transcribing");
       if (action.type === "advance") return to("thinking");
+      // A reply that was still in flight when the student barged in can still fail.
+      if (action.type === "failed") return to("error", action.message);
       return state;
     case "transcribing":
       if (action.type === "transcribed") return to("thinking");

@@ -152,6 +152,8 @@ test("reducer: failure and retry", () => {
   assert.deepEqual(liveReducer(failed, { type: "retry" }), { phase: "thinking", error: null });
   assert.equal(liveReducer(at("transcribing"), { type: "failed", message: "x" }).phase, "error");
   assert.equal(liveReducer(at("speaking"), { type: "failed", message: "x" }).phase, "error");
+  // A reply can still fail after the student's barge-in already moved the phase to listening.
+  assert.equal(liveReducer(at("listening"), { type: "failed", message: "x" }).phase, "error");
 });
 
 test("reducer: end from anywhere, and ignored actions keep the state", () => {
