@@ -77,11 +77,13 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
   }
 
   function listen() {
+    if (!alive.current) return;
     arm();
     recognition.begin();
   }
 
   function listenThenAdvance() {
+    if (!alive.current) return;
     listen();
     clearAdvance();
     advanceTimer.current = setTimeout(() => {
@@ -197,7 +199,13 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
 
     if (!final || final.type !== "done") {
       speech.stopAll();
+      const wasListening = now() === "listening";
       act({ type: "failed", message: final?.type === "error" ? final.message : "Lost the debate mid-sentence." });
+      if (wasListening) {
+        // The barge-in already opened a new listening turn; abandon it, we're bailing to the error screen.
+        recognition.end();
+        void take();
+      }
       return;
     }
     if (!final.turn) return void finish();
