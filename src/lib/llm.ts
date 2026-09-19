@@ -2,9 +2,10 @@ import {
   callOpenRouterText,
   callOpenRouterJSON,
   callOpenRouterVision,
+  callOpenRouterStream,
   type ChatMessage,
 } from "@/lib/openrouter";
-import { callOllama, ollamaModel, ollamaReasoningModel } from "@/lib/ollama";
+import { callOllama, callOllamaStream, ollamaModel, ollamaReasoningModel } from "@/lib/ollama";
 
 export type { ChatMessage };
 
@@ -61,6 +62,23 @@ export async function callLLMText(opts: {
     });
   }
   return callOpenRouterText({ model: opts.model, messages: opts.messages, web: opts.web });
+}
+
+/** callLLMText as a stream of text deltas, dispatched the same way. */
+export function callLLMStream(opts: {
+  model: string;
+  messages: ChatMessage[];
+  stage?: LLMStage;
+  signal?: AbortSignal;
+}): AsyncGenerator<string> {
+  if (resolveProvider(opts.stage) === "ollama") {
+    return callOllamaStream({
+      messages: opts.messages,
+      model: opts.stage === "reasoning" ? ollamaReasoningModel() : undefined,
+      signal: opts.signal,
+    });
+  }
+  return callOpenRouterStream({ model: opts.model, messages: opts.messages, signal: opts.signal });
 }
 
 export async function callLLMJSON(opts: {
