@@ -34,6 +34,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   });
   if (!session) return jsonError("Interview session not found", 404);
   if (session.mode !== "DEBATE") return jsonError("This session is not a debate", 422);
+  if (session.status !== "ACTIVE") return jsonError("This debate is already finished", 422);
   if (!session.topic) return jsonError("This debate has no course topic behind it", 422);
   const topic = session.topic;
 

@@ -43,17 +43,25 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
   const [rate] = useState(() => readReadAloudPrefs().rate);
   const [student, setStudent] = useState<{ text: string; interim: boolean } | null>(null);
   const [ending, setEnding] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
   const speech = useSpeechQueue();
   const recognition = useBrowserRecognition();
   const lectureMic = useMicHeldByLecture();
 
   const agentRef = useRef<Promise<unknown> | null>(null);
-  // The agent turn being spoken, once the server has saved it.
+  // The agent turn being spoken, once the server has saved it. Cleared the moment it can no
+  // longer be barged into, so a later cut-in never lands on a turn that already moved on.
   const agentTurnRef = useRef<string | null>(null);
   // Where the student cut in, held until the interrupted turn has an id.
   const pendingCutRef = useRef<number | null>(null);
+  // The student's point, kept so "Try again" after a failed interject re-sends it rather than dropping it.
+  const pendingInterjectRef = useRef<string | null>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onVadRef = useRef<(event: "start" | "end") => void>(() => {});
+  // False once the component has ended, switched away, or unmounted, so in-flight async work stops
+  // starting new turns instead of talking behind a closed session.
+  const alive = useRef(true);
 
   const mic = useLiveMic(sensitivityToThreshold(prefs.sensitivity), {
     onsetMs: () => (now() === "listening" ? LISTEN_ONSET_MS : now() === "speaking" ? BARGE_IN_MS : Infinity),
@@ -90,6 +98,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
   }
 
   function shutDown() {
+    alive.current = false;
     clearAdvance();
     speech.stopAll();
     recognition.end();
@@ -106,10 +115,30 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
 
   async function switchToTyping() {
     shutDown();
+    act({ type: "end" });
     if (await setLive(sessionId, false)) router.refresh();
+    else setSwitchError("Couldn't switch to typing. Try again.");
+  }
+
+  async function sendInterject(text: string) {
+    pendingInterjectRef.current = text;
+    const res = await fetch(`/api/interview/${sessionId}/debate/interject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text.slice(0, 2000) }),
+    }).catch(() => null);
+    // A concurrent failure (or the debate ending) already moved the phase on; don't pile on.
+    if (now() !== "thinking") return;
+    if (!res?.ok) {
+      act({ type: "failed", message: "Couldn't hand your point to the debate." });
+      return;
+    }
+    pendingInterjectRef.current = null;
+    await nextAgent();
   }
 
   async function nextAgent() {
+    if (!alive.current || now() === "done") return;
     clearAdvance();
     if (now() === "listening" || now() === "idle") {
       recognition.end();
@@ -119,6 +148,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     pendingCutRef.current = null;
 
     const res = await fetch(`/api/interview/${sessionId}/debate/live`, { method: "POST" }).catch(() => null);
+    if (!alive.current) return;
     if (!res?.ok || !res.body) {
       const data = res ? ((await res.json().catch(() => ({}))) as { error?: string }) : {};
       act({ type: "failed", message: data.error ?? "The debate could not continue." });
@@ -129,20 +159,27 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     const run = (async () => {
       let final = null as DebateLiveEvent | null;
       let started = false;
-      for await (const raw of ndjsonEvents(body)) {
-        const event = raw as DebateLiveEvent;
-        if (event.type === "speaker") {
-          speech.begin(event.speaker, voiceFor(event.speaker));
-        } else if (event.type === "text") {
-          if (!started) {
-            started = true;
-            setStudent(null);
-            act({ type: "replyStarted" });
+      try {
+        for await (const raw of ndjsonEvents(body)) {
+          if (!alive.current) break;
+          const event = raw as DebateLiveEvent;
+          if (event.type === "speaker") {
+            speech.begin(event.speaker, voiceFor(event.speaker));
+          } else if (event.type === "text") {
+            if (!started) {
+              started = true;
+              setStudent(null);
+              act({ type: "replyStarted" });
+            }
+            speech.push(event.delta);
+          } else {
+            final = event;
           }
-          speech.push(event.delta);
-        } else {
-          final = event;
         }
+      } catch {
+        // A dropped connection rejects the reader; treat it like a server error event.
+        speech.end();
+        return null;
       }
       speech.end();
       if (final?.type === "done" && final.turn) {
@@ -156,6 +193,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     })();
     agentRef.current = run;
     const final = await run;
+    if (!alive.current) return;
 
     if (!final || final.type !== "done") {
       speech.stopAll();
@@ -164,10 +202,18 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     }
     if (!final.turn) return void finish();
     if (now() === "thinking") act({ type: "replyStarted" });
-    if (now() !== "speaking") return;
+    // True while nothing has cut the reply short; a barge-in already moved the phase on.
+    const stillSpeaking = () => {
+      if (now() === "speaking") return true;
+      if (final.finished) void finish();
+      return false;
+    };
+    if (!stillSpeaking()) return;
     await speech.whenIdle();
-    if (now() !== "speaking") return;
+    if (!alive.current) return;
+    if (!stillSpeaking()) return;
     act({ type: "replyDone", completed: final.finished });
+    agentTurnRef.current = null;
     if (final.finished) void finish();
     else listenThenAdvance();
   }
@@ -180,11 +226,17 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     if (preview) setStudent({ text: preview, interim: true });
     recognition.end();
     const blob = await take();
+    if (now() !== "transcribing") return;
     await agentRef.current;
-    const answer = heardAnswer(await transcribe(sessionId, blob, null), preview);
+    if (now() !== "transcribing") return;
+    const local = await transcribe(sessionId, blob, null);
+    if (now() !== "transcribing") return;
+    const answer = heardAnswer(local, preview);
 
     if (!answer) {
       act({ type: "empty" });
+      // Never post a stray barge-in offset onto the previous agent's turn while the moderator talks.
+      agentTurnRef.current = null;
       await speech.speakAll(MODERATOR, voiceFor(MODERATOR), NOT_HEARD);
       if (now() !== "speaking") return;
       act({ type: "replyDone", completed: false });
@@ -194,17 +246,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     setStudent({ text: answer.text, interim: false });
     if (isEndCommand(answer.text)) return void finish();
     act({ type: "transcribed" });
-
-    const res = await fetch(`/api/interview/${sessionId}/debate/interject`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: answer.text.slice(0, 2000) }),
-    }).catch(() => null);
-    if (!res?.ok) {
-      act({ type: "failed", message: "Couldn't hand your point to the debate." });
-      return;
-    }
-    await nextAgent();
+    await sendInterject(answer.text);
   }
 
   function onSpeechStart() {
@@ -213,8 +255,13 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     if (now() !== "speaking") return;
     const heard = speech.interrupt();
     const turnId = agentTurnRef.current;
-    if (turnId) postInterrupt(turnId, heard);
-    else pendingCutRef.current = heard;
+    if (turnId) {
+      postInterrupt(turnId, heard);
+      // Posted once; a further barge-in before the next turn has an id has nothing to attach to.
+      agentTurnRef.current = null;
+    } else {
+      pendingCutRef.current = heard;
+    }
     act({ type: "bargeIn" });
     listen();
   }
@@ -226,16 +273,22 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     };
   });
 
+  // Stops audio and the mic on unmount, not just on End/Switch-to-typing.
+  // Re-arms `alive` on mount: StrictMode unmounts and remounts once in dev.
   useEffect(() => {
-    const timer = advanceTimer;
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
+    alive.current = true;
+    return () => shutDown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function begin() {
+    if (starting) return;
+    setStarting(true);
     loadKokoro();
-    if (!(await openMic())) return;
+    if (!(await openMic())) {
+      setStarting(false);
+      return;
+    }
     await nextAgent();
   }
 
@@ -262,7 +315,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
             </p>
           )}
           {micError && <p className="text-[13px] font-medium text-red-700">{micError}</p>}
-          <Button variant="brand" onClick={() => void begin()} disabled={!!lectureMic}>
+          <Button variant="brand" onClick={() => void begin()} disabled={!!lectureMic || starting}>
             <Swords className="h-4 w-4" strokeWidth={2} />
             Start the debate
           </Button>
@@ -284,13 +337,20 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
             size="sm"
             onClick={() => {
               act({ type: "retry" });
-              void nextAgent();
+              if (pendingInterjectRef.current) void sendInterject(pendingInterjectRef.current);
+              else void nextAgent();
             }}
           >
             <RotateCcw className="h-4 w-4" strokeWidth={2} />
             Try again
           </Button>
         </div>
+      )}
+
+      {switchError && (
+        <p role="alert" className="text-[13px] font-medium text-red-700">
+          {switchError}
+        </p>
       )}
 
       <LiveControls
