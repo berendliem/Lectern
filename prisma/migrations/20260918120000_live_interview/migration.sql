@@ -3,6 +3,7 @@
 
 -- AlterTable
 ALTER TABLE "InterviewSession" ADD COLUMN "live" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "InterviewSession" ADD COLUMN "liveClaimedAt" DATETIME;
 
 -- AlterTable
 ALTER TABLE "InterviewTurn" ADD COLUMN "spoken" TEXT;

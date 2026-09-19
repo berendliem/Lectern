@@ -14,7 +14,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if ("error" in result) return result.error;
 
   const updated = await db.interviewTurn.updateMany({
-    where: { id: result.data.turnId, sessionId: id },
+    // Only the tutor's (speaker null) or an agent's lines can be cut off, never the student's own.
+    // Spelled out because SQL's NOT on a nullable column would also drop the tutor's null rows.
+    where: { id: result.data.turnId, sessionId: id, OR: [{ speaker: null }, { speaker: { not: "You" } }] },
     data: { interruptedAt: result.data.interruptedAt },
   });
   if (updated.count === 0) return jsonError("Turn not found in this session", 404);

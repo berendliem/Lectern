@@ -10,12 +10,14 @@ import {
   liveTurnSchema,
   nextTurnKind,
   questionsAnswered,
+  readLiveFeedback,
   toLiveFeedback,
   type LiveFeedback,
   type LiveNextTurn,
   type LiveTurnEvent,
 } from "@/lib/live-interview";
 import { createTrailerFilter, normalizeSpoken, parseGradeTrailer, questionFromSpoken } from "@/lib/live-text";
+import { claimLiveSession, releaseLiveSession } from "@/lib/live-claim";
 import { buildLiveTurnUserPrompt, liveSystemPrompt } from "@/lib/prompts/live";
 import { writeRecallSafely } from "@/lib/recall-log";
 
@@ -26,7 +28,8 @@ const GROUNDING_K = 4;
  * One spoken turn: saves the answer, streams the tutor's reply sentence by
  * sentence, then stores the reply, its grade, the recall event and the next
  * question. A turn counts as done once its feedback is stored; a failed reply
- * leaves feedback empty, so posting the same turn again regenerates it.
+ * leaves feedback empty, so posting the same turn again regenerates it, and
+ * posting a turn that is already done replays the stored reply.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -45,15 +48,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   });
   if (!session) return jsonError("Interview session not found", 404);
   if (session.mode === "DEBATE") return jsonError("A debate is spoken through the debate routes", 422);
-  if (session.status === "COMPLETED") return jsonError("This interview is already finished", 422);
   const mode = session.mode;
 
   const turn = session.turns.find((t) => t.id === turnId);
   if (!turn) return jsonError("Question not found in this session", 404);
-  if (turn.feedback !== null) return jsonError("This question has already been answered", 422);
-
-  // The answer lands before the reply: what the student said is kept whether or not the model answers.
-  await db.interviewTurn.update({ where: { id: turn.id }, data: { answer } });
+  if (turn.feedback !== null) {
+    // The reply was saved but its stream never reached the client: Try again replays it.
+    const stored = readLiveFeedback(turn.feedback);
+    if (!stored) return jsonError("This question has already been answered", 422);
+    return ndjson([
+      { type: "text", delta: turn.spoken ?? "" },
+      { type: "done", verdict: stored.verdict, ...(await replayState(id)) },
+    ]);
+  }
+  if (session.status === "COMPLETED") return jsonError("This interview is already finished", 422);
+  if (!(await claimLiveSession(id))) return jsonError("Still working on the last reply — give it a moment.", 409);
 
   const context: InterviewContext = {
     title: session.title,
@@ -68,10 +77,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .map((t) => ({ question: t.question, answer: t.answer as string }));
   const answeringRetry = turn.retryOf !== null;
   const lastQuestion = questionsAnswered(earlier) + (answeringRetry ? 0 : 1) >= MAX_INTERVIEW_QUESTIONS;
-  const grounding = session.topic
-    ? await courseGrounding(session.topic.folderId, `${session.topic.title}: ${turn.question}`, GROUNDING_K, "live-turn")
-    : [];
-
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
@@ -82,16 +87,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           // The tab went away mid-reply. Keep going so the turn is still saved.
         }
       };
-      const fail = (message: string) => {
-        send({ type: "error", message });
-        try {
-          controller.close();
-        } catch {
-          // The tab went away, or the stream is already closed. Nothing left to do.
-        }
-      };
+      const fail = (message: string) => send({ type: "error", message });
 
       try {
+        // The answer lands before the reply: what the student said is kept whether or not the model answers.
+        // A regenerated reply must not inherit where an earlier one was cut off.
+        await db.interviewTurn.update({ where: { id: turn.id }, data: { answer, interruptedAt: null } });
+        const grounding = session.topic
+          ? await courseGrounding(session.topic.folderId, `${session.topic.title}: ${turn.question}`, GROUNDING_K, "live-turn")
+          : [];
+
         const filter = createTrailerFilter();
         try {
           for await (const delta of callLLMStream({
@@ -165,10 +170,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           }
         }
 
-        await db.interviewTurn.update({
-          where: { id: turn.id },
+        const saved = await db.interviewTurn.updateMany({
+          where: { id: turn.id, feedback: null },
           data: { spoken, feedback: JSON.stringify(feedback) },
         });
+        if (saved.count === 0) {
+          // Another request finished this turn first; its recall and next turn stand.
+          send({ type: "done", verdict: feedback.verdict, ...(await replayState(id)) });
+          return;
+        }
         await writeRecallSafely({
           raw: recallRawFor(mode, { score: feedback.score }),
           pageId: session.pageId,
@@ -179,7 +189,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
         let nextTurn: LiveNextTurn | null = null;
         try {
-          if (!finished && nextQuestion) {
+          // The student may have pressed End while the reply was being written.
+          const current = await db.interviewSession.findUnique({ where: { id }, select: { status: true } });
+          if (current?.status === "COMPLETED") {
+            nextTurn = null;
+          } else if (!finished && nextQuestion) {
             const order = session.turns.reduce((max, t) => Math.max(max, t.order), turn.order) + 1;
             const created = await db.interviewTurn.create({
               data: {
@@ -195,7 +209,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           }
         } catch (e) {
           // The reply and its grade are already saved (feedback is non-null), so a
-          // re-POST would just 422. End the session here rather than leave it
+          // re-POST would only replay it. End the session here rather than leave it
           // stuck neither completed nor holding a next turn.
           console.error(`[live-turn] session ${id} failed to save the next turn:`, e);
           try {
@@ -207,15 +221,40 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         }
 
         send({ type: "done", verdict: feedback.verdict, completed: nextTurn === null, nextTurn });
-        controller.close();
       } catch (e) {
         console.error(`[live-turn] session ${id} failed after the reply:`, e);
         fail("Something went wrong saving that turn. Try again.");
+      } finally {
+        // Released before the stream ends, so the client's next request never finds it held.
+        await releaseLiveSession(id);
+        try {
+          controller.close();
+        } catch {
+          // The tab went away, so the stream is already gone. Nothing left to do.
+        }
       }
     },
   });
 
-  return new Response(stream, {
-    headers: { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" },
+  return new Response(stream, { headers: NDJSON_HEADERS });
+}
+
+const NDJSON_HEADERS = { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" };
+
+function ndjson(events: LiveTurnEvent[]): Response {
+  return new Response(events.map((e) => `${JSON.stringify(e)}\n`).join(""), { headers: NDJSON_HEADERS });
+}
+
+/** Where a session stands after its latest saved reply: finished, or waiting on its open question. */
+async function replayState(id: string): Promise<{ completed: boolean; nextTurn: LiveNextTurn | null }> {
+  const session = await db.interviewSession.findUnique({
+    where: { id },
+    select: { status: true, turns: { where: { speaker: null, feedback: null }, orderBy: { order: "desc" }, take: 1 } },
   });
+  const completed = session?.status === "COMPLETED";
+  const open = completed ? undefined : session?.turns[0];
+  return {
+    completed,
+    nextTurn: open ? { id: open.id, order: open.order, question: open.question, retryOf: open.retryOf } : null,
+  };
 }

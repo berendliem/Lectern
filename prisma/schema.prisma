@@ -323,6 +323,9 @@ model InterviewSession {
   /// Set by "Talk it through": the session page renders the spoken loop and,
   /// once finished, the transcript view.
   live Boolean @default(false)
+  /// Set while a live reply is being generated, so a second request for the
+  /// same session waits instead of racing it. Stale claims expire (live-claim.ts).
+  liveClaimedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

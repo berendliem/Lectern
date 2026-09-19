@@ -11,6 +11,7 @@ import {
   pendingInterjection,
   toDebateTurns,
 } from "@/lib/debate";
+import { claimLiveSession, releaseLiveSession } from "@/lib/live-claim";
 import { readLiveFeedback, type DebateLiveEvent } from "@/lib/live-interview";
 import { normalizeSpoken } from "@/lib/live-text";
 import { DEBATE_LIVE_SYSTEM_PROMPT, buildDebateUtterancePrompt } from "@/lib/prompts/debate";
@@ -34,9 +35,11 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   });
   if (!session) return jsonError("Interview session not found", 404);
   if (session.mode !== "DEBATE") return jsonError("This session is not a debate", 422);
-  if (session.status !== "ACTIVE") return jsonError("This debate is already finished", 422);
   if (!session.topic) return jsonError("This debate has no course topic behind it", 422);
   const topic = session.topic;
+  // Already over (the student pressed End, or a lost stream saved the last turn): the client just finishes.
+  if (session.status !== "ACTIVE") return new Response(finishedLine(), { headers: NDJSON_HEADERS });
+  if (!(await claimLiveSession(id))) return jsonError("Still working on the last reply — give it a moment.", 409);
 
   const turns = toDebateTurns(session.turns);
   const encoder = new TextEncoder();
@@ -54,7 +57,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         if (!canAdvance(turns)) {
           await db.interviewSession.update({ where: { id }, data: { status: "COMPLETED" } });
           send({ type: "done", turn: null, finished: true });
-          controller.close();
           return;
         }
 
@@ -96,14 +98,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
           }
         } catch (e) {
           send({ type: "error", message: e instanceof Error ? e.message : "The debate could not continue" });
-          controller.close();
           return;
         }
 
         const utterance = normalizeSpoken(text);
         if (!utterance) {
           send({ type: "error", message: "The debater had nothing to say. Try again." });
-          controller.close();
           return;
         }
 
@@ -118,16 +118,27 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
           turn: { id: created.id, order: created.order, speaker, question: created.question },
           finished,
         });
-        controller.close();
       } catch (e) {
         console.error(`[debate/live] session ${id} failed:`, e);
         send({ type: "error", message: "Something went wrong saving that turn. Try again." });
-        controller.close();
+      } finally {
+        // Released before the stream ends, so the client's next request never finds it held.
+        await releaseLiveSession(id);
+        try {
+          controller.close();
+        } catch {
+          // The tab went away, so the stream is already gone. Nothing left to do.
+        }
       }
     },
   });
 
-  return new Response(stream, {
-    headers: { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" },
-  });
+  return new Response(stream, { headers: NDJSON_HEADERS });
+}
+
+const NDJSON_HEADERS = { "Content-Type": "application/x-ndjson", "Cache-Control": "no-store" };
+
+function finishedLine(): string {
+  const done: DebateLiveEvent = { type: "done", turn: null, finished: true };
+  return `${JSON.stringify(done)}\n`;
 }
