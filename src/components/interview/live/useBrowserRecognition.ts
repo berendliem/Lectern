@@ -34,9 +34,13 @@ export function useBrowserRecognition(lang = "en-US") {
   const [text, setText] = useState("");
   const recognitionRef = useRef<Recognition | null>(null);
   const wantedRef = useRef(false);
+  // False once unmounted, so `onend`'s auto-restart and a late `begin()` call
+  // can't open a recognizer after the hook has stopped listening to it.
+  const mountedRef = useRef(true);
 
   const begin = useCallback(
     function begin() {
+      if (!mountedRef.current) return;
       const Ctor = recognitionCtor();
       if (!Ctor) return;
       wantedRef.current = true;
@@ -58,7 +62,7 @@ export function useBrowserRecognition(lang = "en-US") {
       // Chrome ends a continuous session on its own after a pause; carry on while wanted.
       recognition.onend = () => {
         recognitionRef.current = null;
-        if (wantedRef.current) begin();
+        if (wantedRef.current && mountedRef.current) begin();
       };
       recognition.onerror = (event) => {
         if (event.error === "not-allowed" || event.error === "service-not-allowed") wantedRef.current = false;
@@ -79,13 +83,14 @@ export function useBrowserRecognition(lang = "en-US") {
     setText("");
   }, []);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true; // re-arm on a StrictMode remount
+    return () => {
+      mountedRef.current = false;
       wantedRef.current = false;
       recognitionRef.current?.abort();
-    },
-    []
-  );
+    };
+  }, []);
 
   return { supported, text, begin, end };
 }

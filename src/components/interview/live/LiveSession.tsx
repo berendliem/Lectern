@@ -79,6 +79,7 @@ export function LiveSession({
   const { arm, take, start: openMic, stop: closeMic, error: micError } = mic;
 
   function listen() {
+    if (!aliveRef.current) return; // torn down: nothing should open the mic or a recognizer
     arm();
     recognition.begin();
   }
@@ -124,7 +125,10 @@ export function LiveSession({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ turnId: turn.id, answer: answer.text, transcriptSource: answer.source }),
     }).catch(() => null);
-    if (now() !== "thinking") return; // ended or switched to typing while this was in flight
+    if (now() !== "thinking") {
+      void res?.body?.cancel().catch(() => {}); // ended or switched to typing while this was in flight
+      return;
+    }
     if (!res?.ok || !res.body) {
       const data = res ? ((await res.json().catch(() => ({}))) as { error?: string }) : {};
       act({ type: "failed", message: data.error ?? "Couldn't reach the tutor." });
