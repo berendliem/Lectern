@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseOnqCourses, parseOnqModules, parseOnqTopicText } from "./onq-parse.ts";
+import { parseOnqCourses, parseOnqDueItems, parseOnqModules, parseOnqTopicText } from "./onq-parse.ts";
 
 test("reads courses and drops fields Lectern does not use", () => {
   const out = parseOnqCourses([{ course_id: 100001, name: "CISC 102", code: "X", active: true }]);
@@ -98,4 +98,44 @@ test("rejects over-long strings, naming the tool", () => {
   assert.throws(() => parseOnqTopicText(read({ note: "n".repeat(2001) })), /read_topic/);
   assert.throws(() => parseOnqTopicText(read({ source_file_name: "f".repeat(301) })), /read_topic/);
   assert.equal(parseOnqTopicText(read({ note: "n".repeat(2000), source_file_name: "f".repeat(300) })).text, "x");
+});
+
+test("reads due items, turning the due date into a Date", () => {
+  const out = parseOnqDueItems([
+    {
+      course: "CISC 102",
+      kind: "quiz",
+      id: 9,
+      name: "Quiz #1",
+      due: "2026-09-23T01:00:00+00:00",
+      completed: null,
+      overdue: false,
+    },
+  ]);
+  assert.deepEqual(out, [
+    {
+      course: "CISC 102",
+      kind: "quiz",
+      id: 9,
+      name: "Quiz #1",
+      due: new Date("2026-09-23T01:00:00Z"),
+      completed: null,
+      overdue: false,
+    },
+  ]);
+});
+
+test("an older onq-mcp without completed/overdue reads as unknown and not overdue", () => {
+  const out = parseOnqDueItems([
+    { course: "X", kind: "assignment", id: 1, name: "HW", due: "2026-09-23T01:00:00+00:00", submission_status: "n/a" },
+  ]);
+  assert.equal(out[0].completed, null);
+  assert.equal(out[0].overdue, false);
+});
+
+test("a due date that is not a date fails with the update-onq-mcp message", () => {
+  assert.throws(
+    () => parseOnqDueItems([{ course: "X", kind: "quiz", id: 1, name: "Q", due: "soon" }]),
+    /whats_due returned a shape/
+  );
 });

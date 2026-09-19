@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { CalendarDays, Flame, GraduationCap, Layers } from "lucide-react";
 import { db } from "@/lib/db";
@@ -7,6 +8,8 @@ import clsx from "@/lib/clsx";
 import { groupByDay, SYNC_WINDOW_DAYS, type CalendarEventKind } from "@/lib/calendar-events";
 import { isCalendarConfigured } from "@/lib/calendar-sync";
 import { folderFamily, FOLDER_CHIP_CLASSES } from "@/lib/folder-colors";
+import { isOnqConfigured } from "@/lib/mcp/onq";
+import OnqDeadlines from "./OnqDeadlines";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +17,7 @@ export default async function PlannerPage() {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const [logs, cards, dueNow, reviewedToday, totalCards, rated, events, calendarConfigured] = await Promise.all([
+  const [logs, cards, dueNow, reviewedToday, totalCards, rated, events, calendarConfigured, onqConfigured] = await Promise.all([
     // Deliberately unfiltered by date: this read counts events for the streak and
     // never scores them, so the pre-ledger rows still belong in it.
     db.reviewLog.findMany({ orderBy: { reviewedAt: "desc" }, take: 500, select: { reviewedAt: true } }),
@@ -42,6 +45,7 @@ export default async function PlannerPage() {
       include: { folder: { select: { id: true, name: true, color: true } } },
     }),
     isCalendarConfigured(),
+    isOnqConfigured(),
   ]);
 
   const streak = computeStreak(logs.map((l) => l.reviewedAt), now);
@@ -157,6 +161,16 @@ export default async function PlannerPage() {
           </p>
         )}
       </div>
+
+      {/* onQ deadlines: absent entirely unless onq-mcp is configured. */}
+      {onqConfigured && (
+        <div className="rounded-2xl border border-line/80 bg-surface p-5">
+          <h2 className="mb-4 text-sm font-semibold text-ink">onQ deadlines, next {SYNC_WINDOW_DAYS} days</h2>
+          <Suspense fallback={<p className="text-[13px] text-muted-2">Asking onQ…</p>}>
+            <OnqDeadlines days={SYNC_WINDOW_DAYS} now={now} />
+          </Suspense>
+        </div>
+      )}
 
       {/* Calendar: everything the sync pulled, not just the academic subset home shows. */}
       <div className="rounded-2xl border border-line/80 bg-surface p-5">
