@@ -140,10 +140,15 @@ export function createThinkStripper() {
 export async function* callOllamaStream(opts: {
   messages: ChatMessage[];
   model?: string;
+  maxTokens?: number;
   signal?: AbortSignal;
 }): AsyncGenerator<string> {
   const model = opts.model || ollamaModel();
-  const res = await postOllama(model, { messages: opts.messages, stream: true }, opts.signal);
+  const res = await postOllama(
+    model,
+    { messages: opts.messages, stream: true, ...(opts.maxTokens ? { options: { num_predict: opts.maxTokens } } : {}) },
+    opts.signal
+  );
   if (!res.body) throw new Error("Ollama returned an empty response. You can retry this step.");
   const think = createThinkStripper();
   for await (const event of ndjsonEvents(res.body)) {

@@ -62,6 +62,8 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
   // False once the component has ended, switched away, or unmounted, so in-flight async work stops
   // starting new turns instead of talking behind a closed session.
   const alive = useRef(true);
+  // The utterance being fetched, so leaving stops the download. The server still saves the turn.
+  const agentAbortRef = useRef<AbortController | null>(null);
 
   const mic = useLiveMic(sensitivityToThreshold(prefs.sensitivity), {
     onsetMs: () => (now() === "listening" ? LISTEN_ONSET_MS : now() === "speaking" ? BARGE_IN_MS : Infinity),
@@ -101,6 +103,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
 
   function shutDown() {
     alive.current = false;
+    agentAbortRef.current?.abort();
     clearAdvance();
     speech.stopAll();
     recognition.end();
@@ -149,7 +152,12 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     agentTurnRef.current = null;
     pendingCutRef.current = null;
 
-    const res = await fetch(`/api/interview/${sessionId}/debate/live`, { method: "POST" }).catch(() => null);
+    const abort = new AbortController();
+    agentAbortRef.current = abort;
+    const res = await fetch(`/api/interview/${sessionId}/debate/live`, {
+      method: "POST",
+      signal: abort.signal,
+    }).catch(() => null);
     if (!alive.current) return;
     if (!res?.ok || !res.body) {
       const data = res ? ((await res.json().catch(() => ({}))) as { error?: string }) : {};

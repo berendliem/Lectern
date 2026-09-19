@@ -6,6 +6,7 @@ import { courseGrounding } from "@/lib/course-grounding";
 import { MAX_INTERVIEW_QUESTIONS, recallRawFor, type InterviewContext, type QAPair } from "@/lib/interview";
 import { INTERVIEW_MODEL, generateNextQuestion, gradeAnswer } from "@/lib/interview-grade";
 import {
+  MAX_LIVE_REPLY_CHARS,
   liveGradeSchema,
   liveTurnSchema,
   nextTurnKind,
@@ -98,9 +99,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           : [];
 
         const filter = createTrailerFilter();
+        let length = 0;
         try {
           for await (const delta of callLLMStream({
             model: INTERVIEW_MODEL,
+            // A reply, a worked example and the grade line fit well inside this.
+            maxTokens: 700,
             messages: [
               { role: "system", content: liveSystemPrompt(mode) },
               {
@@ -118,6 +122,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
               },
             ],
           })) {
+            length += delta.length;
+            if (length > MAX_LIVE_REPLY_CHARS) throw new Error("The tutor's reply ran far too long. Try again.");
             const text = filter.push(delta);
             if (text) send({ type: "text", delta: text });
           }

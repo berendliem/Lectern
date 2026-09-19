@@ -50,12 +50,16 @@ export function webPluginField(web?: boolean): { plugins: { id: "web" }[] } | Re
   return web ? { plugins: [{ id: "web" }] } : {};
 }
 
+/** A request that hangs would pin its route handler, and a live reply's session claim, until it died. */
+const REQUEST_TIMEOUT_MS = 120_000;
+
 async function postOpenRouter(model: string, body: Record<string, unknown>, signal?: AbortSignal): Promise<Response> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is not set. Copy .env.example to .env and add your OpenRouter key.");
   }
 
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   let res: Response;
   try {
     res = await fetch(OPENROUTER_URL, {
@@ -65,9 +69,13 @@ async function postOpenRouter(model: string, body: Record<string, unknown>, sign
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ ...modelField(model), ...body }),
-      signal,
+      signal: signal ? AbortSignal.any([timeout, signal]) : timeout,
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.name === "TimeoutError") {
+      throw new Error(`OpenRouter did not respond within ${REQUEST_TIMEOUT_MS / 1000}s. Try again in a moment.`);
+    }
+    if (e instanceof Error && e.name === "AbortError") throw new Error("The OpenRouter request was cancelled.");
     throw new Error("Could not reach OpenRouter. Check your internet connection and try again.");
   }
 
@@ -121,9 +129,14 @@ export function openRouterDelta(payload: string): string {
 export async function* callOpenRouterStream(opts: {
   model: string;
   messages: ChatMessage[];
+  maxTokens?: number;
   signal?: AbortSignal;
 }): AsyncGenerator<string> {
-  const res = await postOpenRouter(opts.model, { messages: opts.messages, stream: true }, opts.signal);
+  const res = await postOpenRouter(
+    opts.model,
+    { messages: opts.messages, stream: true, ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}) },
+    opts.signal
+  );
   if (!res.body) throw new Error("OpenRouter returned an empty response. You can retry this step.");
   for await (const payload of sseData(res.body)) {
     const delta = openRouterDelta(payload);

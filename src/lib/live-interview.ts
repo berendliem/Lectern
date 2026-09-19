@@ -33,6 +33,9 @@ export function liveGradeSchema(mode: "VIVA" | "PROTEGE") {
   });
 }
 
+/** Past this a streamed reply is a runaway, not an answer: the route stops and fails it. */
+export const MAX_LIVE_REPLY_CHARS = 8000;
+
 export const liveTurnSchema = z.object({
   turnId: z.string().trim().min(1),
   answer: z.string().trim().min(1).max(4000),

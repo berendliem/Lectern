@@ -52,15 +52,19 @@ export function createSseReader() {
 async function* decodeChunks(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
+  let finished = false;
   try {
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       yield decoder.decode(value, { stream: true });
     }
+    finished = true;
     const tail = decoder.decode();
     if (tail) yield tail;
   } finally {
+    // Left early (a consumer broke out or threw): cancel, so the connection stops downloading.
+    if (!finished) reader.cancel().catch(() => {});
     reader.releaseLock();
   }
 }

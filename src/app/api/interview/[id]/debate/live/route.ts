@@ -12,7 +12,7 @@ import {
   toDebateTurns,
 } from "@/lib/debate";
 import { claimLiveSession, releaseLiveSession } from "@/lib/live-claim";
-import { readLiveFeedback, type DebateLiveEvent } from "@/lib/live-interview";
+import { MAX_LIVE_REPLY_CHARS, readLiveFeedback, type DebateLiveEvent } from "@/lib/live-interview";
 import { normalizeSpoken } from "@/lib/live-text";
 import { DEBATE_LIVE_SYSTEM_PROMPT, buildDebateUtterancePrompt } from "@/lib/prompts/debate";
 
@@ -72,6 +72,8 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         try {
           for await (const delta of callLLMStream({
             model: reasoningModel(),
+            // One spoken utterance, not an essay.
+            maxTokens: 400,
             messages: [
               { role: "system", content: DEBATE_LIVE_SYSTEM_PROMPT },
               {
@@ -94,6 +96,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
             ],
           })) {
             text += delta;
+            if (text.length > MAX_LIVE_REPLY_CHARS) throw new Error("The debater's reply ran far too long. Try again.");
             send({ type: "text", delta });
           }
         } catch (e) {

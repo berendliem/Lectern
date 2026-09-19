@@ -71,6 +71,8 @@ export function LiveSession({
   const onVadRef = useRef<(event: "start" | "end") => void>(() => {});
   // False once torn down, so a reply still streaming in from a dead session is ignored rather than acted on.
   const aliveRef = useRef(true);
+  // The reply being fetched, so leaving stops the download. The server still saves the turn.
+  const replyAbortRef = useRef<AbortController | null>(null);
 
   const mic = useLiveMic(sensitivityToThreshold(prefs.sensitivity), {
     onsetMs: () => (now() === "listening" ? LISTEN_ONSET_MS : now() === "speaking" ? BARGE_IN_MS : Infinity),
@@ -86,6 +88,7 @@ export function LiveSession({
 
   function shutDown() {
     aliveRef.current = false;
+    replyAbortRef.current?.abort();
     speech.stopAll();
     recognition.end();
     closeMic();
@@ -120,10 +123,13 @@ export function LiveSession({
     if (!turn) return finish();
     lastAnswerRef.current = answer;
 
+    const abort = new AbortController();
+    replyAbortRef.current = abort;
     const res = await fetch(`/api/interview/${sessionId}/live-turn`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ turnId: turn.id, answer: answer.text, transcriptSource: answer.source }),
+      signal: abort.signal,
     }).catch(() => null);
     if (now() !== "thinking") {
       void res?.body?.cancel().catch(() => {}); // ended or switched to typing while this was in flight

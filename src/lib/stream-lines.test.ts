@@ -47,3 +47,21 @@ test("sseData reads a fetch body", async () => {
   for await (const d of sseData(bodyOf(["data: one\n", "data: two\ndata: [DONE]\n"]))) out.push(d);
   assert.deepEqual(out, ["one", "two"]);
 });
+
+test("leaving a stream early cancels its body", async () => {
+  let cancelled = false;
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      controller.enqueue(encoder.encode('{"a":1}\n'));
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  for await (const e of ndjsonEvents(body)) {
+    assert.deepEqual(e, { a: 1 });
+    break;
+  }
+  assert.equal(cancelled, true);
+});
