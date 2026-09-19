@@ -27,6 +27,10 @@ export type OnqDueItem = {
   /** null: onQ does not report the student's progress on this item. */
   completed: boolean | null;
   overdue: boolean;
+  /** Quizzes only: `due` is when one closes, this is when it opens. */
+  opens: Date | null;
+  /** Quizzes only: how long one attempt may run. */
+  timeLimitMinutes: number | null;
 };
 
 // Length caps: these strings are stored and shown as-is, and onq-mcp relays
@@ -61,14 +65,18 @@ const topicTextSchema = topicSchema.extend({
 // `completed` and `overdue` default rather than fail, for the same reason as
 // `downloadable` above. `kind` stays a string: onq-mcp names kinds Lectern has
 // no special treatment for ("item").
+const isoDate = z.iso.datetime({ offset: true }).transform((d) => new Date(d));
+
 const dueItemSchema = z.object({
   course: z.string().max(300),
   kind: z.string().max(32),
   id: z.number().int().nullish().default(null),
   name: title,
-  due: z.iso.datetime({ offset: true }).transform((d) => new Date(d)),
+  due: isoDate,
   completed: z.boolean().nullish().default(null),
   overdue: z.boolean().default(false),
+  opens: isoDate.nullish().default(null),
+  time_limit_minutes: z.number().int().positive().nullish().default(null),
 });
 
 function toTopic(t: z.output<typeof topicSchema>): OnqTopic {
@@ -109,9 +117,8 @@ export function parseOnqTopicText(raw: unknown): OnqTopicText {
 }
 
 export function parseOnqDueItems(raw: unknown): OnqDueItem[] {
-  return parse(z.array(dueItemSchema), raw, "whats_due").map((i) => ({
+  return parse(z.array(dueItemSchema), raw, "whats_due").map(({ time_limit_minutes, ...i }) => ({
     ...i,
-    id: i.id ?? null,
-    completed: i.completed ?? null,
+    timeLimitMinutes: time_limit_minutes,
   }));
 }

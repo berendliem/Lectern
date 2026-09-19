@@ -1,5 +1,6 @@
 import { callMcpToolJson } from "@/lib/mcp/client";
 import { loadMcpServers } from "@/lib/mcp/config";
+import { shortLived } from "@/lib/short-lived";
 import {
   parseOnqCourses,
   parseOnqDueItems,
@@ -41,6 +42,11 @@ export async function readOnqTopic(courseId: number, topicId: number): Promise<O
   );
 }
 
-export async function onqWhatsDue(days: number): Promise<OnqDueItem[]> {
-  return parseOnqDueItems(await callMcpToolJson(ONQ_SERVER, "whats_due", { days }));
-}
+// One whats_due is ~25 authenticated requests to onQ, and the planner asks on
+// every plain GET: reloads, two tabs, or another site framing the page would
+// each pay that in full without this.
+const WHATS_DUE_TTL_MS = 60_000;
+
+export const onqWhatsDue: (days: number) => Promise<OnqDueItem[]> = shortLived(WHATS_DUE_TTL_MS, async (days) =>
+  parseOnqDueItems(await callMcpToolJson(ONQ_SERVER, "whats_due", { days }))
+);

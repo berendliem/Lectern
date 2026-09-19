@@ -110,6 +110,8 @@ test("reads due items, turning the due date into a Date", () => {
       due: "2026-09-23T01:00:00+00:00",
       completed: null,
       overdue: false,
+      opens: "2026-09-23T00:00:00+00:00",
+      time_limit_minutes: 40,
     },
   ]);
   assert.deepEqual(out, [
@@ -121,6 +123,8 @@ test("reads due items, turning the due date into a Date", () => {
       due: new Date("2026-09-23T01:00:00Z"),
       completed: null,
       overdue: false,
+      opens: new Date("2026-09-23T00:00:00Z"),
+      timeLimitMinutes: 40,
     },
   ]);
 });
@@ -131,6 +135,8 @@ test("an older onq-mcp without completed/overdue reads as unknown and not overdu
   ]);
   assert.equal(out[0].completed, null);
   assert.equal(out[0].overdue, false);
+  assert.equal(out[0].opens, null);
+  assert.equal(out[0].timeLimitMinutes, null);
 });
 
 test("a due date that is not a date fails with the update-onq-mcp message", () => {
