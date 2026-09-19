@@ -1,3 +1,5 @@
+import { sseData } from "@/lib/stream-lines";
+
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -48,17 +50,16 @@ export function webPluginField(web?: boolean): { plugins: { id: "web" }[] } | Re
   return web ? { plugins: [{ id: "web" }] } : {};
 }
 
-async function callOpenRouter(opts: {
-  model: string;
-  messages: ApiMessage[];
-  jsonMode?: boolean;
-  web?: boolean;
-}): Promise<string> {
+/** A request that hangs would pin its route handler, and a live reply's session claim, until it died. */
+const REQUEST_TIMEOUT_MS = 120_000;
+
+async function postOpenRouter(model: string, body: Record<string, unknown>, signal?: AbortSignal): Promise<Response> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("OPENROUTER_API_KEY is not set. Copy .env.example to .env and add your OpenRouter key.");
   }
 
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   let res: Response;
   try {
     res = await fetch(OPENROUTER_URL, {
@@ -67,22 +68,36 @@ async function callOpenRouter(opts: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        ...modelField(opts.model),
-        ...webPluginField(opts.web),
-        messages: opts.messages,
-        ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
-      }),
+      body: JSON.stringify({ ...modelField(model), ...body }),
+      signal: signal ? AbortSignal.any([timeout, signal]) : timeout,
     });
-  } catch {
+  } catch (e) {
+    if (e instanceof Error && e.name === "TimeoutError") {
+      throw new Error(`OpenRouter did not respond within ${REQUEST_TIMEOUT_MS / 1000}s. Try again in a moment.`);
+    }
+    if (e instanceof Error && e.name === "AbortError") throw new Error("The OpenRouter request was cancelled.");
     throw new Error("Could not reach OpenRouter. Check your internet connection and try again.");
   }
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    const detail = body?.error?.message ?? `OpenRouter returned ${res.status}`;
-    throw new Error(`OpenRouter request failed (model: ${opts.model}): ${detail}`);
+    const data = await res.json().catch(() => ({}));
+    const detail = data?.error?.message ?? `OpenRouter returned ${res.status}`;
+    throw new Error(`OpenRouter request failed (model: ${model}): ${detail}`);
   }
+  return res;
+}
+
+async function callOpenRouter(opts: {
+  model: string;
+  messages: ApiMessage[];
+  jsonMode?: boolean;
+  web?: boolean;
+}): Promise<string> {
+  const res = await postOpenRouter(opts.model, {
+    ...webPluginField(opts.web),
+    messages: opts.messages,
+    ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
+  });
 
   const data = await res.json();
   const content = data?.choices?.[0]?.message?.content;
@@ -90,6 +105,43 @@ async function callOpenRouter(opts: {
     throw new Error("OpenRouter returned an empty response. You can retry this step.");
   }
   return content;
+}
+
+/**
+ * One SSE payload's text. A provider that fails after the headers were sent
+ * reports it as an `error` payload inside a 200 stream, so that throws here.
+ */
+export function openRouterDelta(payload: string): string {
+  let data: { error?: { message?: unknown }; choices?: { delta?: { content?: unknown } }[] };
+  try {
+    data = JSON.parse(payload);
+  } catch {
+    return "";
+  }
+  if (typeof data?.error?.message === "string") {
+    throw new Error(`OpenRouter stream failed: ${data.error.message}`);
+  }
+  const content = data?.choices?.[0]?.delta?.content;
+  return typeof content === "string" ? content : "";
+}
+
+/** The reply as it is written, for the live interview's voice. */
+export async function* callOpenRouterStream(opts: {
+  model: string;
+  messages: ChatMessage[];
+  maxTokens?: number;
+  signal?: AbortSignal;
+}): AsyncGenerator<string> {
+  const res = await postOpenRouter(
+    opts.model,
+    { messages: opts.messages, stream: true, ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}) },
+    opts.signal
+  );
+  if (!res.body) throw new Error("OpenRouter returned an empty response. You can retry this step.");
+  for await (const payload of sseData(res.body)) {
+    const delta = openRouterDelta(payload);
+    if (delta) yield delta;
+  }
 }
 
 export async function callOpenRouterText(opts: {

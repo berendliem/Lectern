@@ -2,7 +2,8 @@
 // captured. Judging two plausible arguments is a retrieval task disguised as a
 // spectator sport — it surfaces exactly the distinctions notes gloss over.
 
-import { UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+import { LIVE_GRADE_CLAUSE, LIVE_TUTOR_RULES, UNTRUSTED_CONTENT_CLAUSE, sanitizeUntrusted } from "@/lib/prompts/shared";
+import type { Verdict } from "@/lib/live-interview";
 import { DEBATE_AGENTS, type DebateTurn } from "@/lib/debate";
 
 const BRIEFS: Record<string, string> = {
@@ -19,18 +20,39 @@ Respond with ONLY a JSON object (no markdown code fences, no commentary) matchin
 
 ${UNTRUSTED_CONTENT_CLAUSE}`;
 
+export const DEBATE_LIVE_SYSTEM_PROMPT = `You are one voice in a two-sided academic debate held out loud in front of a student. Speak in 2-4 sentences — this is a debate, not a lecture. Address the other side's last point directly rather than restating your own. Never break character, and never address the student unless they have just interjected.
+
+${LIVE_TUTOR_RULES}
+
+Reply with only the words you say.
+
+${UNTRUSTED_CONTENT_CLAUSE} ${LIVE_GRADE_CLAUSE}`;
+
 export type DebateGrounding = { title: string; text: string }[];
 
-function renderSources(grounding: DebateGrounding): string {
+function pendingInstruction(
+  pending: DebateTurn,
+  live: { pendingGrade: { verdict: Verdict; correction: string } | null } | undefined
+): string {
+  const quoted = `THE STUDENT JUST INTERJECTED:\n"""\n${sanitizeUntrusted(pending.answer ?? "")}\n"""`;
+  const grade = live?.pendingGrade;
+  if (!grade) return `${quoted}\nAnswer their point first, in your own voice, then continue your argument.`;
+  if (grade.verdict === "right") {
+    return `${quoted}\nTheir point is right. Concede it briefly in your own voice, then continue your argument.`;
+  }
+  return `${quoted}\nTheir point is wrong or incomplete. What's off: ${sanitizeUntrusted(grade.correction)}\nCorrect them in your own voice with one concrete example from the course material, then continue your argument.`;
+}
+
+export function renderSources(grounding: DebateGrounding): string {
   return grounding
-    .map((g, i) => `[${i + 1}] ${g.title}\n"""\n${g.text.slice(0, 1200)}\n"""`)
+    .map((g, i) => `[${i + 1}] ${sanitizeUntrusted(g.title)}\n"""\n${sanitizeUntrusted(g.text.slice(0, 1200))}\n"""`)
     .join("\n\n");
 }
 
 function renderTranscript(turns: DebateTurn[], texts: Map<number, string>): string {
   return [...turns]
     .sort((a, b) => a.order - b.order)
-    .map((t) => `${t.speaker}: ${texts.get(t.order) ?? ""}`)
+    .map((t) => `${t.speaker}: ${sanitizeUntrusted(texts.get(t.order) ?? "")}`)
     .join("\n\n");
 }
 
@@ -42,6 +64,8 @@ export function buildDebateUtterancePrompt(opts: {
   turns: DebateTurn[];
   texts: Map<number, string>;
   pending: DebateTurn | null;
+  /** Spoken debate: plain text out, and the interjection's grade decides whether to correct or concede. */
+  live?: { pendingGrade: { verdict: Verdict; correction: string } | null };
 }): string {
   const sources = renderSources(opts.grounding);
 
@@ -55,10 +79,8 @@ export function buildDebateUtterancePrompt(opts: {
     opts.turns.length > 0
       ? `THE DEBATE SO FAR:\n"""\n${renderTranscript(opts.turns, opts.texts)}\n"""`
       : "You are opening the debate.",
-    opts.pending
-      ? `THE STUDENT JUST INTERJECTED:\n"""\n${opts.pending.answer}\n"""\nAnswer their point first, in your own voice, then continue your argument.`
-      : "",
-    "Give your next utterance. Return the required JSON.",
+    opts.pending ? pendingInstruction(opts.pending, opts.live) : "",
+    opts.live ? "Give your next utterance as the words you say, with no JSON." : "Give your next utterance. Return the required JSON.",
   ]
     .filter(Boolean)
     .join("\n\n");

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { modelField, webPluginField } from "./openrouter.ts";
+import { modelField, openRouterDelta, webPluginField } from "./openrouter.ts";
 
 test("the free default is sent as a chat-model chain, not the router", () => {
   const field = modelField("openrouter/free");
@@ -21,4 +21,17 @@ test("web search is a plugin field only when the toggle is on", () => {
   assert.deepEqual(webPluginField(true), { plugins: [{ id: "web" }] });
   assert.deepEqual(webPluginField(false), {});
   assert.deepEqual(webPluginField(undefined), {});
+});
+
+test("openRouterDelta reads a content delta", () => {
+  assert.equal(openRouterDelta('{"choices":[{"delta":{"content":"Hi"}}]}'), "Hi");
+});
+
+test("openRouterDelta ignores role-only chunks and garbage", () => {
+  assert.equal(openRouterDelta('{"choices":[{"delta":{"role":"assistant"}}]}'), "");
+  assert.equal(openRouterDelta("not json"), "");
+});
+
+test("openRouterDelta throws on a mid-stream error", () => {
+  assert.throws(() => openRouterDelta('{"error":{"message":"rate limited"}}'), /rate limited/);
 });

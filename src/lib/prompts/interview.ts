@@ -24,7 +24,7 @@ Respond with ONLY a JSON object (no markdown code fences, no commentary) matchin
 
 ${UNTRUSTED_CONTENT_CLAUSE}`;
 
-function describeContext(ctx: InterviewContext): string {
+export function describeContext(ctx: InterviewContext): string {
   if (ctx.source === "LECTURE") {
     const parts = [`Lecture title: "${ctx.title}"`];
     if (ctx.notesMarkdown) {

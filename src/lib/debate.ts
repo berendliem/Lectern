@@ -57,3 +57,15 @@ export function pendingInterjection(turns: DebateTurn[]): DebateTurn | null {
   const after = sorted.filter((t) => t.speaker === STUDENT_SPEAKER && t.order > lastAgentOrder);
   return after.length > 0 ? after[after.length - 1] : null;
 }
+
+/** A turn as Prisma returns it, narrowed to what the debate algebra and prompts read. */
+export type StoredDebateTurn = { order: number; speaker: string | null; question: string; answer: string | null };
+
+export function toDebateTurns(turns: StoredDebateTurn[]): DebateTurn[] {
+  return turns.map((t) => ({ order: t.order, speaker: t.speaker, answer: t.answer }));
+}
+
+/** What each turn said: an agent's utterance lives in `question`, the student's point in `answer`. */
+export function debateTexts(turns: StoredDebateTurn[]): Map<number, string> {
+  return new Map(turns.map((t) => [t.order, t.speaker === STUDENT_SPEAKER ? (t.answer ?? "") : t.question]));
+}

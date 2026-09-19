@@ -65,7 +65,7 @@ function highlightCtor(): (new (...ranges: Range[]) => object) | undefined {
 /** Neither of the two facts below changes after load, so there is nothing to subscribe to. */
 const noSubscription = () => () => {};
 
-function readPrefs(): { voiceId: string; rate: number; volume: number } {
+export function readPrefs(): { voiceId: string; rate: number; volume: number } {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
     if (raw) {

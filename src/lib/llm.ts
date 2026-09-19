@@ -2,9 +2,10 @@ import {
   callOpenRouterText,
   callOpenRouterJSON,
   callOpenRouterVision,
+  callOpenRouterStream,
   type ChatMessage,
 } from "@/lib/openrouter";
-import { callOllama, ollamaModel, ollamaReasoningModel } from "@/lib/ollama";
+import { callOllama, callOllamaStream, ollamaModel, ollamaReasoningModel } from "@/lib/ollama";
 
 export type { ChatMessage };
 
@@ -61,6 +62,30 @@ export async function callLLMText(opts: {
     });
   }
   return callOpenRouterText({ model: opts.model, messages: opts.messages, web: opts.web });
+}
+
+/** callLLMText as a stream of text deltas, dispatched the same way. `maxTokens` caps the reply's length. */
+export function callLLMStream(opts: {
+  model: string;
+  messages: ChatMessage[];
+  stage?: LLMStage;
+  maxTokens?: number;
+  signal?: AbortSignal;
+}): AsyncGenerator<string> {
+  if (resolveProvider(opts.stage) === "ollama") {
+    return callOllamaStream({
+      messages: opts.messages,
+      model: opts.stage === "reasoning" ? ollamaReasoningModel() : undefined,
+      maxTokens: opts.maxTokens,
+      signal: opts.signal,
+    });
+  }
+  return callOpenRouterStream({
+    model: opts.model,
+    messages: opts.messages,
+    maxTokens: opts.maxTokens,
+    signal: opts.signal,
+  });
 }
 
 export async function callLLMJSON(opts: {

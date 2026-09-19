@@ -2,30 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { callLLMJSON } from "@/lib/llm";
 import {
   MAX_INTERVIEW_QUESTIONS,
   submitAnswerSchema,
-  interviewFeedbackResponseSchema,
-  interviewQuestionResponseSchema,
-  rubricFor,
   recallRawFor,
   type InterviewContext,
   type QAPair,
 } from "@/lib/interview";
-import {
-  INTERVIEW_FEEDBACK_SYSTEM_PROMPT,
-  buildFeedbackUserPrompt,
-  INTERVIEW_QUESTION_SYSTEM_PROMPT,
-  buildNextQuestionUserPrompt,
-} from "@/lib/prompts/interview";
-import { FEYNMAN_SYSTEM_PROMPT, buildFeynmanUserPrompt } from "@/lib/prompts/feynman";
-import { PROTEGE_QUESTION_SYSTEM_PROMPT, buildProtegeNextQuestionUserPrompt } from "@/lib/prompts/protege";
-import { feynmanFeedbackSchema } from "@/lib/validation";
+import { gradeAnswer, generateNextQuestion } from "@/lib/interview-grade";
+import { questionsAnswered } from "@/lib/live-interview";
 import { writeRecallSafely } from "@/lib/recall-log";
-
-const MODEL =
-  process.env.OPENROUTER_MODEL_INTERVIEW ?? process.env.OPENROUTER_MODEL_QUIZ ?? "openrouter/free";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -46,7 +32,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const turn = session.turns.find((t) => t.id === turnId);
   if (!turn) return jsonError("Question not found in this session", 404);
-  if (turn.answer !== null) return jsonError("This question has already been answered", 422);
+  // A spoken answer whose reply failed has an answer but no feedback; typing it again finishes the turn.
+  if (turn.feedback !== null) return jsonError("This question has already been answered", 422);
 
   const context: InterviewContext = {
     title: session.title,
@@ -56,40 +43,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     topicText: session.topicText ?? session.topic?.title ?? null,
   };
 
-  const rubric = rubricFor(session.mode);
-
   let feedback: unknown;
   let score: number;
   let firstImprovement: string | null;
   try {
-    if (rubric === "FEYNMAN") {
-      const raw = await callLLMJSON({
-        model: MODEL,
-        systemPrompt: FEYNMAN_SYSTEM_PROMPT,
-        userPrompt: buildFeynmanUserPrompt({
-          concept: turn.question,
-          reference: context.notesMarkdown ?? context.transcriptText ?? context.topicText ?? undefined,
-          explanation: answer,
-          priorExplanations: session.turns
-            .filter((t) => t.answer !== null && t.id !== turn.id)
-            .map((t) => t.answer as string),
-        }),
-      });
-      const parsed = await feynmanFeedbackSchema.parseAsync(raw);
-      feedback = parsed;
-      score = parsed.score;
-      firstImprovement = parsed.gaps[0] ?? null;
-    } else {
-      const raw = await callLLMJSON({
-        model: MODEL,
-        systemPrompt: INTERVIEW_FEEDBACK_SYSTEM_PROMPT,
-        userPrompt: buildFeedbackUserPrompt(context, turn.question, answer),
-      });
-      const parsed = await interviewFeedbackResponseSchema.parseAsync(raw);
-      feedback = parsed;
-      score = parsed.score;
-      firstImprovement = parsed.improvements[0] ?? null;
-    }
+    const graded = await gradeAnswer({
+      mode: session.mode,
+      context,
+      question: turn.question,
+      answer,
+      priorAnswers: session.turns
+        .filter((t) => t.answer !== null && t.id !== turn.id)
+        .map((t) => t.answer as string),
+    });
+    feedback = graded.feedback;
+    score = graded.score;
+    firstImprovement = graded.firstImprovement;
   } catch (e) {
     const message =
       e instanceof ZodError
@@ -115,7 +84,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     detail: { question: turn.question, score, mode: session.mode },
   });
 
-  const answeredCount = session.turns.filter((t) => t.answer !== null).length + 1;
+  // Live retries are second goes at one question, so they don't use up the session.
+  const answeredCount = questionsAnswered(session.turns.filter((t) => t.id !== turn.id)) + (turn.retryOf === null ? 1 : 0);
 
   if (answeredCount >= MAX_INTERVIEW_QUESTIONS) {
     await db.interviewSession.update({ where: { id: session.id }, data: { status: "COMPLETED" } });
@@ -124,24 +94,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const history: QAPair[] = [
     ...session.turns
-      .filter((t) => t.answer !== null)
+      .filter((t) => t.answer !== null && t.id !== turn.id)
       .map((t) => ({ question: t.question, answer: t.answer as string })),
     { question: turn.question, answer },
   ];
 
   try {
-    const usingProtege = session.mode === "PROTEGE";
-    const raw = await callLLMJSON({
-      model: MODEL,
-      systemPrompt: usingProtege ? PROTEGE_QUESTION_SYSTEM_PROMPT : INTERVIEW_QUESTION_SYSTEM_PROMPT,
-      userPrompt: usingProtege
-        ? buildProtegeNextQuestionUserPrompt(context, history)
-        : buildNextQuestionUserPrompt(context, history),
-    });
-    const parsed = await interviewQuestionResponseSchema.parseAsync(raw);
+    const question = await generateNextQuestion({ mode: session.mode, context, history });
     const nextOrder = session.turns.reduce((max, t) => Math.max(max, t.order), turn.order) + 1;
     const nextTurn = await db.interviewTurn.create({
-      data: { sessionId: session.id, order: nextOrder, question: parsed.question },
+      data: { sessionId: session.id, order: nextOrder, question },
     });
     return NextResponse.json({ feedback, nextTurn });
   } catch {

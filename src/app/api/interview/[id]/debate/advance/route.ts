@@ -3,16 +3,16 @@ import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
-import { searchCourse } from "@/lib/embeddings";
+import { courseGrounding } from "@/lib/course-grounding";
 import {
   DEBATE_AGENTS,
   MAX_DEBATE_EXCHANGES,
-  STUDENT_SPEAKER,
   canAdvance,
+  debateTexts,
   nextOrder,
   nextSpeaker,
   pendingInterjection,
-  type DebateTurn,
+  toDebateTurns,
 } from "@/lib/debate";
 import { DEBATE_SYSTEM_PROMPT, buildDebateUtterancePrompt } from "@/lib/prompts/debate";
 import { debateUtteranceResponseSchema } from "@/lib/validation";
@@ -39,31 +39,21 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (session.mode !== "DEBATE") return jsonError("This session is not a debate", 422);
   if (!session.topic) return jsonError("This debate has no course topic behind it", 422);
 
-  const turns: DebateTurn[] = session.turns.map((t) => ({
-    order: t.order,
-    speaker: t.speaker,
-    answer: t.answer,
-  }));
+  const turns = toDebateTurns(session.turns);
 
   if (!canAdvance(turns)) {
     await db.interviewSession.update({ where: { id }, data: { status: "COMPLETED" } });
     return NextResponse.json({ turns: [], done: true, maxExchanges: MAX_DEBATE_EXCHANGES });
   }
 
-  let grounding: { title: string; text: string }[] = [];
-  try {
-    const hits = await searchCourse(session.topic.folderId, session.topic.title, GROUNDING_K);
-    grounding = hits.map((hit) => ({ title: hit.title, text: hit.text }));
-  } catch (e) {
-    console.error(
-      `[debate/advance] semantic retrieval failed for debate session ${id}, continuing ungrounded:`,
-      e
-    );
-  }
-
-  const texts = new Map<number, string>(
-    session.turns.map((t) => [t.order, t.speaker === STUDENT_SPEAKER ? (t.answer ?? "") : t.question])
+  const grounding = await courseGrounding(
+    session.topic.folderId,
+    session.topic.title,
+    GROUNDING_K,
+    "debate/advance"
   );
+
+  const texts = debateTexts(session.turns);
 
   const created = [];
   const working = [...turns];

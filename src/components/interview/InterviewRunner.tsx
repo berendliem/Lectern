@@ -89,10 +89,11 @@ function VivaRunner({
   totalQuestions: number;
 }) {
   const [history, setHistory] = useState<AnsweredTurn[]>(() => parseAnswered(initialTurns));
+  // Feedback, not the answer, marks a turn done: a spoken answer whose reply failed is saved without one.
   const [current, setCurrent] = useState<Turn | null>(
-    () => initialTurns.find((t) => t.answer === null) ?? null
+    () => initialTurns.find((t) => t.feedback === null) ?? null
   );
-  const [completed, setCompleted] = useState(status === "COMPLETED" && !initialTurns.some((t) => t.answer === null));
+  const [completed, setCompleted] = useState(status === "COMPLETED" && !initialTurns.some((t) => t.feedback === null));
 
   const [answer, setAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);

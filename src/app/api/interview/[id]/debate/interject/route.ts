@@ -3,8 +3,8 @@ import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
-import { searchCourse } from "@/lib/embeddings";
-import { STUDENT_SPEAKER, nextOrder, type DebateTurn } from "@/lib/debate";
+import { courseGrounding } from "@/lib/course-grounding";
+import { STUDENT_SPEAKER, debateTexts, nextOrder, toDebateTurns } from "@/lib/debate";
 import {
   INTERJECTION_GRADE_SYSTEM_PROMPT,
   buildInterjectionGradePrompt,
@@ -37,11 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (session.mode !== "DEBATE") return jsonError("This session is not a debate", 422);
   if (!session.topic) return jsonError("This debate has no course topic behind it", 422);
 
-  const turns: DebateTurn[] = session.turns.map((t) => ({
-    order: t.order,
-    speaker: t.speaker,
-    answer: t.answer,
-  }));
+  const turns = toDebateTurns(session.turns);
 
   // The turn lands before the grade: a point the student typed is theirs whether
   // or not the grader is reachable.
@@ -55,20 +51,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     },
   });
 
-  let grounding: { title: string; text: string }[] = [];
-  try {
-    const hits = await searchCourse(session.topic.folderId, session.topic.title, GROUNDING_K);
-    grounding = hits.map((hit) => ({ title: hit.title, text: hit.text }));
-  } catch (e) {
-    console.error(
-      `[debate/interject] semantic retrieval failed for debate session ${id}, continuing ungrounded:`,
-      e
-    );
-  }
-
-  const texts = new Map<number, string>(
-    session.turns.map((t) => [t.order, t.speaker === STUDENT_SPEAKER ? (t.answer ?? "") : t.question])
+  const grounding = await courseGrounding(
+    session.topic.folderId,
+    session.topic.title,
+    GROUNDING_K,
+    "debate/interject"
   );
+
+  const texts = debateTexts(session.turns);
 
   let feedback;
   try {
