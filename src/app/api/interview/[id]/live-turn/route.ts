@@ -84,7 +84,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       };
       const fail = (message: string) => {
         send({ type: "error", message });
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          // The tab went away, or the stream is already closed. Nothing left to do.
+        }
       };
 
       try {
@@ -174,19 +178,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         });
 
         let nextTurn: LiveNextTurn | null = null;
-        if (!finished && nextQuestion) {
-          const order = session.turns.reduce((max, t) => Math.max(max, t.order), turn.order) + 1;
-          const created = await db.interviewTurn.create({
-            data: {
-              sessionId: session.id,
-              order,
-              question: nextQuestion,
-              retryOf: kind === "retry" ? turn.id : null,
-            },
-          });
-          nextTurn = { id: created.id, order: created.order, question: created.question, retryOf: created.retryOf };
-        } else {
-          await db.interviewSession.update({ where: { id: session.id }, data: { status: "COMPLETED" } });
+        try {
+          if (!finished && nextQuestion) {
+            const order = session.turns.reduce((max, t) => Math.max(max, t.order), turn.order) + 1;
+            const created = await db.interviewTurn.create({
+              data: {
+                sessionId: session.id,
+                order,
+                question: nextQuestion,
+                retryOf: kind === "retry" ? turn.id : null,
+              },
+            });
+            nextTurn = { id: created.id, order: created.order, question: created.question, retryOf: created.retryOf };
+          } else {
+            await db.interviewSession.update({ where: { id: session.id }, data: { status: "COMPLETED" } });
+          }
+        } catch (e) {
+          // The reply and its grade are already saved (feedback is non-null), so a
+          // re-POST would just 422. End the session here rather than leave it
+          // stuck neither completed nor holding a next turn.
+          console.error(`[live-turn] session ${id} failed to save the next turn:`, e);
+          try {
+            await db.interviewSession.update({ where: { id: session.id }, data: { status: "COMPLETED" } });
+          } catch (e2) {
+            console.error(`[live-turn] session ${id} failed to mark itself completed after a next-turn failure:`, e2);
+          }
+          nextTurn = null;
         }
 
         send({ type: "done", verdict: feedback.verdict, completed: nextTurn === null, nextTurn });
