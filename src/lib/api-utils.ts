@@ -28,7 +28,9 @@ export async function withValidation<T>(
  * both — this is what left a finished lecture reading "terminated" for days.
  */
 export async function markStageFailed(id: string, previous: PageStatus, message: string) {
-  await db.page.update({
+  // updateMany, not update: a page deleted while its stage ran has nothing left
+  // to mark, and update's P2025 would turn the stage's error into a 500.
+  await db.page.updateMany({
     where: { id },
     data: previous === "READY" ? { status: "READY" } : { status: "ERROR", errorMessage: message },
   });
