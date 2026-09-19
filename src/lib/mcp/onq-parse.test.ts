@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { parseOnqCourses, parseOnqModules, parseOnqTopicText } from "./onq-parse.ts";
 
 test("reads courses and drops fields Lectern does not use", () => {
-  const out = parseOnqCourses([{ course_id: 1180369, name: "CISC 102", code: "X", active: true }]);
-  assert.deepEqual(out, [{ courseId: 1180369, name: "CISC 102" }]);
+  const out = parseOnqCourses([{ course_id: 100001, name: "CISC 102", code: "X", active: true }]);
+  assert.deepEqual(out, [{ courseId: 100001, name: "CISC 102" }]);
 });
 
 test("reads a module tree", () => {

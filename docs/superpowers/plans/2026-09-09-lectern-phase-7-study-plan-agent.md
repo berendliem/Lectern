@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - **No new npm dependencies.** `@modelcontextprotocol/sdk@^1.30.0` and `zod@^4.4.3` are already in `dependencies`; the MCP server half ships in that same package.
-- **`main` is protected** (`AGENTS.md`). All work lands on `feat/study-plan-agent` in the worktree `/Users/Work/Documents/Dev/Lectern-study-plan-agent`. Parallel sessions hold the other worktrees — never `git checkout` in `/Users/Work/Documents/Dev/Lectern`.
+- **`main` is protected** (`AGENTS.md`). All work lands on `feat/study-plan-agent` in the worktree `../Lectern-study-plan-agent`. Parallel sessions hold the other worktrees — never `git checkout` in `../Lectern`.
 - **This worktree's dev server runs on port 3100**, not 3000. Another session is using 3000. Every command below assumes `PORT=3100`, and the `LECTERN_BASE_URL` defaults follow it.
 - **No tool may write spaced-repetition state.** Nothing in this plan touches `ReviewLog`, `Flashcard.nextReviewAt`, `repetitions`, `interval`, or `easeFactor`. A wrong review write raises no error and shows no symptom.
 - **Commit convention:** `<type>: <imperative lowercase phrase>`, one logical change per commit. No `Co-Authored-By` trailer on a commit whose content you did not write.
@@ -61,7 +61,7 @@ The worktree is a fresh checkout: no `node_modules`, no `.env` (gitignored), no 
 - [ ] **Step 1: Install dependencies and bring up a database in this worktree**
 
 ```bash
-cd /Users/Work/Documents/Dev/Lectern-study-plan-agent
+cd ../Lectern-study-plan-agent
 npm install
 cp ../Lectern/.env .env
 cp ../Lectern/prisma/dev.db prisma/dev.db   # a real course library to plan against
