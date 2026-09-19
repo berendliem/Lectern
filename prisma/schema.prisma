@@ -320,6 +320,10 @@ model InterviewSession {
   /// events land with no target and the scheduler cannot see them.
   courseTopicId String?
 
+  /// Set by "Talk it through": the session page renders the spoken loop and,
+  /// once finished, the transcript view.
+  live Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -343,6 +347,14 @@ model InterviewTurn {
   /// Null = the examiner asking. "You" = the student. Anything else is an agent
   /// name in a debate.
   speaker         String?
+  /// Live mode: the tutor's whole spoken reply to this turn's answer, which
+  /// ends in the next question. Stored normalized (see normalizeSpoken).
+  spoken          String?
+  /// Char offset into `spoken` (or into `question` on a debate agent's turn)
+  /// where the student cut in.
+  interruptedAt   Int?
+  /// The turn whose missed question this variant retries.
+  retryOf         String?
   createdAt       DateTime @default(now())
 
   session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
