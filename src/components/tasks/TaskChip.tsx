@@ -74,7 +74,7 @@ export function TaskChip() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-1.5 w-80 rounded-xl border border-line bg-surface p-1.5 shadow-lg">
+        <div className="absolute right-0 z-50 mt-1.5 max-h-[70vh] w-80 overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-lg">
           <ul className="flex flex-col">
             {tasks.map((task) => (
               <li key={task.key} className="flex items-start gap-2 rounded-lg px-2 py-1.5 hover:bg-surface-2">
