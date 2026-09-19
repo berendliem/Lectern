@@ -5,10 +5,12 @@ import {
   MAX_DEBATE_EXCHANGES,
   STUDENT_SPEAKER,
   canAdvance,
+  debateTexts,
   exchangeCount,
   nextOrder,
   nextSpeaker,
   pendingInterjection,
+  toDebateTurns,
   type DebateTurn,
 } from "./debate.ts";
 
@@ -72,4 +74,20 @@ test("the agents owe an answer to the newest interjection only", () => {
 
   const unanswered = [...answered, studentTurn(3, "Second objection")];
   assert.equal(pendingInterjection(unanswered)?.answer, "Second objection");
+});
+
+test("toDebateTurns keeps order, speaker and answer", () => {
+  assert.deepEqual(
+    toDebateTurns([{ order: 3, speaker: "Skeptic", question: "No.", answer: null }]),
+    [{ order: 3, speaker: "Skeptic", answer: null }]
+  );
+});
+
+test("debateTexts reads the student's answer and an agent's utterance", () => {
+  const texts = debateTexts([
+    { order: 0, speaker: "Proponent", question: "It holds.", answer: null },
+    { order: 1, speaker: STUDENT_SPEAKER, question: "Interjection", answer: "It doesn't." },
+  ]);
+  assert.equal(texts.get(0), "It holds.");
+  assert.equal(texts.get(1), "It doesn't.");
 });
