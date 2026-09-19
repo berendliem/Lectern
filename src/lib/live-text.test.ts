@@ -128,3 +128,9 @@ test("questionFromSpoken takes the last question", () => {
   assert.equal(questionFromSpoken("Close. Why is that? Try this: what is 2 plus 2?"), "Try this: what is 2 plus 2?");
   assert.equal(questionFromSpoken("Well done. That is all."), null);
 });
+
+test("wordSchedule pauses after a sentence that ends inside curly quotes", () => {
+  // aaaa.” weighs 6 + 3 against bb's 2, so bb starts at 9/11 of the duration.
+  assert.ok(Math.abs(wordSchedule("aaaa.” bb", 11)[1].start - 9) < 1e-9);
+  assert.ok(Math.abs(wordSchedule("aaaa,’ bb", 10)[1].start - 8) < 1e-9);
+});

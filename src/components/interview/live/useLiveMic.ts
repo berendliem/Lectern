@@ -5,10 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { pickSupportedMimeType } from "@/components/recording/useMediaRecorder";
 import { SILENCE_MS, createVad } from "@/lib/live-interview";
 
+export type VadEvent = "rise" | "drop" | "start" | "end";
+
 type Handlers = {
   /** Sustained speech needed before "start"; Infinity ignores the mic (while transcribing or thinking). */
   onsetMs: () => number;
-  onVad: (event: "start" | "end") => void;
+  onVad: (event: VadEvent) => void;
 };
 
 /**
@@ -114,6 +116,9 @@ export function useLiveMic(threshold: number, handlers: Handlers) {
     recorderRef.current = recorder;
   }, []);
 
+  /** True while a recorder is armed, e.g. a provisional one started at a rise. */
+  const recording = useCallback(() => recorderRef.current?.state === "recording", []);
+
   /** Stops the armed recorder and hands back what it heard. */
   const take = useCallback(
     () =>
@@ -133,5 +138,5 @@ export function useLiveMic(threshold: number, handlers: Handlers) {
 
   useEffect(() => stop, [stop]);
 
-  return { start, stop, arm, take, error };
+  return { start, stop, arm, take, recording, error };
 }

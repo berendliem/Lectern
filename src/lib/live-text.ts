@@ -108,8 +108,8 @@ export type WordSpan = { start: number; end: number };
 const words = (text: string) => text.split(/\s+/).filter(Boolean);
 
 function weight(word: string): number {
-  if (/[.!?]["')"']*$/.test(word)) return word.length + 3;
-  if (/[,;:]["')"']*$/.test(word)) return word.length + 2;
+  if (/[.!?]["')\u201D\u2019]*$/.test(word)) return word.length + 3;
+  if (/[,;:]["')\u201D\u2019]*$/.test(word)) return word.length + 2;
   return word.length;
 }
 

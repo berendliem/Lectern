@@ -93,7 +93,11 @@ export function readLiveFeedback(json: string | null): LiveFeedback | null {
   const o = value as Record<string, unknown>;
   if (typeof o.score !== "number") return null;
   if (typeof o.verdict === "string" && (VERDICTS as readonly string[]).includes(o.verdict) && typeof o.correction === "string") {
-    return o as unknown as LiveFeedback;
+    return {
+      ...(o as unknown as LiveFeedback),
+      improvement: typeof o.improvement === "string" ? o.improvement : "",
+      example: typeof o.example === "string" ? o.example : "",
+    };
   }
   if (typeof o.modelAnswer === "string" && Array.isArray(o.improvements)) {
     return toLiveFeedback(o as unknown as InterviewFeedback);
@@ -132,7 +136,9 @@ export function sensitivityToThreshold(sensitivity: number): number {
 /**
  * Energy-based voice detection. The onset is passed per step because the same
  * mic needs a quick trigger while listening and a slower one while the tutor
- * talks, where a cough should not count as cutting in.
+ * talks, where a cough should not count as cutting in. "rise" and "drop" mark
+ * a possible start and its dying out, so a barge-in can record from the rise
+ * rather than lose the onset.
  */
 export function createVad(config: { threshold: number; silenceMs: number }) {
   let threshold = config.threshold;
@@ -140,19 +146,23 @@ export function createVad(config: { threshold: number; silenceMs: number }) {
   let aboveSince: number | null = null;
   let belowSince: number | null = null;
   return {
-    step(level: number, now: number, onsetMs: number): "start" | "end" | null {
+    step(level: number, now: number, onsetMs: number): "rise" | "drop" | "start" | "end" | null {
       if (level >= threshold) {
         belowSince = null;
         if (speaking) return null;
+        const rising = aboveSince === null;
         aboveSince ??= now;
         if (now - aboveSince >= onsetMs) {
           speaking = true;
           aboveSince = null;
           return "start";
         }
-        return null;
+        return rising ? "rise" : null;
       }
-      aboveSince = null;
+      if (aboveSince !== null) {
+        aboveSince = null;
+        return "drop";
+      }
       if (!speaking) return null;
       belowSince ??= now;
       if (now - belowSince >= config.silenceMs) {

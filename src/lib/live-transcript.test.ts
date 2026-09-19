@@ -83,3 +83,16 @@ test("markdown export", () => {
 test("markdown export with nothing to fix", () => {
   assert.match(transcriptMarkdown("T", [], []), /Nothing to fix/);
 });
+
+test("markdown export escapes what the student and the tutor said", () => {
+  const md = transcriptMarkdown(
+    "T",
+    [{ speaker: "You", text: "# see [link](http://x) *now* <b>_a_</b> \\ `c` !", interrupted: false }],
+    [{ question: "# Q", answer: "a*b", correction: "[c]", example: "e_f", retry: null }]
+  );
+  assert.ok(md.includes("**You:** \\# see \\[link\\]\\(http://x\\) \\*now\\* \\<b\\>\\_a\\_\\</b\\> \\\\ \\`c\\` \\!"));
+  assert.ok(md.includes("### 1. \\# Q"));
+  assert.ok(md.includes("- **You said:** a\\*b"));
+  assert.ok(md.includes("- **Correction:** \\[c\\]"));
+  assert.ok(md.includes("- **Example:** e\\_f"));
+});

@@ -24,7 +24,7 @@ import { CaptionStrip } from "./CaptionStrip";
 import { LiveControls, setLive, useLivePrefs } from "./LiveControls";
 import { transcribe, useAct } from "./transcribe";
 import { useBrowserRecognition } from "./useBrowserRecognition";
-import { useLiveMic } from "./useLiveMic";
+import { useLiveMic, type VadEvent } from "./useLiveMic";
 import { useSpeechQueue, type Voice } from "./useSpeechQueue";
 
 const NOT_HEARD = "Sorry, I didn't catch that. Could you say it again?";
@@ -68,7 +68,7 @@ export function LiveSession({
   // A reply still streaming after a barge-in; the next answer waits for it to be saved.
   const replyRef = useRef<Promise<unknown> | null>(null);
   const lastAnswerRef = useRef<Answer | null>(null);
-  const onVadRef = useRef<(event: "start" | "end") => void>(() => {});
+  const onVadRef = useRef<(event: VadEvent) => void>(() => {});
   // False once torn down, so a reply still streaming in from a dead session is ignored rather than acted on.
   const aliveRef = useRef(true);
   // The reply being fetched, so leaving stops the download. The server still saves the turn.
@@ -78,12 +78,31 @@ export function LiveSession({
     onsetMs: () => (now() === "listening" ? LISTEN_ONSET_MS : now() === "speaking" ? BARGE_IN_MS : Infinity),
     onVad: (event) => onVadRef.current(event),
   });
-  const { arm, take, start: openMic, stop: closeMic, error: micError } = mic;
+  const { arm, take, recording, start: openMic, stop: closeMic, error: micError } = mic;
 
   function listen() {
     if (!aliveRef.current) return; // torn down: nothing should open the mic or a recognizer
+    // A barge-in keeps the recorder and recognizer its rise started, so the first words aren't lost.
+    if (recording()) return;
     arm();
     recognition.begin();
+  }
+
+  /**
+   * While the voice talks, a rise may be the student cutting in: start recording
+   * now, and throw it away if it dies before counting as a barge-in. While
+   * listening the recorder is already armed, so neither applies.
+   */
+  function onRiseOrDrop(event: "rise" | "drop") {
+    if (now() === "listening") return;
+    if (event === "rise") {
+      if (now() !== "speaking" || !aliveRef.current) return;
+      arm();
+      recognition.begin();
+    } else if (recording()) {
+      recognition.end();
+      void take();
+    }
   }
 
   function shutDown() {
@@ -206,7 +225,7 @@ export function LiveSession({
   }
 
   async function onSpeechEnd() {
-    if (now() !== "listening") return;
+    if (!aliveRef.current || now() !== "listening") return;
     act({ type: "speechEnd" });
     const preview = recognition.text;
     if (preview) setStudent({ text: preview, interim: true });
@@ -220,6 +239,7 @@ export function LiveSession({
     if (!answer) {
       act({ type: "empty" });
       replyTurnRef.current = null; // "I didn't catch that" isn't a reply to whatever a barge-in interrupted
+      if (!aliveRef.current) return; // torn down while transcribing
       await speech.speakAll(tutor, voice, NOT_HEARD);
       if (now() !== "speaking") return;
       act({ type: "replyDone", completed: false });
@@ -251,7 +271,8 @@ export function LiveSession({
   useEffect(() => {
     onVadRef.current = (event) => {
       if (event === "start") onSpeechStart();
-      else void onSpeechEnd();
+      else if (event === "end") void onSpeechEnd();
+      else onRiseOrDrop(event);
     };
   });
 

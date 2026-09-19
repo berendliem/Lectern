@@ -92,22 +92,27 @@ export function fixCards(turns: TranscriptTurn[]): FixCard[] {
     });
 }
 
+/** Spoken text is plain text: in the export it must not turn into links, emphasis, HTML or headings. */
+function escapeMarkdown(text: string): string {
+  return text.replace(/[\\[\]()!<>*_`]/g, "\\$&").replace(/^#/, "\\#");
+}
+
 export function transcriptMarkdown(title: string, lines: TranscriptLine[], cards: FixCard[]): string {
   const conversation = lines.map((l) => {
     const cut = l.interrupted ? " — (you cut in)" : "";
     const source = l.source === "browser" ? " _(browser transcript)_" : "";
-    return `**${l.speaker}:** ${l.text}${cut}${source}`;
+    return `**${escapeMarkdown(l.speaker)}:** ${escapeMarkdown(l.text)}${cut}${source}`;
   });
   const fixes =
     cards.length === 0
       ? ["Nothing to fix — every answer landed."]
       : cards.map((c, i) =>
           [
-            `### ${i + 1}. ${c.question}`,
-            `- **You said:** ${c.answer}`,
-            c.correction ? `- **Correction:** ${c.correction}` : "",
-            c.example ? `- **Example:** ${c.example}` : "",
-            c.retry ? `- **Retry:** ${c.retry.answer} (${c.retry.verdict})` : "",
+            `### ${i + 1}. ${escapeMarkdown(c.question)}`,
+            `- **You said:** ${escapeMarkdown(c.answer)}`,
+            c.correction ? `- **Correction:** ${escapeMarkdown(c.correction)}` : "",
+            c.example ? `- **Example:** ${escapeMarkdown(c.example)}` : "",
+            c.retry ? `- **Retry:** ${escapeMarkdown(c.retry.answer)} (${c.retry.verdict})` : "",
           ]
             .filter(Boolean)
             .join("\n")

@@ -90,7 +90,7 @@ test("sensitivityToThreshold is clamped and inverse", () => {
 
 test("vad: speech starts only after the onset holds", () => {
   const vad = createVad({ threshold: 0.1, silenceMs: 1000 });
-  assert.equal(vad.step(0.5, 0, 300), null);
+  assert.equal(vad.step(0.5, 0, 300), "rise");
   assert.equal(vad.step(0.5, 200, 300), null);
   assert.equal(vad.step(0.5, 300, 300), "start");
   assert.equal(vad.step(0.5, 400, 300), null);
@@ -100,7 +100,8 @@ test("vad: a blip shorter than the onset is ignored", () => {
   const vad = createVad({ threshold: 0.1, silenceMs: 1000 });
   vad.step(0.5, 0, 300);
   vad.step(0.0, 100, 300);
-  assert.equal(vad.step(0.5, 350, 300), null);
+  // A fresh rise, not a start: the blip's time doesn't count toward the onset.
+  assert.equal(vad.step(0.5, 350, 300), "rise");
 });
 
 test("vad: silence ends speech, a short pause does not", () => {
@@ -174,4 +175,24 @@ test("isEndCommand", () => {
   assert.equal(isEndCommand("please stop the interview"), true);
   assert.equal(isEndCommand("finish debate"), true);
   assert.equal(isEndCommand("The session ends when entropy peaks"), false);
+});
+
+test("vad: a rise is reported at once, and a drop when it dies before the onset", () => {
+  const vad = createVad({ threshold: 0.1, silenceMs: 1000 });
+  assert.equal(vad.step(0.5, 0, 300), "rise");
+  assert.equal(vad.step(0.5, 100, 300), null);
+  assert.equal(vad.step(0.0, 150, 300), "drop");
+  assert.equal(vad.step(0.0, 200, 300), null);
+  assert.equal(vad.step(0.5, 250, 300), "rise");
+  assert.equal(vad.step(0.5, 550, 300), "start");
+  // Neither while already speaking.
+  assert.equal(vad.step(0.0, 600, 300), null);
+  assert.equal(vad.step(0.5, 700, 300), null);
+});
+
+test("readLiveFeedback fills a live grade's missing text fields", () => {
+  const read = readLiveFeedback(JSON.stringify({ score: 2, verdict: "wrong", correction: "c", improvement: 7 }));
+  assert.equal(read?.improvement, "");
+  assert.equal(read?.example, "");
+  assert.equal(read?.correction, "c");
 });

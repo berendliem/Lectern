@@ -10,6 +10,7 @@ import {
   type QAPair,
 } from "@/lib/interview";
 import { gradeAnswer, generateNextQuestion } from "@/lib/interview-grade";
+import { questionsAnswered } from "@/lib/live-interview";
 import { writeRecallSafely } from "@/lib/recall-log";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const turn = session.turns.find((t) => t.id === turnId);
   if (!turn) return jsonError("Question not found in this session", 404);
-  if (turn.answer !== null) return jsonError("This question has already been answered", 422);
+  // A spoken answer whose reply failed has an answer but no feedback; typing it again finishes the turn.
+  if (turn.feedback !== null) return jsonError("This question has already been answered", 422);
 
   const context: InterviewContext = {
     title: session.title,
@@ -82,7 +84,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     detail: { question: turn.question, score, mode: session.mode },
   });
 
-  const answeredCount = session.turns.filter((t) => t.answer !== null).length + 1;
+  // Live retries are second goes at one question, so they don't use up the session.
+  const answeredCount = questionsAnswered(session.turns.filter((t) => t.id !== turn.id)) + (turn.retryOf === null ? 1 : 0);
 
   if (answeredCount >= MAX_INTERVIEW_QUESTIONS) {
     await db.interviewSession.update({ where: { id: session.id }, data: { status: "COMPLETED" } });
@@ -91,7 +94,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const history: QAPair[] = [
     ...session.turns
-      .filter((t) => t.answer !== null)
+      .filter((t) => t.answer !== null && t.id !== turn.id)
       .map((t) => ({ question: t.question, answer: t.answer as string })),
     { question: turn.question, answer },
   ];

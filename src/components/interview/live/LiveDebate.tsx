@@ -21,7 +21,7 @@ import { CaptionStrip } from "./CaptionStrip";
 import { LiveControls, setLive, useLivePrefs } from "./LiveControls";
 import { transcribe, useAct } from "./transcribe";
 import { useBrowserRecognition } from "./useBrowserRecognition";
-import { useLiveMic } from "./useLiveMic";
+import { useLiveMic, type VadEvent } from "./useLiveMic";
 import { useSpeechQueue, type Voice } from "./useSpeechQueue";
 
 /** One voice per side, so the student can tell them apart with eyes closed. */
@@ -58,7 +58,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
   // The student's point, kept so "Try again" after a failed interject re-sends it rather than dropping it.
   const pendingInterjectRef = useRef<string | null>(null);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const onVadRef = useRef<(event: "start" | "end") => void>(() => {});
+  const onVadRef = useRef<(event: VadEvent) => void>(() => {});
   // False once the component has ended, switched away, or unmounted, so in-flight async work stops
   // starting new turns instead of talking behind a closed session.
   const alive = useRef(true);
@@ -69,7 +69,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
     onsetMs: () => (now() === "listening" ? LISTEN_ONSET_MS : now() === "speaking" ? BARGE_IN_MS : Infinity),
     onVad: (event) => onVadRef.current(event),
   });
-  const { arm, take, start: openMic, stop: closeMic, error: micError } = mic;
+  const { arm, take, recording, start: openMic, stop: closeMic, error: micError } = mic;
 
   const voiceFor = (speaker: string): Voice => ({ voice: DEBATE_VOICES[speaker] ?? "af_heart", rate, lang: "en-US" });
 
@@ -80,8 +80,27 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
 
   function listen() {
     if (!alive.current) return;
+    // A barge-in keeps the recorder and recognizer its rise started, so the first words aren't lost.
+    if (recording()) return;
     arm();
     recognition.begin();
+  }
+
+  /**
+   * While the voice talks, a rise may be the student cutting in: start recording
+   * now, and throw it away if it dies before counting as a barge-in. While
+   * listening the recorder is already armed, so neither applies.
+   */
+  function onRiseOrDrop(event: "rise" | "drop") {
+    if (now() === "listening") return;
+    if (event === "rise") {
+      if (now() !== "speaking" || !alive.current) return;
+      arm();
+      recognition.begin();
+    } else if (recording()) {
+      recognition.end();
+      void take();
+    }
   }
 
   function listenThenAdvance() {
@@ -235,7 +254,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
   }
 
   async function onSpeechEnd() {
-    if (now() !== "listening") return;
+    if (!alive.current || now() !== "listening") return;
     clearAdvance();
     act({ type: "speechEnd" });
     const preview = recognition.text;
@@ -253,6 +272,7 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
       act({ type: "empty" });
       // Never post a stray barge-in offset onto the previous agent's turn while the moderator talks.
       agentTurnRef.current = null;
+      if (!alive.current) return; // torn down while transcribing
       await speech.speakAll(MODERATOR, voiceFor(MODERATOR), NOT_HEARD);
       if (now() !== "speaking") return;
       act({ type: "replyDone", completed: false });
@@ -285,7 +305,8 @@ export function LiveDebate({ sessionId, concept }: { sessionId: string; concept:
   useEffect(() => {
     onVadRef.current = (event) => {
       if (event === "start") onSpeechStart();
-      else void onSpeechEnd();
+      else if (event === "end") void onSpeechEnd();
+      else onRiseOrDrop(event);
     };
   });
 
