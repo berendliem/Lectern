@@ -25,6 +25,7 @@ export function useLiveMic(threshold: number, handlers: Handlers) {
   const chunksRef = useRef<Blob[]>([]);
   const vadRef = useRef(createVad({ threshold, silenceMs: SILENCE_MS }));
   const handlersRef = useRef(handlers);
+  const mountedRef = useRef(false);
 
   useEffect(() => {
     handlersRef.current = handlers;
@@ -32,12 +33,19 @@ export function useLiveMic(threshold: number, handlers: Handlers) {
   useEffect(() => {
     vadRef.current.setThreshold(threshold);
   }, [threshold]);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const stop = useCallback(() => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     frameRef.current = null;
     const recorder = recorderRef.current;
     if (recorder && recorder.state !== "inactive") {
+      recorder.ondataavailable = null;
       recorder.onstop = null;
       recorder.stop();
     }
@@ -56,6 +64,11 @@ export function useLiveMic(threshold: number, handlers: Handlers) {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
+      if (!mountedRef.current) {
+        // The component went away while permission was pending; don't leave the mic open.
+        stream.getTracks().forEach((track) => track.stop());
+        return false;
+      }
       streamRef.current = stream;
       const context = new AudioContext();
       const analyser = context.createAnalyser();
@@ -86,6 +99,8 @@ export function useLiveMic(threshold: number, handlers: Handlers) {
     if (!stream) return;
     const old = recorderRef.current;
     if (old && old.state !== "inactive") {
+      // A final async dataavailable would otherwise land in the new recorder's chunksRef.
+      old.ondataavailable = null;
       old.onstop = null;
       old.stop();
     }
