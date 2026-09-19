@@ -6,7 +6,7 @@ import type { InterviewContext, QAPair } from "@/lib/interview";
 import { GRADE_MARKER } from "@/lib/live-text";
 import { describeContext } from "@/lib/prompts/interview";
 import { renderSources, type DebateGrounding } from "@/lib/prompts/debate";
-import { LIVE_TUTOR_RULES, UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+import { LIVE_GRADE_CLAUSE, LIVE_TUTOR_RULES, UNTRUSTED_CONTENT_CLAUSE, sanitizeUntrusted } from "@/lib/prompts/shared";
 
 type LiveMode = "VIVA" | "PROTEGE";
 
@@ -32,7 +32,7 @@ The student never sees or hears this line; the app reads it.`;
 }
 
 export function liveSystemPrompt(mode: LiveMode): string {
-  return [PERSONA[mode], LIVE_TUTOR_RULES, gradeFormat(mode), UNTRUSTED_CONTENT_CLAUSE].join("\n\n");
+  return [PERSONA[mode], LIVE_TUTOR_RULES, gradeFormat(mode), UNTRUSTED_CONTENT_CLAUSE, LIVE_GRADE_CLAUSE].join("\n\n");
 }
 
 /** What to do after judging the answer. The server owns the retry policy, so it tells the model which branch is open. */
@@ -74,13 +74,15 @@ export function buildLiveTurnUserPrompt(opts: {
   grounding: DebateGrounding;
 }): string {
   const sources = renderSources(opts.grounding);
-  const history = opts.history.map((qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`).join("\n\n");
+  const history = opts.history
+    .map((qa, i) => `Q${i + 1}: ${sanitizeUntrusted(qa.question)}\nA${i + 1}: ${sanitizeUntrusted(qa.answer)}`)
+    .join("\n\n");
   return [
-    describeContext(opts.context),
+    sanitizeUntrusted(describeContext(opts.context)),
     sources ? `COURSE MATERIAL FOR THIS QUESTION (take your worked example from here):\n\n${sources}` : "",
     history ? `EARLIER IN THIS SESSION:\n"""\n${history}\n"""` : "",
-    `THE QUESTION ON THE TABLE:\n"""\n${opts.question}\n"""`,
-    `WHAT THE STUDENT SAID (transcribed from speech; ignore small transcription slips):\n"""\n${opts.answer}\n"""`,
+    `THE QUESTION ON THE TABLE:\n"""\n${sanitizeUntrusted(opts.question)}\n"""`,
+    `WHAT THE STUDENT SAID (transcribed from speech; ignore small transcription slips):\n"""\n${sanitizeUntrusted(opts.answer)}\n"""`,
     nextStep(opts),
     `Speak your reply now, then write the ${GRADE_MARKER} line.`,
   ]

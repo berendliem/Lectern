@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMStream } from "@/lib/llm";
 import { courseGrounding } from "@/lib/course-grounding";
-import { MAX_INTERVIEW_QUESTIONS, recallRawFor, type InterviewContext, type QAPair } from "@/lib/interview";
+import { MAX_INTERVIEW_QUESTIONS, recallRawFor, rubricFor, type InterviewContext, type QAPair } from "@/lib/interview";
 import { INTERVIEW_MODEL, generateNextQuestion, gradeAnswer } from "@/lib/interview-grade";
 import {
   MAX_LIVE_REPLY_CHARS,
@@ -13,6 +13,7 @@ import {
   questionsAnswered,
   readLiveFeedback,
   toLiveFeedback,
+  verdictFromScore,
   type LiveFeedback,
   type LiveNextTurn,
   type LiveTurnEvent,
@@ -141,7 +142,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         if (grade.success) {
           const { nextQuestion: asked, ...graded } = grade.data;
           feedback = graded;
-          nextQuestion = asked;
+          // Trusted only if it was actually spoken: a trailer can't slip in a question the student never heard.
+          nextQuestion =
+            asked && normalizeSpoken(spoken).includes(normalizeSpoken(asked)) ? asked : questionFromSpoken(spoken);
         } else {
           try {
             const graded = await gradeAnswer({
@@ -157,7 +160,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             return fail("Your answer was kept, but it couldn't be graded. Try again.");
           }
         }
-        feedback = { ...feedback, transcriptSource };
+        // The score decides the verdict, whichever grader produced it, so the model can't pair a low score with "right".
+        feedback = { ...feedback, verdict: verdictFromScore(rubricFor(mode), feedback.score), transcriptSource };
 
         const kind = nextTurnKind(feedback.verdict, answeringRetry);
         const finished = kind === "new" && lastQuestion;
@@ -189,7 +193,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           raw: recallRawFor(mode, { score: feedback.score }),
           pageId: session.pageId,
           topicId: session.courseTopicId,
-          misconception: feedback.improvement || null,
+          misconception: feedback.improvement.slice(0, 200) || null,
           detail: { question: turn.question, score: feedback.score, mode, live: true },
         });
 
