@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError } from "@/lib/api-utils";
@@ -22,11 +21,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const buffer = Buffer.from(await file.arrayBuffer());
   const mimeType = file.type || "audio/webm";
   const extension = extensionForMimeType(mimeType, file instanceof File ? file.name : undefined);
-  const stem = turnId ?? randomUUID();
 
   try {
-    const relativePath = await saveAudioFile(stem, buffer, extension);
+    // Kept only when it belongs to a turn: a file no row points to is never shown or deleted.
     if (turnId) {
+      const relativePath = await saveAudioFile(turnId, buffer, extension);
       await db.interviewTurn.updateMany({
         where: { id: turnId, sessionId: id },
         data: { answerAudioPath: relativePath },

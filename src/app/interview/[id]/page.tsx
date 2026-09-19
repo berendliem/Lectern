@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { InterviewRunner } from "@/components/interview/InterviewRunner";
 import { GoLiveButton } from "@/components/interview/GoLiveButton";
 import { LiveSession } from "@/components/interview/live/LiveSession";
+import { LiveDebate } from "@/components/interview/live/LiveDebate";
 import { MAX_INTERVIEW_QUESTIONS } from "@/lib/interview";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,9 @@ export default async function InterviewSessionPage({ params }: { params: Promise
   const open = session.turns.find((t) => t.speaker === null && t.feedback === null);
 
   let body: React.ReactNode;
-  if (session.live && active && session.mode !== "DEBATE") {
+  if (session.live && active && session.mode === "DEBATE") {
+    body = <LiveDebate sessionId={session.id} concept={session.topic?.title ?? session.title} />;
+  } else if (session.live && active) {
     body = (
       <LiveSession
         sessionId={session.id}
