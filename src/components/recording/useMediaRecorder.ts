@@ -14,7 +14,7 @@ const MIME_TYPE_CANDIDATES = [
 // complete, standalone audio file, so it can be transcribed on its own.
 const LIVE_SEGMENT_MS = 15_000;
 
-function pickSupportedMimeType(): string | undefined {
+export function pickSupportedMimeType(): string | undefined {
   if (typeof MediaRecorder === "undefined") return undefined;
   return MIME_TYPE_CANDIDATES.find((type) => MediaRecorder.isTypeSupported(type));
 }
