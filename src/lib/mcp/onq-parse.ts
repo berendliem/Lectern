@@ -18,6 +18,20 @@ export type OnqTopicText = OnqTopic & {
   note: string | null;
   sourceFileName: string | null;
 };
+export type OnqDueItem = {
+  course: string;
+  kind: string;
+  id: number | null;
+  name: string;
+  due: Date;
+  /** null: onQ does not report the student's progress on this item. */
+  completed: boolean | null;
+  overdue: boolean;
+  /** Quizzes only: `due` is when one closes, this is when it opens. */
+  opens: Date | null;
+  /** Quizzes only: how long one attempt may run. */
+  timeLimitMinutes: number | null;
+};
 
 // Length caps: these strings are stored and shown as-is, and onq-mcp relays
 // whatever the course author typed.
@@ -46,6 +60,23 @@ const topicTextSchema = topicSchema.extend({
   text: z.string().nullable(),
   note: z.string().max(2000).nullish().default(null),
   source_file_name: z.string().max(300).nullish().default(null),
+});
+
+// `completed` and `overdue` default rather than fail, for the same reason as
+// `downloadable` above. `kind` stays a string: onq-mcp names kinds Lectern has
+// no special treatment for ("item").
+const isoDate = z.iso.datetime({ offset: true }).transform((d) => new Date(d));
+
+const dueItemSchema = z.object({
+  course: z.string().max(300),
+  kind: z.string().max(32),
+  id: z.number().int().nullish().default(null),
+  name: title,
+  due: isoDate,
+  completed: z.boolean().nullish().default(null),
+  overdue: z.boolean().default(false),
+  opens: isoDate.nullish().default(null),
+  time_limit_minutes: z.number().int().positive().nullish().default(null),
 });
 
 function toTopic(t: z.output<typeof topicSchema>): OnqTopic {
@@ -83,4 +114,11 @@ export function parseOnqModules(raw: unknown): OnqModule[] {
 export function parseOnqTopicText(raw: unknown): OnqTopicText {
   const t = parse(topicTextSchema, raw, "read_topic");
   return { ...toTopic(t), text: t.text, note: t.note ?? null, sourceFileName: t.source_file_name ?? null };
+}
+
+export function parseOnqDueItems(raw: unknown): OnqDueItem[] {
+  return parse(z.array(dueItemSchema), raw, "whats_due").map(({ time_limit_minutes, ...i }) => ({
+    ...i,
+    timeLimitMinutes: time_limit_minutes,
+  }));
 }
