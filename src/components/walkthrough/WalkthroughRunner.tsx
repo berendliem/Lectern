@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
@@ -31,9 +31,15 @@ export function WalkthroughRunner({
   const [answer, setAnswer] = useState("");
   const [marked, setMarked] = useState<Marked | null>(null);
   const [revealed, setRevealed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Split so Retry can retry the thing that actually failed: teachError gets
+  // a Retry button that re-runs teach(); markError is shown inline under the
+  // Answer row with no Retry button, because the answer is still in the box
+  // and pressing Answer again IS the retry.
+  const [teachError, setTeachError] = useState<string | null>(null);
+  const [markError, setMarkError] = useState<string | null>(null);
 
   const step = steps[index];
+  const recallPromptId = useId();
 
   // React state updates aren't synchronous, so StrictMode's double-run mount
   // effect (or a fast Retry click) can fire two teach POSTs for the same step
@@ -45,7 +51,7 @@ export function WalkthroughRunner({
     if (teachingStepId.current === step.id) return;
     teachingStepId.current = step.id;
     setTeaching(true);
-    setError(null);
+    setTeachError(null);
     try {
       const data = (await postTask(
         `/api/materials/${materialId}/walkthrough/steps/${step.id}/teach`,
@@ -55,7 +61,7 @@ export function WalkthroughRunner({
       )) as { step: WalkthroughStepView };
       setSteps((prev) => prev.map((s) => (s.id === data.step.id ? data.step : s)));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not write this step.");
+      setTeachError(e instanceof Error ? e.message : "Could not write this step.");
     } finally {
       teachingStepId.current = null;
       setTeaching(false);
@@ -71,8 +77,8 @@ export function WalkthroughRunner({
     // the same via a locally-scoped async function); `teach` is only pulled
     // out of the effect via useCallback so the Retry button can reuse it.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!step.recallPrompt && !teaching && !error) void teach();
-  }, [step.recallPrompt, teaching, error, teach]);
+    if (!step.recallPrompt && !teaching && !teachError) void teach();
+  }, [step.recallPrompt, teaching, teachError, teach]);
 
   // Same reasoning as teachingStepId above: `marking` state lags a fast
   // double click, and a duplicate POST here would write two recall attempts
@@ -84,7 +90,7 @@ export function WalkthroughRunner({
     if (submitting.current) return;
     submitting.current = true;
     setMarking(true);
-    setError(null);
+    setMarkError(null);
     try {
       const data = (await postTask(
         `/api/materials/${materialId}/walkthrough/steps/${step.id}/recall`,
@@ -98,8 +104,10 @@ export function WalkthroughRunner({
       setMarked(data);
       setRevealed(true);
     } catch (e) {
-      // The answer stays in the box: a failed marking must not cost the typing.
-      setError(e instanceof Error ? e.message : "Could not mark your answer.");
+      // The answer stays in the box and the Answer button re-enables: a
+      // failed marking must not cost the typing, and pressing Answer again
+      // is the retry, not a separate Retry button.
+      setMarkError(e instanceof Error ? e.message : "Could not mark your answer.");
     } finally {
       submitting.current = false;
       setMarking(false);
@@ -112,7 +120,8 @@ export function WalkthroughRunner({
     setAnswer("");
     setMarked(null);
     setRevealed(false);
-    setError(null);
+    setTeachError(null);
+    setMarkError(null);
     // Position is persisted so a refresh lands here again. A failure is silent
     // on purpose: the student has already moved, and a message about
     // bookkeeping would interrupt studying to report nothing they can act on.
@@ -133,14 +142,17 @@ export function WalkthroughRunner({
         {step.label} · {index + 1} of {steps.length}
       </p>
 
-      {error && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
-          <p className="text-[13px] font-medium text-red-700">{error}</p>
+      {teachError && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2"
+        >
+          <p className="text-[13px] font-medium text-red-700">{teachError}</p>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              setError(null);
+              setTeachError(null);
               void teach();
             }}
           >
@@ -150,14 +162,16 @@ export function WalkthroughRunner({
       )}
 
       {!step.recallPrompt ? (
-        <p className="flex items-center gap-2 text-sm text-muted-2">
+        <p role="status" className="flex items-center gap-2 text-sm text-muted-2">
           {teaching && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
           {teaching ? "Writing this step…" : "This step hasn't been written yet."}
         </p>
       ) : (
         <>
           <div className="rounded-xl border border-line bg-surface px-4 py-3">
-            <p className="text-sm font-medium text-ink">{step.recallPrompt}</p>
+            <p id={recallPromptId} className="text-sm font-medium text-ink">
+              {step.recallPrompt}
+            </p>
             <p className="mt-1 text-[12.5px] text-muted-2">
               Answer from memory first. The material is revealed after you do.
             </p>
@@ -169,6 +183,7 @@ export function WalkthroughRunner({
             disabled={marking || revealed}
             rows={5}
             placeholder="What do you remember about this step?"
+            aria-labelledby={recallPromptId}
           />
 
           <div className="flex items-center gap-2">
@@ -181,6 +196,12 @@ export function WalkthroughRunner({
               </Button>
             )}
           </div>
+
+          {markError && (
+            <p role="alert" className="text-[13px] font-medium text-red-700">
+              {markError}
+            </p>
+          )}
 
           {marked && (
             <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-[13px]">
