@@ -24,12 +24,16 @@ export function NotesTab({
   markdown: initialMarkdown,
   canUndo: initialCanUndo,
   keyTerms,
+  staleMessage,
 }: {
   pageId: string;
   markdown: string;
   /** The server holds a pre-edit snapshot, so Undo works after a refresh too. */
   canUndo: boolean;
   keyTerms: KeyTerm[];
+  /** Set when the notes were written before the transcript they came from —
+   *  typically notes made from the slides before the lecture was recorded. */
+  staleMessage: string | null;
 }) {
   const router = useRouter();
   const [markdown, setMarkdown] = useState(initialMarkdown);
@@ -55,6 +59,18 @@ export function NotesTab({
   const editKey = `page:${pageId}:edit-notes`;
   const editTask = task(editKey);
   const busy = editTask?.status === "running" || undoBusy;
+  const summarizeKey = `page:${pageId}:summarize`;
+  const resummarizing = task(summarizeKey)?.status === "running";
+
+  async function regenerate() {
+    await run(
+      { key: summarizeKey, label: "Rewriting the notes with the recording…", href: `/pages/${pageId}` },
+      async () => {
+        await postTask(`/api/pages/${pageId}/summarize`, "Could not rewrite these notes. Try again.");
+      }
+    );
+    router.refresh();
+  }
 
   // Server refreshes (router.refresh after an edit or another pipeline step)
   // can change the props; adopt them unless we're mid-edit. The server clears
@@ -177,6 +193,19 @@ export function NotesTab({
 
   return (
     <div className="flex flex-col gap-4">
+      {staleMessage && (
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-soft">
+          <span>{staleMessage}</span>
+          <Button variant="secondary" onClick={regenerate} disabled={busy || resummarizing} className="ml-auto">
+            {resummarizing ? (
+              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+            ) : (
+              <Wand2 className="h-4 w-4" strokeWidth={2} />
+            )}
+            Rewrite with the recording
+          </Button>
+        </div>
+      )}
       <form
         onSubmit={applyEdit}
         className="flex flex-col gap-2 rounded-xl border border-line bg-surface-2/60 p-3"

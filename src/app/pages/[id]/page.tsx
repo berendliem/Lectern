@@ -20,6 +20,7 @@ import { LectureActions } from "@/components/page-detail/LectureActions";
 import { PretestReveal, type PretestRevealEntry } from "@/components/page/PretestReveal";
 import { isVideoExtension } from "@/lib/audio-storage";
 import { RECALL_LEDGER_SINCE } from "@/lib/recall";
+import { staleNotesMessage } from "@/lib/transcript-layer";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -122,6 +123,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
                 markdown={page.notes.markdown}
                 canUndo={page.notes.previousMarkdown !== null}
                 keyTerms={keyTerms}
+                staleMessage={staleNotesMessage(page.notes, page.transcript)}
               />
             ) : (
               <EmptyState message="Notes will appear here once the transcript has been summarized." />
