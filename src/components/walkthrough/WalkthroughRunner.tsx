@@ -113,16 +113,17 @@ export function WalkthroughRunner({
     if (!step.recallPrompt && !teachError) void teach();
   }, [step.recallPrompt, teachError, teach]);
 
-  // Same reasoning as teachingRef above: `marking` state lags a fast
-  // double click, and a duplicate POST here would write two recall attempts
-  // to the ledger for one answer, counting as two strikes toward a card.
-  const submitting = useRef(false);
+  // Same reasoning as teachingRef above, and keyed the same way: a plain
+  // boolean would block step 4's Answer click while step 3's request is
+  // still in flight, even though step 4's own marking state shows the
+  // button as enabled — a silent no-op is worse than a disabled button.
+  const submittingStepId = useRef<string | null>(null);
 
   async function submit() {
     if (!answer.trim()) return;
-    if (submitting.current) return;
+    if (submittingStepId.current === step.id) return;
     const forStepId = step.id;
-    submitting.current = true;
+    submittingStepId.current = forStepId;
     setMarking(true);
     setMarkError(null);
     try {
@@ -148,7 +149,7 @@ export function WalkthroughRunner({
       // is the retry, not a separate Retry button.
       setMarkError(e instanceof Error ? e.message : "Could not mark your answer.");
     } finally {
-      submitting.current = false;
+      if (submittingStepId.current === forStepId) submittingStepId.current = null;
       if (shownStepId.current === forStepId) setMarking(false);
     }
   }
