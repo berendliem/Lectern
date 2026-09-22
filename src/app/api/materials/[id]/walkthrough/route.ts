@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
 import {
+  sourceHash,
   splitSections,
   splitSlides,
   toStepView,
@@ -45,7 +46,17 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     include: { walkthrough: { include: { steps: { orderBy: { ordinal: "asc" } } } } },
   });
   if (!material) return jsonError("Material not found", 404);
-  if (material.walkthrough) return NextResponse.json({ walkthrough: view(material.walkthrough) });
+  if (material.walkthrough) {
+    // Made before the fingerprint existed. The text it was split from is
+    // taken to be today's: the column is younger than any re-import since.
+    if (material.walkthrough.sourceHash === null) {
+      await db.walkthrough.update({
+        where: { id: material.walkthrough.id },
+        data: { sourceHash: await sourceHash(material.text) },
+      });
+    }
+    return NextResponse.json({ walkthrough: view(material.walkthrough) });
+  }
 
   if (!WALKABLE.includes(material.kind)) {
     return jsonError("Only slide decks and readings can be walked through", 422);
@@ -85,6 +96,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     walkthrough = await db.walkthrough.create({
       data: {
         materialId: id,
+        sourceHash: await sourceHash(material.text),
         steps: {
           create: seeds.map((seed) => ({
             ordinal: seed.ordinal,
@@ -129,4 +141,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const stepIndex = Math.min(result.data.stepIndex, Math.max(0, walkthrough._count.steps - 1));
   await db.walkthrough.update({ where: { id: walkthrough.id }, data: { stepIndex } });
   return NextResponse.json({ stepIndex });
+}
+
+/**
+ * Discards a walkthrough so the next Learn builds a fresh one, for a material
+ * whose text has changed underneath it. The steps, their explanations and the
+ * student's place go; the cards made from misses and the recall ledger hang
+ * off the material and stay.
+ */
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const { count } = await db.walkthrough.deleteMany({ where: { materialId: id } });
+  if (count === 0) return jsonError("This material has no walkthrough", 404);
+  return NextResponse.json({ deleted: true });
 }

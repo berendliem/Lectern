@@ -15,6 +15,16 @@
  */
 export const WALKTHROUGH_SOURCE_TERM = "From a walkthrough";
 
+/**
+ * Fingerprint of the text a walkthrough was split from, so a re-import that
+ * changes the text can be noticed. Web Crypto rather than node:crypto: this
+ * module is also bundled for the browser.
+ */
+export async function sourceHash(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export type WalkthroughStepSeed = { ordinal: number; label: string; sourceText: string };
 
 /** One step as the client sees it, once it exists as a row. */

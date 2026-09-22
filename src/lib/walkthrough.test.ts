@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MAX_STEP_CHARS, splitSections, splitSlides, toStepView } from "./walkthrough.ts";
+import { MAX_STEP_CHARS, sourceHash, splitSections, splitSlides, toStepView } from "./walkthrough.ts";
 import {
   walkthroughOutlineResponseSchema,
   walkthroughRecallResponseSchema,
@@ -339,4 +339,11 @@ test("the teaching prompt sanitizes the title, the label and the step text", () 
 test("walkthroughRecallResponseSchema rejects a grade that found nothing at all", () => {
   assert.throws(() => walkthroughRecallResponseSchema.parse({}));
   assert.throws(() => walkthroughRecallResponseSchema.parse({ covered: [], missed: [], wrong: [] }));
+});
+
+test("sourceHash is stable for one text and changes with it", async () => {
+  const a = await sourceHash("Slide 1: Cells\nThe cell is the unit of life.");
+  assert.equal(a, await sourceHash("Slide 1: Cells\nThe cell is the unit of life."));
+  assert.match(a, /^[0-9a-f]{64}$/);
+  assert.notEqual(a, await sourceHash("Slide 1: Cells\nThe cell is the unit of life!"));
 });

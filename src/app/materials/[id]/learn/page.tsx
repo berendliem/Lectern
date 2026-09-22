@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
+import { RebuildNotice } from "@/components/walkthrough/RebuildNotice";
 import { WalkthroughRunner } from "@/components/walkthrough/WalkthroughRunner";
-import { toStepView } from "@/lib/walkthrough";
+import { sourceHash, toStepView } from "@/lib/walkthrough";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,12 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
   // The walkthrough is created by the button that links here, so arriving
   // without one means a stale link or a deleted material either way.
   if (!material || !material.walkthrough || material.walkthrough.steps.length === 0) notFound();
+  const { walkthrough } = material;
+
+  // Null is a walkthrough from before the fingerprint, filled on its next
+  // resume; it is not evidence of a change.
+  const stale =
+    walkthrough.sourceHash !== null && walkthrough.sourceHash !== (await sourceHash(material.text));
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
@@ -34,11 +41,21 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
         <h1 className="text-xl font-semibold text-ink">{material.title}</h1>
       </div>
 
+      {stale && (
+        <RebuildNotice
+          materialId={material.id}
+          folderId={material.folderId}
+          written={walkthrough.steps.filter((step) => step.explanation !== null).length}
+        />
+      )}
+
+      {/* Keyed so a rebuild, which is a new walkthrough, starts the runner over. */}
       <WalkthroughRunner
+        key={walkthrough.id}
         materialId={material.id}
         folderId={material.folderId}
-        startIndex={material.walkthrough.stepIndex}
-        steps={material.walkthrough.steps.map(toStepView)}
+        startIndex={walkthrough.stepIndex}
+        steps={walkthrough.steps.map(toStepView)}
       />
     </main>
   );
