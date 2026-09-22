@@ -11,9 +11,7 @@ import {
 import { normalizeQuality } from "@/lib/recall";
 import { recallRow, settleMisconceptions, type RecallEvent } from "@/lib/recall-log";
 import { walkthroughRecallResponseSchema, walkthroughRecallSubmitSchema } from "@/lib/validation";
-
-/** Marks a card as born from a walkthrough, so a deck shows where it came from. */
-const WALKTHROUGH_SOURCE_TERM = "From a walkthrough";
+import { WALKTHROUGH_SOURCE_TERM } from "@/lib/walkthrough";
 
 const RETRY_MESSAGE = "The model's response didn't match the expected format. You can retry this step.";
 

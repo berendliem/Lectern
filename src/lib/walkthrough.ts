@@ -8,6 +8,13 @@
  * model names that is not actually in the text is skipped rather than guessed at.
  */
 
+/**
+ * Marks a card as born from a walkthrough, so a deck shows where it came from,
+ * and so regenerating a material's cards knows these are the student's own
+ * misses rather than generated cards it may replace.
+ */
+export const WALKTHROUGH_SOURCE_TERM = "From a walkthrough";
+
 export type WalkthroughStepSeed = { ordinal: number; label: string; sourceText: string };
 
 /** One step as the client sees it, once it exists as a row. */
