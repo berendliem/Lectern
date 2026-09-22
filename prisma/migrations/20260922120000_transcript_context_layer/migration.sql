@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Transcript" ADD COLUMN "contextText" TEXT;
+ALTER TABLE "Transcript" ADD COLUMN "contextSource" TEXT;
+ALTER TABLE "Transcript" ADD COLUMN "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;

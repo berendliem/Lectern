@@ -187,7 +187,18 @@ model Transcript {
   segments  String
   language  String?
   modelUsed String?
+  /// The slide or reading text this lecture was delivered over, moved here when
+  /// a recording lands on a page that was created from imported text. `rawText`
+  /// and `segments` always describe the audio; this layer never does.
+  contextText   String?
+  /// The `modelUsed` value the context arrived with (`import:slides`, `import`,
+  /// `import:subtitles`), so the notes prompt can tell a deck from a reading.
+  contextSource String?
   createdAt DateTime @default(now())
+  /// Set on every write, so the Notes tab can tell when notes predate the
+  /// transcript they were written from. Defaulted because existing rows have no
+  /// modification time to recover.
+  updatedAt DateTime @default(now()) @updatedAt
 
   page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
 }
