@@ -371,9 +371,8 @@ export const flashcardsResponseSchema = z.object({
         // generated card wearing one would survive every regenerate.
         sourceTerm: z
           .string()
-          .max(200)
           .optional()
-          .transform((term) => (isEarnedSourceTerm(term) ? undefined : term)),
+          .transform((term) => (isEarnedSourceTerm(term) ? undefined : term?.slice(0, 200))),
       })
     )
     .min(1),

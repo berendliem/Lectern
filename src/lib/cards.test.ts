@@ -92,3 +92,10 @@ test("a generated card cannot claim a label regenerate keeps", () => {
     [undefined, undefined, "Mitosis"]
   );
 });
+
+test("an over-long generated label is trimmed, not a failed generation", () => {
+  const parsed = flashcardsResponseSchema.parse({
+    flashcards: [{ prompt: "p", idealExplanation: "e", sourceTerm: "x".repeat(300) }],
+  });
+  assert.equal(parsed.flashcards[0].sourceTerm?.length, 200);
+});
