@@ -27,7 +27,14 @@ export const PASS_QUALITY = 3;
 /** At or above this, a recall is good enough to close an open misconception. */
 export const RESOLVE_QUALITY = 4;
 
-export type RecallKind = "FLASHCARD" | "QUIZ" | "FEYNMAN" | "INTERVIEW" | "BLURT" | "PRETEST";
+export type RecallKind =
+  | "FLASHCARD"
+  | "QUIZ"
+  | "FEYNMAN"
+  | "INTERVIEW"
+  | "BLURT"
+  | "PRETEST"
+  | "WALKTHROUGH";
 
 /**
  * What a grader actually produced, in its own units. A discriminated union
@@ -44,6 +51,8 @@ export type RecallRaw =
   | { kind: "FEYNMAN"; score: number }
   | { kind: "INTERVIEW"; rating: number }
   | { kind: "BLURT"; covered: number; missed: number; wrong: number }
+  /** One step of a material walkthrough, marked the way a blurt is. */
+  | { kind: "WALKTHROUGH"; covered: number; missed: number; wrong: number }
   | { kind: "PRETEST"; correct: boolean };
 
 function clamp(quality: number): number {
@@ -66,13 +75,14 @@ export function normalizeQuality(raw: RecallRaw): number {
       return clamp(raw.rating);
     case "FEYNMAN":
       return clamp(raw.score / 20);
-    case "BLURT": {
+    case "BLURT":
+    case "WALKTHROUGH": {
       // Wrong claims sit in the denominator beside what was missed. The spec
       // scored covered/(covered+missed), which hands a perfect 5 to a dump that
       // recalled everything and also asserted eight things the notes contradict
       // — and a 5 closes every open misconception on that lecture.
       const asked = raw.covered + raw.missed + raw.wrong;
-      // Nothing to score against is not a failure; an empty blurt scores 0 on
+      // Nothing to score against is not a failure; an empty answer scores 0 on
       // its own because `covered` is 0.
       return asked === 0 ? 0 : clamp((raw.covered / asked) * 5);
     }

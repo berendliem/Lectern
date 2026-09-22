@@ -1,8 +1,11 @@
 /**
  * The single writer to the recall ledger. Every grader — flashcards, quiz,
- * Feynman, interview, blurt — calls `writeRecall`, and nothing else touches
- * `db.reviewLog`. That is the only thing keeping the channels comparable: a
- * grader writing the row itself would be a grader writing its own scale.
+ * Feynman, interview, blurt, walkthrough — builds its row here, and nothing
+ * else decides what goes into `db.reviewLog`. That is the only thing keeping
+ * the channels comparable: a grader writing the row itself would be a grader
+ * writing its own scale. Most call `writeRecall`; blurt and walkthrough write
+ * their cards in the same transaction as the row, so they use `recallRow` there
+ * and call `settleMisconceptions` after it commits.
  *
  * The scale arithmetic is in `recall.ts`, which stays pure and tested.
  */

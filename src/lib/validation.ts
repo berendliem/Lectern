@@ -465,3 +465,51 @@ export const pretestDetailSchema = z.object({
 export const updateCalendarEventSchema = z.object({
   folderId: z.string().trim().min(1).nullable(),
 });
+
+/**
+ * A walkthrough's three model responses, and its two request bodies. Every
+ * string is capped, not just every array: this text becomes flashcards and
+ * ledger rows, and the model wrote it after reading course material it does
+ * not control.
+ *
+ * The array caps truncate rather than reject: each prompt states its cap, but a
+ * model that honestly lists one item too many would otherwise fail the call on
+ * every retry. Every item is still validated, and nothing past the cap is kept.
+ */
+function cappedArray<T extends z.ZodType>(item: T, max: number) {
+  return z
+    .array(item)
+    .transform((items) => items.slice(0, max))
+    .default([]);
+}
+
+export const walkthroughOutlineResponseSchema = z.object({
+  headings: cappedArray(z.string().trim().min(1).max(200), 60),
+});
+
+export const walkthroughTeachResponseSchema = z.object({
+  explanation: z.string().trim().min(1).max(4000),
+  recallPrompt: z.string().trim().min(1).max(500),
+});
+
+// `covered` is capped low because its length is the score: a padded list would
+// mark any answer 5/5 and close every open misconception on the material.
+export const walkthroughRecallResponseSchema = z.object({
+  covered: cappedArray(z.string().trim().min(1).max(500), 12),
+  missed: cappedArray(z.string().trim().min(1).max(500), 6),
+  wrong: cappedArray(
+    z.object({
+      claim: z.string().trim().min(1).max(500),
+      correction: z.string().trim().min(1).max(1000),
+    }),
+    6
+  ),
+});
+
+export const walkthroughRecallSubmitSchema = z.object({
+  answer: z.string().trim().min(1).max(4000),
+});
+
+export const walkthroughStepIndexSchema = z.object({
+  stepIndex: z.number().int().min(0),
+});

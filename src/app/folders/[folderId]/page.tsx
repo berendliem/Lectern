@@ -12,6 +12,7 @@ import {
 } from "@/lib/coverage";
 import { scoreTopics } from "@/lib/embeddings";
 import { RECALL_LEDGER_SINCE } from "@/lib/recall";
+import { WALKTHROUGH_SOURCE_TERM } from "@/lib/walkthrough";
 import { CourseOverview, type TopicRow } from "@/components/course/CourseOverview";
 import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
@@ -36,7 +37,17 @@ export default async function FolderPage({
   const folder = await db.folder.findUnique({ where: { id: folderId } });
   if (!folder) notFound();
 
-  const [pages, quizCount, quizlessCount, dueCount, materials, topics, cards, openMisconceptions] = await Promise.all([
+  const [
+    pages,
+    quizCount,
+    quizlessCount,
+    dueCount,
+    materials,
+    topics,
+    cards,
+    openMisconceptions,
+    walkthroughCardCounts,
+  ] = await Promise.all([
     db.page.findMany({
       where: { folderId },
       orderBy: { updatedAt: "desc" },
@@ -63,6 +74,7 @@ export default async function FolderPage({
         slideCount: true,
         createdAt: true,
         _count: { select: { flashcards: true, quizQuestions: true } },
+        walkthrough: { select: { id: true } },
       },
     }),
     db.courseTopic.findMany({ where: { folderId }, orderBy: { order: "asc" } }),
@@ -88,6 +100,13 @@ export default async function FolderPage({
         page: { select: { title: true } },
         material: { select: { title: true } },
       },
+    }),
+    // Regenerating a material's cards keeps these, so its confirm has to count
+    // them apart. A second query because `_count` takes one count per relation.
+    db.flashcard.groupBy({
+      by: ["materialId"],
+      where: { sourceTerm: WALKTHROUGH_SOURCE_TERM, material: { folderId } },
+      _count: true,
     }),
   ]);
 
@@ -197,7 +216,10 @@ export default async function FolderPage({
                       slideCount: m.slideCount,
                       createdAt: m.createdAt,
                       flashcardCount: m._count.flashcards,
+                      walkthroughCardCount:
+                        walkthroughCardCounts.find((c) => c.materialId === m.id)?._count ?? 0,
                       quizCount: m._count.quizQuestions,
+                      hasWalkthrough: m.walkthrough !== null,
                     }))}
                   />
                 </div>

@@ -49,7 +49,7 @@ export function FolderHeader({ folderId, name }: { folderId: string; name: strin
   }
 
   async function handleDelete() {
-    if (!confirm(`Delete course "${name}"? Its lectures will be kept but will no longer belong to a course. Any materials uploaded to it — syllabus, slides, readings — will be permanently deleted.`)) return;
+    if (!confirm(`Delete course "${name}"? Its lectures will be kept but will no longer belong to a course. Any materials uploaded to it — syllabus, slides, readings — will be permanently deleted, along with each one's flashcards, quiz questions, and walkthrough with your place in it.`)) return;
     setBusy(true);
     const res = await fetch(`/api/folders/${folderId}`, { method: "DELETE" });
     if (res.ok) {
