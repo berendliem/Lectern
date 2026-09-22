@@ -122,7 +122,8 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
                 chapters={page.transcript?.chapters ? JSON.parse(page.transcript.chapters) : []}
                 segments={segments}
                 materials={materials}
-                hasContext={!!page.transcript?.contextText}
+                contextText={page.transcript?.contextText ?? null}
+                contextSource={page.transcript?.contextSource ?? null}
                 recordingBlocked={recordingWouldDestroyImport(page.transcript)}
               />
             ),
@@ -136,7 +137,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
                 markdown={page.notes.markdown}
                 canUndo={page.notes.previousMarkdown !== null}
                 keyTerms={keyTerms}
-                staleMessage={staleNotesMessage(page.notes, page.transcript)}
+                staleMessage={staleNotesMessage(page.notes, page.transcript, !!page.audioFilePath)}
               />
             ) : (
               <EmptyState message="Notes will appear here once the transcript has been summarized." />

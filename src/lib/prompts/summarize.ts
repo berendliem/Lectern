@@ -79,6 +79,10 @@ export function buildSlidesSummarizeUserPrompt(slides: string, spellingGuide = "
  *  the from-text route for `source: "slides"`. */
 export const SLIDES_TRANSCRIPT_SOURCE = "import:slides";
 
+/** `Transcript.modelUsed` of imported text with no more specific source — a
+ *  reading or a paste. The from-text route writes it for `source: undefined`. */
+export const IMPORT_TRANSCRIPT_SOURCE = "import";
+
 // A lecture that has both a recording and the deck (or reading) it was given
 // over. The material is the skeleton — written down, ordered, spelled correctly
 // — and the recording is what actually happened in the room. Added context stays

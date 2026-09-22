@@ -1,7 +1,7 @@
 import { SLIDES_TRANSCRIPT_SOURCE } from "@/lib/prompts/summarize";
 
 /** A transcript's two layers: what was said, and what it was said over. */
-export type TranscriptLayers = {
+type TranscriptLayers = {
   rawText: string;
   cleanText: string | null;
   contextText: string | null;
@@ -11,7 +11,7 @@ export type TranscriptLayers = {
 type ExistingTranscript = { rawText: string; modelUsed: string | null; contextText: string | null };
 
 /** The fields a transcription writes besides the audio itself. */
-export type TranscriptWrite = {
+type TranscriptWrite = {
   cleanText: null;
   chapters: null;
   contextText?: string;
@@ -27,6 +27,14 @@ export function isImported(modelUsed: string | null): boolean {
 /** What the attached context layer is, for the copy that has to name it. */
 export function contextKind(contextSource: string | null | undefined): "slides" | "reading" {
   return contextSource === SLIDES_TRANSCRIPT_SOURCE ? "slides" : "reading";
+}
+
+/** The first line of the attached context, short enough to quote in a confirm
+ *  so a replace names the text it is about to discard. */
+export function contextPreview(contextText: string | null | undefined): string | null {
+  const line = contextText?.trim().split("\n")[0].trim();
+  if (!line) return null;
+  return line.length > 60 ? `${line.slice(0, 60).trimEnd()}…` : line;
 }
 
 /**
@@ -75,17 +83,23 @@ export function lectureText(transcript: TranscriptLayers | null | undefined): st
   if (!transcript) return "";
   const spoken = transcript.cleanText ?? transcript.rawText;
   if (!transcript.contextText) return spoken;
-  const label = transcript.contextSource === SLIDES_TRANSCRIPT_SOURCE ? "SLIDES" : "SOURCE TEXT";
+  const label = contextKind(transcript.contextSource) === "slides" ? "SLIDES" : "SOURCE TEXT";
   return `${label}:\n${transcript.contextText}\n\nLECTURE TRANSCRIPT:\n${spoken}`;
 }
 
 /** Why the notes on screen are behind the transcript, or null when they aren't. */
 export function staleNotesMessage(
   notes: { updatedAt: Date } | null | undefined,
-  transcript: (TranscriptLayers & { updatedAt: Date }) | null | undefined
+  transcript: (TranscriptLayers & { updatedAt: Date }) | null | undefined,
+  hasAudio: boolean
 ): string | null {
   if (!notes || !transcript || notes.updatedAt >= transcript.updatedAt) return null;
-  return transcript.contextText
-    ? "These notes were written from the slides alone — the recording isn't in them yet."
-    : "These notes were written before the current transcript.";
+  // With both layers on the page there is no way to tell which of them moved,
+  // so the message says only what is certain: the notes are behind. Only the
+  // context-without-audio case can name what is missing.
+  if (transcript.contextText && !hasAudio) {
+    const kind = contextKind(transcript.contextSource);
+    return `These notes don't include the ${kind === "slides" ? "slides" : "reading"} attached to this lecture.`;
+  }
+  return "These notes were written before the current transcript.";
 }

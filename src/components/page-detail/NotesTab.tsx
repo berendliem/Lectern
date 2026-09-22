@@ -55,7 +55,7 @@ export function NotesTab({
   // Dictation and the lecture recorder are two `getUserMedia()` calls on one
   // device: while a lecture is being recorded, this entry point stands down.
   const micHolder = useMicHeldByLecture();
-  const { run, task } = useTasks();
+  const { run, task, clear } = useTasks();
   const editKey = `page:${pageId}:edit-notes`;
   const editTask = task(editKey);
   const busy = editTask?.status === "running" || undoBusy;
@@ -64,8 +64,11 @@ export function NotesTab({
   const resummarizing = summarizeTask?.status === "running";
 
   async function regenerate() {
+    // The banner below renders this task's error, so the run starts by dropping
+    // its own last failure — otherwise one from an earlier visit shows up here.
+    clear([summarizeKey]);
     const outcome = await run(
-      { key: summarizeKey, label: "Rewriting the notes with the recording…", href: `/pages/${pageId}` },
+      { key: summarizeKey, label: "Rewriting the notes from the transcript…", href: `/pages/${pageId}` },
       async () => {
         await postTask(`/api/pages/${pageId}/summarize`, "Could not rewrite these notes. Try again.");
       }
@@ -204,7 +207,7 @@ export function NotesTab({
               ) : (
                 <Wand2 className="h-4 w-4" strokeWidth={2} />
               )}
-              Rewrite with the recording
+              Rewrite these notes
             </Button>
           </div>
           {summarizeTask?.error && (

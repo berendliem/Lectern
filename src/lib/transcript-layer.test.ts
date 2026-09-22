@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   contextKind,
+  contextPreview,
   isImported,
   lectureText,
   planTranscribeWrite,
@@ -81,6 +82,14 @@ test("the context layer is named from where it came", () => {
   assert.equal(contextKind(null), "reading");
 });
 
+test("a context preview is one line, short enough to quote", () => {
+  assert.equal(contextPreview("Slide 1: Bayes' rule\nSlide 2: priors"), "Slide 1: Bayes' rule");
+  assert.equal(contextPreview(null), null);
+  assert.equal(contextPreview("   \n  "), null);
+  const long = contextPreview("x".repeat(200));
+  assert.equal(long, `${"x".repeat(60)}…`);
+});
+
 test("both layers join under labels, and the cleaned transcript wins", () => {
   const text = lectureText({
     rawText: "so uh today, Bayes",
@@ -109,45 +118,54 @@ test("one layer alone is returned unlabelled", () => {
   assert.equal(lectureText(null), "");
 });
 
-test("notes written before the recording are called out as slides-only", () => {
-  const message = staleNotesMessage(
-    { updatedAt: new Date("2026-09-20T10:00:00Z") },
-    {
-      updatedAt: new Date("2026-09-20T11:00:00Z"),
-      rawText: "spoken",
-      cleanText: null,
-      contextText: "Slide 1",
-      contextSource: "import:slides",
-    }
+const older = { updatedAt: new Date("2026-09-20T10:00:00Z") };
+const transcriptAt = (extra: { contextText?: string; contextSource?: string } = {}) => ({
+  updatedAt: new Date("2026-09-20T11:00:00Z"),
+  rawText: "spoken",
+  cleanText: null,
+  contextText: null,
+  contextSource: null,
+  ...extra,
+});
+
+test("with no context layer the message just says the notes are behind", () => {
+  assert.equal(
+    staleNotesMessage(older, transcriptAt(), true),
+    "These notes were written before the current transcript."
   );
-  assert.match(message ?? "", /recording isn't in them yet/);
+});
+
+test("a context layer and no audio names the attached material", () => {
+  assert.equal(
+    staleNotesMessage(older, transcriptAt({ contextText: "Slide 1", contextSource: "import:slides" }), false),
+    "These notes don't include the slides attached to this lecture."
+  );
+  assert.equal(
+    staleNotesMessage(older, transcriptAt({ contextText: "chapter three", contextSource: "import" }), false),
+    "These notes don't include the reading attached to this lecture."
+  );
+});
+
+test("with both layers the message claims nothing about which one changed", () => {
+  // Attaching a deck to a recorded lecture used to claim the recording was
+  // missing from the notes, which was backwards.
+  assert.equal(
+    staleNotesMessage(older, transcriptAt({ contextText: "Slide 1", contextSource: "import:slides" }), true),
+    "These notes were written before the current transcript."
+  );
 });
 
 test("notes newer than the transcript are not stale", () => {
   assert.equal(
     staleNotesMessage(
       { updatedAt: new Date("2026-09-20T12:00:00Z") },
-      {
-        updatedAt: new Date("2026-09-20T11:00:00Z"),
-        rawText: "spoken",
-        cleanText: null,
-        contextText: "Slide 1",
-        contextSource: "import:slides",
-      }
+      transcriptAt({ contextText: "Slide 1", contextSource: "import:slides" }),
+      true
     ),
     null
   );
 });
 
 test("a page with no notes has nothing to call stale", () => {
-  assert.equal(
-    staleNotesMessage(null, {
-      updatedAt: new Date(),
-      rawText: "spoken",
-      cleanText: null,
-      contextText: null,
-      contextSource: null,
-    }),
-    null
-  );
+  assert.equal(staleNotesMessage(null, transcriptAt(), true), null);
 });

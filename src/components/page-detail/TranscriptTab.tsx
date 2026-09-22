@@ -12,6 +12,7 @@ import { TranscriptView } from "@/components/page-detail/TranscriptView";
 import { SyncedTranscriptPlayer } from "@/components/page-detail/SyncedTranscriptPlayer";
 import { useTasks } from "@/components/tasks/TaskProvider";
 import { postTask } from "@/lib/tasks";
+import { contextKind, contextPreview } from "@/lib/transcript-layer";
 import type { Chapter, TranscriptSegment } from "@/types";
 
 export function TranscriptTab({
@@ -24,7 +25,8 @@ export function TranscriptTab({
   chapters,
   segments,
   materials,
-  hasContext,
+  contextText,
+  contextSource,
   recordingBlocked,
 }: {
   pageId: string;
@@ -37,15 +39,16 @@ export function TranscriptTab({
   segments: TranscriptSegment[];
   /** The course's decks and readings, for attaching one as this lecture's context. */
   materials: { id: string; title: string; kind: string }[];
-  /** Whether a deck or reading is already attached. */
-  hasContext: boolean;
+  /** The attached deck or reading, and which of the two it is. */
+  contextText: string | null;
+  contextSource: string | null;
   /** Set when this page's transcript is imported text and a context layer is
    *  already attached: a recording would overwrite the only copy of that text,
    *  and the transcribe route refuses it. Don't offer what can't be done. */
   recordingBlocked: boolean;
 }) {
   const router = useRouter();
-  const [view, setView] = useState<"clean" | "raw">(cleanText ? "clean" : "raw");
+  const [view, setView] = useState<"clean" | "raw" | "context">(cleanText ? "clean" : "raw");
   const [attaching, setAttaching] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
   const { run, task, clear } = useTasks();
@@ -56,6 +59,19 @@ export function TranscriptTab({
   const cleaning = task(cleanKey)?.status === "running";
   const error = task(chapterKey)?.error ?? task(cleanKey)?.error ?? null;
 
+  const hasContext = contextText !== null;
+  const kind = contextKind(contextSource);
+  // "Cleaned" and "Raw" both describe the audio. The third view is the deck or
+  // reading the lecture was taught over, which nothing else on the page shows.
+  const views = (["clean", "raw", "context"] as const).filter((v) =>
+    v === "clean" ? !!cleanText : v === "context" ? hasContext : true
+  );
+  const viewLabels = {
+    clean: "Cleaned",
+    raw: "Raw + timestamps",
+    context: kind === "slides" ? "Slides" : "Reading",
+  };
+
   const src = `/api/pages/${pageId}/audio`;
   // Audio + timestamped segments get the synced player (click a line to seek,
   // live highlight); it renders both the player and the transcript.
@@ -65,6 +81,7 @@ export function TranscriptTab({
   // download that audio. See the comment on the panel below.
   const holdingTake = session?.pageId === pageId && audioBlob !== null;
   const showClean = view === "clean" && !!cleanText;
+  const showContext = view === "context" && hasContext;
 
   async function detectChapters() {
     clear([chapterKey]);
@@ -95,7 +112,7 @@ export function TranscriptTab({
     if (
       hasContext &&
       !confirm(
-        `Replace the slides attached to this lecture with "${material?.title ?? "that material"}"? The text currently attached is discarded.`
+        `Replace the ${kind} attached to this lecture — “${contextPreview(contextText)}” — with "${material?.title ?? "that material"}"? The text currently attached is discarded.`
       )
     ) {
       return;
@@ -124,7 +141,9 @@ export function TranscriptTab({
   return (
     <div className="flex flex-col gap-5">
       {hasAudio && isVideo && <video controls src={src} className="max-h-80 w-full rounded-xl bg-black" />}
-      {hasAudio && !isVideo && (!synced || showClean) && <audio controls src={src} className="w-full" />}
+      {hasAudio && !isVideo && (!synced || showClean || showContext) && (
+        <audio controls src={src} className="w-full" />
+      )}
 
       {/* The panel also has to be here when audio already exists but this
           lecture still holds an unsaved take: on the transcribe-failure path the
@@ -143,8 +162,9 @@ export function TranscriptTab({
 
       {recordingBlocked && (
         <p className="rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-soft">
-          This page&rsquo;s transcript was imported, and slides or a reading are already attached to it.
-          A recording here would have to overwrite one of them, so record on a new lecture page instead.
+          This page&rsquo;s transcript was imported, and {kind === "slides" ? "slides are" : "a reading is"}{" "}
+          already attached to it. A recording here would have to overwrite one of them, so record on a
+          new lecture page instead.
         </p>
       )}
 
@@ -152,8 +172,8 @@ export function TranscriptTab({
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line px-3 py-2.5 text-[13px] text-ink-soft">
           <span>
             {hasContext
-              ? "Slides are attached to this lecture — the notes use both."
-              : "Taught from a deck? Attach it and the notes will follow its structure."}
+              ? `${kind === "slides" ? "Slides are" : "A reading is"} attached to this lecture — the notes use both.`
+              : "Taught from a deck or a reading? Attach it and the notes will follow its structure."}
           </span>
           <select
             value=""
@@ -177,9 +197,9 @@ export function TranscriptTab({
 
       {transcript && (
         <div className="flex flex-wrap items-center gap-2">
-          {cleanText && (
+          {views.length > 1 && (
             <div className="flex rounded-lg border border-line p-0.5 text-[12.5px] font-medium">
-              {(["clean", "raw"] as const).map((v) => (
+              {views.map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
@@ -188,7 +208,7 @@ export function TranscriptTab({
                     view === v ? "bg-brand-soft text-brand-ink" : "text-muted hover:text-ink-soft"
                   )}
                 >
-                  {v === "clean" ? "Cleaned" : "Raw + timestamps"}
+                  {viewLabels[v]}
                 </button>
               ))}
             </div>
@@ -228,7 +248,9 @@ export function TranscriptTab({
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {showClean && cleanText ? (
+      {showContext && contextText ? (
+        <TranscriptView rawText={contextText} segments={[]} />
+      ) : showClean && cleanText ? (
         <TranscriptView rawText={cleanText} segments={[]} />
       ) : synced ? (
         <SyncedTranscriptPlayer src={src} segments={segments} chapters={chapters} />

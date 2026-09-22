@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { setPageContextSchema } from "@/lib/validation";
-import { SLIDES_TRANSCRIPT_SOURCE } from "@/lib/prompts/summarize";
+import { IMPORT_TRANSCRIPT_SOURCE, SLIDES_TRANSCRIPT_SOURCE } from "@/lib/prompts/summarize";
 import { upsertSearchIndex } from "@/lib/fts";
+import { contextKind } from "@/lib/transcript-layer";
 
 // Attaches a course material to a lecture page as its context layer: the slides
 // or reading the lecture was delivered over. The other direction — recording
@@ -17,14 +18,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const page = await db.page.findUnique({
     where: { id },
-    select: { id: true, folderId: true, transcript: { select: { contextText: true } } },
+    select: {
+      id: true,
+      folderId: true,
+      transcript: { select: { contextText: true, contextSource: true } },
+    },
   });
   if (!page) return jsonError("Page not found", 404);
   if (!page.transcript) {
     return jsonError("This page has no transcript to attach context to yet", 422);
   }
   if (page.transcript.contextText !== null && !result.data.replace) {
-    return jsonError("This lecture already has slides attached.", 409);
+    const attached = contextKind(page.transcript.contextSource) === "slides" ? "slides" : "a reading";
+    return jsonError(`This lecture already has ${attached} attached.`, 409);
   }
 
   const material = await db.material.findUnique({
@@ -42,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     where: { pageId: id },
     data: {
       contextText: material.text,
-      contextSource: material.kind === "SLIDES" ? SLIDES_TRANSCRIPT_SOURCE : "import",
+      contextSource: material.kind === "SLIDES" ? SLIDES_TRANSCRIPT_SOURCE : IMPORT_TRANSCRIPT_SOURCE,
     },
   });
 
