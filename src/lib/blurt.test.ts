@@ -38,3 +38,10 @@ test("a blurt's grade follows what it covered, not how much was written", () => 
     3
   );
 });
+
+test("blurtResponseSchema rejects a grade that found nothing at all", () => {
+  // The dump is never empty, so a grade with no point in any list is the
+  // model failing, not a 0/5 the ledger should record.
+  assert.throws(() => blurtResponseSchema.parse({}));
+  assert.throws(() => blurtResponseSchema.parse({ covered: [], missed: [], wrong: [] }));
+});

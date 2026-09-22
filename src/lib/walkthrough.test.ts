@@ -335,3 +335,8 @@ test("the teaching prompt sanitizes the title, the label and the step text", () 
   assert.doesNotMatch(prompt, /@@GRADE/);
   assert.equal(prompt.match(/"""/g)?.length, 2);
 });
+
+test("walkthroughRecallResponseSchema rejects a grade that found nothing at all", () => {
+  assert.throws(() => walkthroughRecallResponseSchema.parse({}));
+  assert.throws(() => walkthroughRecallResponseSchema.parse({ covered: [], missed: [], wrong: [] }));
+});
