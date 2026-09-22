@@ -249,34 +249,41 @@ export function WalkthroughRunner({
             </p>
           )}
 
-          {marked && (
-            <div
-              role="status"
-              className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-[13px]"
-            >
-              <p className="font-medium text-ink">
-                Scored {marked.quality}/5
-                {marked.cardsCreated > 0
-                  ? ` · ${marked.cardsCreated} card${marked.cardsCreated === 1 ? "" : "s"} made from what you missed`
-                  : ""}
-              </p>
-              {marked.feedback.missed.length > 0 && (
-                <div>
-                  <p className="font-medium text-ink">You didn&apos;t mention</p>
-                  <ul className="list-disc pl-5 text-muted">
-                    {marked.feedback.missed.map((point, i) => (
-                      <li key={i}>{point}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {marked.feedback.wrong.map((item, i) => (
-                <p key={i} className="text-muted">
-                  <span className="text-ink">{item.claim}</span> — {item.correction}
+          {/* Mounted before any result so screen readers announce the score when it lands. */}
+          <div
+            role="status"
+            className={
+              marked
+                ? "flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-[13px]"
+                : "sr-only"
+            }
+          >
+            {marked && (
+              <>
+                <p className="font-medium text-ink">
+                  Scored {marked.quality}/5
+                  {marked.cardsCreated > 0
+                    ? ` · ${marked.cardsCreated} card${marked.cardsCreated === 1 ? "" : "s"} made from what you missed`
+                    : ""}
                 </p>
-              ))}
-            </div>
-          )}
+                {marked.feedback.missed.length > 0 && (
+                  <div>
+                    <p className="font-medium text-ink">You didn&apos;t mention</p>
+                    <ul className="list-disc pl-5 text-muted">
+                      {marked.feedback.missed.map((point, i) => (
+                        <li key={i}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {marked.feedback.wrong.map((item, i) => (
+                  <p key={i} className="text-muted">
+                    <span className="text-ink">{item.claim}</span> — {item.correction}
+                  </p>
+                ))}
+              </>
+            )}
+          </div>
 
           {revealed && (
             <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface px-4 py-3">
