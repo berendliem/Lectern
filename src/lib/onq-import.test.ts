@@ -8,6 +8,7 @@ import {
   isSessionError,
   materialFromTopic,
   runImport,
+  selectAllState,
   type ImportOutcome,
   type ImportTarget,
 } from "./onq-import.ts";
@@ -81,6 +82,16 @@ test("pre-ticks what is new or changed, nothing else", () => {
     [{ onqTopicId: 11, onqLastModified: "2026-09-01T00:00:00.000Z" }]
   );
   assert.deepEqual(defaultSelection(annotated), [10]);
+});
+
+test("the select-all box reads the pre-ticked set, not everything ticked", () => {
+  const defaults = [10, 12];
+  assert.equal(selectAllState(new Set([10, 12]), defaults), "all");
+  assert.equal(selectAllState(new Set([10, 12, 11]), defaults), "all");
+  assert.equal(selectAllState(new Set([12]), defaults), "some");
+  assert.equal(selectAllState(new Set(), defaults), "none");
+  // Re-ticking an already-imported file alone is not "some of the new ones".
+  assert.equal(selectAllState(new Set([11]), defaults), "none");
 });
 
 test("matches a Lectern course to an onQ course by its number", () => {

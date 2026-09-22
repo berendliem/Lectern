@@ -11,6 +11,7 @@ import {
   bestCourseMatch,
   defaultSelection,
   runImport,
+  selectAllState,
   type AnnotatedModule,
   type ImportOutcome,
   type ImportSummary,
@@ -140,6 +141,17 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
     });
   }
 
+  /** Ticking adds the new and changed files; unticking clears every tick, so one file is two clicks away. */
+  function setAll(on: boolean) {
+    setView((v) => {
+      if (v.step !== "pick") return v;
+      return { ...v, selected: on ? new Set([...v.selected, ...defaultSelection(v.modules)]) : new Set<number>() };
+    });
+  }
+
+  const defaults = view.step === "pick" ? defaultSelection(view.modules) : [];
+  const allState = view.step === "pick" ? selectAllState(view.selected, defaults) : "none";
+
   async function startImport(modules: AnnotatedModule[], selected: Set<number>) {
     const targets: ImportTarget[] = modules.flatMap((m) =>
       m.topics
@@ -268,6 +280,19 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
 
           {!error && view.step === "pick" && (
             <>
+              {defaults.length > 0 && (
+                <label className="flex items-baseline gap-2 text-[14px] font-medium">
+                  <input
+                    type="checkbox"
+                    checked={allState === "all"}
+                    ref={(el) => {
+                      if (el) el.indeterminate = allState === "some";
+                    }}
+                    onChange={() => setAll(allState !== "all")}
+                  />
+                  All new and changed ({defaults.length})
+                </label>
+              )}
               <div className="flex max-h-[55vh] flex-col gap-3 overflow-y-auto pr-1">
                 {view.modules
                   .filter((m) => m.topics.length > 0)

@@ -66,6 +66,17 @@ export function defaultSelection(modules: AnnotatedModule[]): number[] {
   );
 }
 
+/**
+ * Where the dialog's select-all box stands. It is measured against the
+ * pre-ticked set, not every row: ticking it restores new and changed files
+ * only, so "select all" never quietly re-imports what is already here.
+ */
+export function selectAllState(selected: ReadonlySet<number>, defaults: readonly number[]): "all" | "some" | "none" {
+  const ticked = defaults.filter((id) => selected.has(id)).length;
+  if (ticked === 0) return "none";
+  return ticked === defaults.length ? "all" : "some";
+}
+
 // "CISC102" and "CISC 102" have to meet, so letters and digits split apart.
 const tokens = (name: string): string[] => name.toLowerCase().match(/[a-z]+|\d+/g) ?? [];
 
