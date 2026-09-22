@@ -16,9 +16,9 @@ import { WALKTHROUGH_SOURCE_TERM } from "@/lib/walkthrough";
 const RETRY_MESSAGE = "The model's response didn't match the expected format. You can retry this step.";
 
 /**
- * The student says what they remember of one step, before reading the
- * explanation again. What they missed becomes cards, the attempt becomes one
- * ledger row, and the walkthrough moves on.
+ * The student answers the step's question from memory, before reading the
+ * explanation again. What the question required and they missed becomes cards,
+ * the attempt becomes one ledger row, and the walkthrough moves on.
  */
 export async function POST(
   req: NextRequest,
@@ -38,7 +38,8 @@ export async function POST(
     },
   });
   if (!step || step.walkthrough.materialId !== id) return jsonError("Step not found", 404);
-  if (!step.explanation) return jsonError("This step hasn't been written yet", 409);
+  const { explanation, recallPrompt } = step;
+  if (!explanation || !recallPrompt) return jsonError("This step hasn't been written yet", 409);
 
   let parsed;
   try {
@@ -47,7 +48,8 @@ export async function POST(
       systemPrompt: WALKTHROUGH_RECALL_SYSTEM_PROMPT,
       userPrompt: buildWalkthroughRecallUserPrompt(
         step.sourceText,
-        step.explanation,
+        explanation,
+        recallPrompt,
         result.data.answer
       ),
     });
