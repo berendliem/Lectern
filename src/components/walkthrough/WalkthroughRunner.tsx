@@ -228,7 +228,7 @@ export function WalkthroughRunner({
             disabled={marking || revealed}
             rows={5}
             maxLength={4000}
-            placeholder="What do you remember about this step?"
+            placeholder="Answer from memory…"
             aria-labelledby={recallPromptId}
           />
 
@@ -250,7 +250,10 @@ export function WalkthroughRunner({
           )}
 
           {marked && (
-            <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-[13px]">
+            <div
+              role="status"
+              className="flex flex-col gap-2 rounded-xl border border-line bg-surface px-4 py-3 text-[13px]"
+            >
               <p className="font-medium text-ink">
                 Scored {marked.quality}/5
                 {marked.cardsCreated > 0

@@ -176,13 +176,19 @@ function linesOf(text: string): Line[] {
  * substring — the same anchoring `^Slide N:` gives splitSlides. A heading
  * that also shows up mid-sentence in an earlier section's prose ("as Bar
  * covers below") cannot masquerade as the heading itself; only a line whose
- * trimmed content equals or starts with the heading counts.
+ * trimmed content equals the heading, or starts with it at a word boundary
+ * ("Introduction: the setup", not "Introductions are due"), counts.
  */
 function findHeadingLine(lines: Line[], heading: string, from: number): Line | null {
   const candidates = lines.filter((line) => line.start >= from);
   const exact = candidates.find((line) => line.content.trim() === heading);
   if (exact) return exact;
-  return candidates.find((line) => line.content.trim().startsWith(heading)) ?? null;
+  return (
+    candidates.find((line) => {
+      const content = line.content.trim();
+      return content.startsWith(heading) && !/[\p{L}\p{N}]/u.test(content.charAt(heading.length));
+    }) ?? null
+  );
 }
 
 export function splitSections(text: string, headings: string[]): WalkthroughStepSeed[] {

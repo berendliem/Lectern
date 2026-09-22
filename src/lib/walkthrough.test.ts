@@ -107,6 +107,21 @@ test("splitSections skips a heading that only ever appears mid-line", () => {
   assert.equal(steps[0].label, "The whole text");
 });
 
+test("splitSections cuts on a heading prefix only at a word boundary", () => {
+  const reading = [
+    "Setup",
+    "Introductions are due first.",
+    "Introductionary notes follow.",
+    "",
+    "Introduction: the setup",
+    "Real content.",
+  ].join("\n");
+  const steps = splitSections(reading, ["Setup", "Introduction"]);
+  assert.equal(steps.length, 2);
+  assert.match(steps[0].sourceText, /Introductionary notes follow\.$/);
+  assert.match(steps[1].sourceText, /^Introduction: the setup\n/);
+});
+
 test("walkthroughOutlineResponseSchema defaults a missing heading list to empty", () => {
   assert.deepEqual(walkthroughOutlineResponseSchema.parse({}).headings, []);
 });
