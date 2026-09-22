@@ -31,7 +31,7 @@ this, one piece at a time."
 | Persistence | Steps, the explanation written for each, and the current step index all persist |
 | Recall | Answering a step writes one `ReviewLog` (`RecallKind.WALKTHROUGH`) and turns missed points into flashcards |
 | Kind tailoring | Same engine, different prompt: a deck's bullets are shorthand to expand, a reading is an argument to follow |
-| Regeneration | None in v1. Steps are split once, from the material's text at the time; an onQ re-import that rewrites `Material.text` leaves the walkthrough on its old steps (see Out of scope) |
+| Regeneration | Steps are split once, from the material's text at the time. `Walkthrough.sourceHash` fingerprints that text; when an onQ re-import changes it, the learn page offers a rebuild whose confirm names what goes |
 
 Rejected: generating every step in one completion and storing it as JSON on the
 material (a sixty-slide deck becomes one huge, slow, truncation-prone call, and
@@ -211,16 +211,18 @@ Prefetching the next step's teaching call; a regenerate action; walkthroughs for
 SYLLABUS and OTHER materials; spoken playback of a step. Prefetching is the first
 one worth revisiting, and only once a step's wait is actually annoying.
 
-Known gap: a re-imported material keeps its old walkthrough. An onQ re-import
-rewrites `Material.text`, but the walkthrough's steps were split from the text
-as it was, and nothing rebuilds them; rebuilding is a follow-up.
+A re-imported material keeps its old walkthrough until the student rebuilds it
+from the notice on the learn page. Nothing rebuilds on its own: the old steps
+still work, and a rebuild discards the student's place and every explanation.
 
 ## Changes during implementation
 
 - Heading search is line-anchored: a heading counts only where a whole line equals or starts with it, so a heading named mid-sentence in earlier prose cannot cut there.
 - Steps are capped at 12,000 characters (`MAX_STEP_CHARS`, one export shared by the splitter and the prompts); a longer step is split on paragraph boundaries into "Label (2 of 3)" steps.
 - Teach is first-writer-wins: concurrent teach calls on one step both return the pair that was stored first.
-- Back and Next are disabled while an answer is being marked.
+- Answering state is held per step, so Back and Next stay usable while an answer is marked and the mark lands on its own step. The server advances the student's place only if they are still on the step that was marked.
+- A step answered on an earlier visit opens revealed with its last score (read back from the ledger), and offers "Answer again" instead of asking again.
+- A grade with nothing in covered, missed or wrong is refused as a format error and retried, never scored 0/5.
 - One `toStepView` in `src/lib/walkthrough.ts` shapes a step row for the client, used by every route and the learn page.
-- Regenerating a material's flashcards keeps its walkthrough cards, and the confirm counts them apart.
+- Regenerating a material's or a lecture's flashcards keeps every card earned from the student's own misses (walkthrough, blurt, and the ledger's "Missed N×" cards), and the confirm counts them apart.
 

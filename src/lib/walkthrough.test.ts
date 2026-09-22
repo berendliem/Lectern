@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MAX_STEP_CHARS, sourceHash, splitSections, splitSlides, toStepView } from "./walkthrough.ts";
+import { MAX_STEP_CHARS, lastScores, sourceHash, splitSections, splitSlides, toStepView } from "./walkthrough.ts";
 import {
   walkthroughOutlineResponseSchema,
   walkthroughRecallResponseSchema,
@@ -346,4 +346,15 @@ test("sourceHash is stable for one text and changes with it", async () => {
   assert.equal(a, await sourceHash("Slide 1: Cells\nThe cell is the unit of life."));
   assert.match(a, /^[0-9a-f]{64}$/);
   assert.notEqual(a, await sourceHash("Slide 1: Cells\nThe cell is the unit of life!"));
+});
+
+test("lastScores keeps each step's latest ledger score and ignores other rows", () => {
+  const row = (stepId: string, quality: number) => ({ quality, detail: JSON.stringify({ stepId, step: "Slide 1" }) });
+  assert.deepEqual(
+    lastScores(
+      [row("a", 2), row("b", 5), row("a", 4), row("old", 1), { quality: 3, detail: null }, { quality: 3, detail: "{" }],
+      ["a", "b", "c"]
+    ),
+    { a: 4, b: 5 }
+  );
 });

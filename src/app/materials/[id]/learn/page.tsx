@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { RebuildNotice } from "@/components/walkthrough/RebuildNotice";
 import { WalkthroughRunner } from "@/components/walkthrough/WalkthroughRunner";
-import { sourceHash, toStepView } from "@/lib/walkthrough";
+import { lastScores, sourceHash, toStepView } from "@/lib/walkthrough";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,12 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
   // without one means a stale link or a deleted material either way.
   if (!material || !material.walkthrough || material.walkthrough.steps.length === 0) notFound();
   const { walkthrough } = material;
+
+  const attempts = await db.reviewLog.findMany({
+    where: { materialId: id, kind: "WALKTHROUGH" },
+    orderBy: { reviewedAt: "asc" },
+    select: { quality: true, detail: true },
+  });
 
   // Null is a walkthrough from before the fingerprint, filled on its next
   // resume; it is not evidence of a change.
@@ -55,6 +61,7 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
         materialId={material.id}
         folderId={material.folderId}
         startIndex={walkthrough.stepIndex}
+        lastScores={lastScores(attempts, walkthrough.steps.map((step) => step.id))}
         steps={walkthrough.steps.map(toStepView)}
       />
     </main>

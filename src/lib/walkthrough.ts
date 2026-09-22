@@ -25,6 +25,30 @@ export async function sourceHash(text: string): Promise<string> {
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Each step's latest score, read back from the ledger rows the recall route
+ * writes, so a step answered on an earlier visit shows how it went instead of
+ * asking again. `attempts` is oldest first. Rows for steps not in `stepIds`
+ * (a walkthrough since rebuilt) are ignored.
+ */
+export function lastScores(
+  attempts: { quality: number; detail: string | null }[],
+  stepIds: string[]
+): Record<string, number> {
+  const wanted = new Set(stepIds);
+  const scores: Record<string, number> = {};
+  for (const { quality, detail } of attempts) {
+    let stepId: unknown;
+    try {
+      stepId = detail ? (JSON.parse(detail) as { stepId?: unknown }).stepId : undefined;
+    } catch {
+      continue;
+    }
+    if (typeof stepId === "string" && wanted.has(stepId)) scores[stepId] = quality;
+  }
+  return scores;
+}
+
 export type WalkthroughStepSeed = { ordinal: number; label: string; sourceText: string };
 
 /** One step as the client sees it, once it exists as a row. */

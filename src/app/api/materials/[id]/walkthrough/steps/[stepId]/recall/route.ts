@@ -115,6 +115,8 @@ export async function POST(
 
   // Advancing is part of the same write: a student whose answer was graded and
   // whose cards were made should not land back on the step they just finished.
+  // Only from this step, though: the student can move on while the answer is
+  // being marked, and the place they moved to wins.
   const stepIndex = Math.min(step.ordinal + 1, Math.max(0, step.walkthrough._count.steps - 1));
 
   // One transaction, for the reason the blurt route gives: cards without the
@@ -134,7 +136,10 @@ export async function POST(
         ]
       : []),
     db.reviewLog.create({ data: recallRow(event) }),
-    db.walkthrough.update({ where: { id: step.walkthroughId }, data: { stepIndex } }),
+    db.walkthrough.updateMany({
+      where: { id: step.walkthroughId, stepIndex: step.ordinal },
+      data: { stepIndex },
+    }),
   ]);
 
   // Outside the transaction, and caught: everything above is committed by now,
@@ -149,5 +154,5 @@ export async function POST(
     );
   }
 
-  return NextResponse.json({ feedback: parsed, quality, cardsCreated: cards.length, stepIndex });
+  return NextResponse.json({ feedback: parsed, quality, cardsCreated: cards.length });
 }
