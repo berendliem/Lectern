@@ -23,9 +23,18 @@ type StepState = {
   marked: Marked | null;
   revealed: boolean;
   markError: string | null;
+  /** The latest score on this step, from the ledger or from this visit. */
+  score: number | null;
 };
 
-const BLANK: StepState = { answer: "", marking: false, marked: null, revealed: false, markError: null };
+const BLANK: StepState = {
+  answer: "",
+  marking: false,
+  marked: null,
+  revealed: false,
+  markError: null,
+  score: null,
+};
 
 export function WalkthroughRunner({
   materialId,
@@ -52,15 +61,20 @@ export function WalkthroughRunner({
   // rather than on whichever one is showing. A step answered on an earlier
   // visit opens revealed, with its last score, instead of asking again.
   const [byStep, setByStep] = useState<Record<string, StepState>>(() =>
-    Object.fromEntries(Object.keys(lastScores).map((id) => [id, { ...BLANK, revealed: true }]))
+    Object.fromEntries(
+      Object.entries(lastScores).map(([id, score]) => [id, { ...BLANK, revealed: true, score }])
+    )
   );
   // teachError gets a Retry button that re-runs teach(); a step's markError is
   // shown inline under its Answer row with no Retry button, because the answer
   // is still in the box and pressing Answer again IS the retry.
   const [teachError, setTeachError] = useState<string | null>(null);
+  // A mark that lands after the student has moved on would otherwise be
+  // silent, and a failed one would look saved.
+  const [elsewhere, setElsewhere] = useState<string | null>(null);
 
   const step = steps[index];
-  const { answer, marking, marked, revealed, markError } = byStep[step.id] ?? BLANK;
+  const { answer, marking, marked, revealed, markError, score } = byStep[step.id] ?? BLANK;
   const patch = (id: string, change: Partial<StepState>) =>
     setByStep((prev) => ({ ...prev, [id]: { ...(prev[id] ?? BLANK), ...change } }));
   const recallPromptId = useId();
@@ -147,6 +161,7 @@ export function WalkthroughRunner({
 
   async function submit() {
     const forStepId = step.id;
+    const forLabel = step.label;
     if (!answer.trim() || submitting.current.has(forStepId)) return;
     submitting.current.add(forStepId);
     patch(forStepId, { marking: true, markError: null });
@@ -160,12 +175,16 @@ export function WalkthroughRunner({
         },
         "Network error talking to the local server."
       )) as Marked;
-      patch(forStepId, { marked: data, revealed: true });
+      patch(forStepId, { marked: data, revealed: true, score: data.quality });
+      if (shownStepId.current !== forStepId) setElsewhere(`${forLabel}: scored ${data.quality}/5.`);
     } catch (e) {
       // The answer stays in the box and the Answer button re-enables: a
       // failed marking must not cost the typing, and pressing Answer again
       // is the retry, not a separate Retry button.
       patch(forStepId, { markError: e instanceof Error ? e.message : "Could not mark your answer." });
+      if (shownStepId.current !== forStepId) {
+        setElsewhere(`${forLabel}: your answer couldn't be marked. Go back to it to try again.`);
+      }
     } finally {
       submitting.current.delete(forStepId);
       patch(forStepId, { marking: false });
@@ -176,6 +195,7 @@ export function WalkthroughRunner({
     const next = Math.max(0, Math.min(to, steps.length - 1));
     setIndex(next);
     setTeachError(null);
+    setElsewhere(null);
     // Position is persisted so a refresh lands here again. A failure is silent
     // on purpose: the student has already moved, and a message about
     // bookkeeping would interrupt studying to report nothing they can act on.
@@ -196,6 +216,10 @@ export function WalkthroughRunner({
     <div className="flex flex-col gap-4">
       <p className="text-[12.5px] font-medium uppercase tracking-wide text-muted-2">
         {step.label} · {index + 1} of {steps.length}
+      </p>
+
+      <p role="status" className={elsewhere ? "text-[13px] text-muted" : "sr-only"}>
+        {elsewhere}
       </p>
 
       {teachError && (
@@ -252,7 +276,7 @@ export function WalkthroughRunner({
                 variant="ghost"
                 onClick={() => patch(step.id, { answer: "", marked: null, revealed: false, markError: null })}
               >
-                Answer again
+                {score === null ? "Answer it" : "Answer again"}
               </Button>
             ) : (
               <Button variant="ghost" onClick={() => patch(step.id, { revealed: true })} disabled={marking}>
@@ -303,8 +327,8 @@ export function WalkthroughRunner({
             )}
           </div>
 
-          {revealed && !marked && lastScores[step.id] !== undefined && (
-            <p className="text-[13px] text-muted">Last time you scored {lastScores[step.id]}/5 on this step.</p>
+          {revealed && !marked && score !== null && (
+            <p className="text-[13px] text-muted">Last time you scored {score}/5 on this step.</p>
           )}
 
           {revealed && (

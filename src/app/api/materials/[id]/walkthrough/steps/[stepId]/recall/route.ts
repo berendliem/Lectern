@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { assertSingleParent } from "@/lib/cards";
+import { WALKTHROUGH_SOURCE_TERM, assertSingleParent } from "@/lib/cards";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
 import {
   WALKTHROUGH_RECALL_SYSTEM_PROMPT,
@@ -11,7 +11,6 @@ import {
 import { normalizeQuality } from "@/lib/recall";
 import { recallRow, settleMisconceptions, type RecallEvent } from "@/lib/recall-log";
 import { walkthroughRecallResponseSchema, walkthroughRecallSubmitSchema } from "@/lib/validation";
-import { WALKTHROUGH_SOURCE_TERM } from "@/lib/walkthrough";
 
 const RETRY_MESSAGE = "The model's response didn't match the expected format. You can retry this step.";
 

@@ -29,10 +29,14 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
     select: { quality: true, detail: true },
   });
 
-  // Null is a walkthrough from before the fingerprint, filled on its next
-  // resume; it is not evidence of a change.
-  const stale =
-    walkthrough.sourceHash !== null && walkthrough.sourceHash !== (await sourceHash(material.text));
+  // A walkthrough made before the fingerprint existed takes today's text as
+  // its own, on its first visit since: the column is younger than any
+  // re-import it could have missed.
+  const hash = sourceHash(material.text);
+  if (walkthrough.sourceHash === null) {
+    await db.walkthrough.update({ where: { id: walkthrough.id }, data: { sourceHash: hash } });
+  }
+  const stale = walkthrough.sourceHash !== null && walkthrough.sourceHash !== hash;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
@@ -50,7 +54,6 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
       {stale && (
         <RebuildNotice
           materialId={material.id}
-          folderId={material.folderId}
           written={walkthrough.steps.filter((step) => step.explanation !== null).length}
         />
       )}

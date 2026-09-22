@@ -37,26 +37,23 @@ function view(walkthrough: { id: string; stepIndex: number; steps: WalkthroughSt
  * Idempotent on purpose: the button that calls this is the button a student
  * clicks to resume, and rebuilding would silently drop their position and every
  * explanation already paid for.
+ *
+ * `?rebuild=1` is the one exception, for a material whose text has changed
+ * underneath its walkthrough. The new steps are built first and swapped in
+ * with the old ones' delete in one transaction, so a failed outline call leaves
+ * the old walkthrough exactly as it was. Cards made from misses and the recall
+ * ledger hang off the material and stay.
  */
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const rebuild = req.nextUrl.searchParams.get("rebuild") === "1";
 
   const material = await db.material.findUnique({
     where: { id },
     include: { walkthrough: { include: { steps: { orderBy: { ordinal: "asc" } } } } },
   });
   if (!material) return jsonError("Material not found", 404);
-  if (material.walkthrough) {
-    // Made before the fingerprint existed. The text it was split from is
-    // taken to be today's: the column is younger than any re-import since.
-    if (material.walkthrough.sourceHash === null) {
-      await db.walkthrough.update({
-        where: { id: material.walkthrough.id },
-        data: { sourceHash: await sourceHash(material.text) },
-      });
-    }
-    return NextResponse.json({ walkthrough: view(material.walkthrough) });
-  }
+  if (material.walkthrough && !rebuild) return NextResponse.json({ walkthrough: view(material.walkthrough) });
 
   if (!WALKABLE.includes(material.kind)) {
     return jsonError("Only slide decks and readings can be walked through", 422);
@@ -93,10 +90,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   let walkthrough;
   try {
-    walkthrough = await db.walkthrough.create({
+    const create = db.walkthrough.create({
       data: {
         materialId: id,
-        sourceHash: await sourceHash(material.text),
+        sourceHash: sourceHash(material.text),
         steps: {
           create: seeds.map((seed) => ({
             ordinal: seed.ordinal,
@@ -107,6 +104,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       },
       include: { steps: { orderBy: { ordinal: "asc" } } },
     });
+    walkthrough = rebuild
+      ? (await db.$transaction([db.walkthrough.deleteMany({ where: { materialId: id } }), create]))[1]
+      : await create;
   } catch (e) {
     // Unique constraint on Walkthrough.materialId: two POSTs raced past the
     // "no walkthrough yet" check above. The loser didn't fail, it just lost —
@@ -141,17 +141,4 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const stepIndex = Math.min(result.data.stepIndex, Math.max(0, walkthrough._count.steps - 1));
   await db.walkthrough.update({ where: { id: walkthrough.id }, data: { stepIndex } });
   return NextResponse.json({ stepIndex });
-}
-
-/**
- * Discards a walkthrough so the next Learn builds a fresh one, for a material
- * whose text has changed underneath it. The steps, their explanations and the
- * student's place go; the cards made from misses and the recall ledger hang
- * off the material and stay.
- */
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const { count } = await db.walkthrough.deleteMany({ where: { materialId: id } });
-  if (count === 0) return jsonError("This material has no walkthrough", 404);
-  return NextResponse.json({ deleted: true });
 }

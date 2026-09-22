@@ -53,11 +53,11 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
   const audioExt = page.audioFilePath?.split(".").pop() ?? "";
   const isVideo = isVideoExtension(audioExt);
 
-  // Distinct questions this lecture has been failed on — the drill button's
-  // subject matter, and the reason it is offered at all.
   // Regenerating keeps these, so its confirm counts them apart.
   const earnedCardCount = await db.flashcard.count({ where: { pageId: page.id, ...earnedCardFilter } });
 
+  // Distinct questions this lecture has been failed on — the drill button's
+  // subject matter, and the reason it is offered at all.
   const missedCount = await db.quizQuestion.count({
     where: { pageId: page.id, attempts: { some: { isCorrect: false } } },
   });

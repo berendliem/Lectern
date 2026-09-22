@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MAX_SCAN_IMAGE_CHARS, MAX_TEXT_CHARS } from "./limits";
 import { MAX_MASTERY_ATTEMPTS } from "./grading";
+import { isEarnedSourceTerm } from "./cards";
 
 export const createFolderSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -366,7 +367,13 @@ export const flashcardsResponseSchema = z.object({
       z.object({
         prompt: z.string().min(1),
         idealExplanation: z.string().min(1),
-        sourceTerm: z.string().optional(),
+        // A label regenerate keeps is the student's, never the model's: a
+        // generated card wearing one would survive every regenerate.
+        sourceTerm: z
+          .string()
+          .max(200)
+          .optional()
+          .transform((term) => (isEarnedSourceTerm(term) ? undefined : term)),
       })
     )
     .min(1),

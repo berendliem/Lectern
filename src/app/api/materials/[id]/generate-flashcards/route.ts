@@ -32,16 +32,19 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     const parsed = await flashcardsResponseSchema.parseAsync(raw);
 
     // Cards the student earned by missing something are kept: generation
-    // never recreates them.
-    await db.flashcard.deleteMany({ where: { materialId: id, ...generatedCardFilter } });
-    await db.flashcard.createMany({
-      data: parsed.flashcards.map((card) => ({
-        ...assertSingleParent({ materialId: id }),
-        prompt: card.prompt,
-        idealExplanation: card.idealExplanation,
-        sourceTerm: card.sourceTerm,
-      })),
-    });
+    // never recreates them. One transaction, so a failed insert cannot leave
+    // the old cards deleted and nothing in their place.
+    await db.$transaction([
+      db.flashcard.deleteMany({ where: { materialId: id, ...generatedCardFilter } }),
+      db.flashcard.createMany({
+        data: parsed.flashcards.map((card) => ({
+          ...assertSingleParent({ materialId: id }),
+          prompt: card.prompt,
+          idealExplanation: card.idealExplanation,
+          sourceTerm: card.sourceTerm,
+        })),
+      }),
+    ]);
 
     return NextResponse.json({ count: parsed.flashcards.length });
   } catch (e) {

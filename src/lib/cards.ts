@@ -5,8 +5,6 @@
  * assertSingleParent, and every course-scoped read through courseScopeFilter.
  */
 
-import { WALKTHROUGH_SOURCE_TERM } from "./walkthrough.ts";
-
 export type CardParent = { pageId?: string | null; materialId?: string | null };
 
 export function assertSingleParent(
@@ -49,6 +47,9 @@ export function quizlessMaterialsFilter(folderId: string) {
   };
 }
 
+/** Marks a card born from a walkthrough step, so a deck shows where it came from. */
+export const WALKTHROUGH_SOURCE_TERM = "From a walkthrough";
+
 /** Marks a card born from a blurt, so a deck shows where it came from. */
 export const BLURT_SOURCE_TERM = "From a blurt";
 
@@ -67,6 +68,16 @@ export const earnedCardFilter = {
     { sourceTerm: { startsWith: "Missed ", endsWith: "×" } },
   ],
 };
+
+/**
+ * The same labels as `earnedCardFilter`, for a label about to be written.
+ * Case-insensitive on "Missed" because Prisma's `startsWith` is SQLite LIKE,
+ * which ignores ASCII case.
+ */
+export function isEarnedSourceTerm(term: string | null | undefined): boolean {
+  if (!term) return false;
+  return term === WALKTHROUGH_SOURCE_TERM || term === BLURT_SOURCE_TERM || /^missed [\s\S]*×$/i.test(term);
+}
 
 /**
  * Every card a regenerate replaces. `NOT` alone would skip a null sourceTerm,

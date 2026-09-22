@@ -86,7 +86,9 @@ export function FlashcardsTab({
       earnedCount > 0
         ? ` The ${earnedCount} card${earnedCount === 1 ? "" : "s"} made from your own misses ${earnedCount === 1 ? "is" : "are"} kept.`
         : "";
+    // Nothing generated to replace means nothing to warn about.
     if (
+      count > 0 &&
       !confirm(
         `Regenerate flashcards for this lecture? Its ${count} existing card${count === 1 ? "" : "s"} will be replaced, and the review progress on them (intervals and ease) is lost.${keptNote}`
       )

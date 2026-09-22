@@ -8,21 +8,14 @@
  * model names that is not actually in the text is skipped rather than guessed at.
  */
 
-/**
- * Marks a card as born from a walkthrough, so a deck shows where it came from,
- * and so regenerating a material's cards knows these are the student's own
- * misses rather than generated cards it may replace.
- */
-export const WALKTHROUGH_SOURCE_TERM = "From a walkthrough";
+import { createHash } from "node:crypto";
 
 /**
  * Fingerprint of the text a walkthrough was split from, so a re-import that
- * changes the text can be noticed. Web Crypto rather than node:crypto: this
- * module is also bundled for the browser.
+ * changes the text can be noticed.
  */
-export async function sourceHash(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+export function sourceHash(text: string): string {
+  return createHash("sha256").update(text).digest("hex");
 }
 
 /**
