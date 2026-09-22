@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { lectureText } from "@/lib/transcript-layer";
 
 /**
  * Re-syncs the page_search FTS5 row for a page from its current Notes/Transcript/
@@ -19,7 +20,7 @@ export async function upsertSearchIndex(pageId: string) {
   await db.$executeRaw`DELETE FROM page_search WHERE pageId = ${pageId}`;
   await db.$executeRaw`
     INSERT INTO page_search (pageId, title, transcriptText, notesText, flashcardsText)
-    VALUES (${pageId}, ${page.title}, ${page.transcript?.rawText ?? ""}, ${page.notes?.markdown ?? ""}, ${flashcardsText})
+    VALUES (${pageId}, ${page.title}, ${lectureText(page.transcript)}, ${page.notes?.markdown ?? ""}, ${flashcardsText})
   `;
 }
 

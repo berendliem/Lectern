@@ -5,6 +5,7 @@ import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { CHAT_DIAGRAM_CLAUSE, UNTRUSTED_CONTENT_CLAUSE, WEB_SEARCH_CLAUSE } from "@/lib/prompts/shared";
 import { retrieve } from "@/lib/retrieval";
 import { chatRequestSchema } from "@/lib/validation";
+import { lectureText } from "@/lib/transcript-layer";
 
 const MAX_CONTEXT_CHARS = 24_000;
 
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       ? hits.map((h) => `### ${h.title}\n${h.text}`).join("\n\n---\n\n")
       : [
           page.notes ? `NOTES:\n${page.notes.markdown}` : "",
-          page.transcript ? `TRANSCRIPT:\n${page.transcript.rawText}` : "",
+          lectureText(page.transcript),
         ]
           .filter(Boolean)
           .join("\n\n")
