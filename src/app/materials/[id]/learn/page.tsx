@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
 import { WalkthroughRunner } from "@/components/walkthrough/WalkthroughRunner";
+import { toStepView } from "@/lib/walkthrough";
 
 export const dynamic = "force-dynamic";
 
@@ -37,14 +38,7 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
         materialId={material.id}
         folderId={material.folderId}
         startIndex={material.walkthrough.stepIndex}
-        steps={material.walkthrough.steps.map((step) => ({
-          id: step.id,
-          ordinal: step.ordinal,
-          label: step.label,
-          sourceText: step.sourceText,
-          explanation: step.explanation,
-          recallPrompt: step.recallPrompt,
-        }))}
+        steps={material.walkthrough.steps.map(toStepView)}
       />
     </main>
   );

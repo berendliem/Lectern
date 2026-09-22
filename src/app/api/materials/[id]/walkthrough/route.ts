@@ -4,30 +4,25 @@ import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
-import { splitSections, splitSlides, toStepView, type WalkthroughStepSeed } from "@/lib/walkthrough";
+import {
+  splitSections,
+  splitSlides,
+  toStepView,
+  type WalkthroughStepSeed,
+  type WalkthroughStepView,
+} from "@/lib/walkthrough";
 import {
   WALKTHROUGH_OUTLINE_SYSTEM_PROMPT,
   buildWalkthroughOutlineUserPrompt,
 } from "@/lib/prompts/walkthrough";
 import { walkthroughOutlineResponseSchema, walkthroughStepIndexSchema } from "@/lib/validation";
 
-const RETRY_MESSAGE = "The model's response didn't match the expected format. You can retry this step.";
+const RETRY_MESSAGE = "Couldn't plan the walkthrough. Try Learn again.";
 
 /** Only a deck or a reading is walked: a syllabus is a reference document. */
 const WALKABLE: readonly string[] = ["SLIDES", "READING"];
 
-function view(walkthrough: {
-  id: string;
-  stepIndex: number;
-  steps: {
-    id: string;
-    ordinal: number;
-    label: string;
-    sourceText: string;
-    explanation: string | null;
-    recallPrompt: string | null;
-  }[];
-}) {
+function view(walkthrough: { id: string; stepIndex: number; steps: WalkthroughStepView[] }) {
   return {
     id: walkthrough.id,
     stepIndex: walkthrough.stepIndex,

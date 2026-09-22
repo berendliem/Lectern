@@ -47,10 +47,10 @@ export function WalkthroughRunner({
   const step = steps[index];
   const recallPromptId = useId();
 
-  // Whatever step is on screen right now. submit() and teach() capture the
-  // step they started for and check this ref before touching screen state,
-  // so a slow response for a step the student has since left via Next/Back
-  // cannot paint over the step now showing. Synced from an effect rather
+  // Whatever step is on screen right now. teach() captures the step it
+  // started for and checks this ref before touching screen state, so a slow
+  // response for a step the student has since left via Next/Back cannot
+  // paint over the step now showing. Synced from an effect rather
   // than written directly during render (react-hooks/refs forbids mutating a
   // ref in the render body); a passive effect still flushes long before any
   // network response it needs to beat, since the user can't click ahead of
@@ -122,12 +122,10 @@ export function WalkthroughRunner({
     if (!step.recallPrompt && !teachError) void teach();
   }, [step.recallPrompt, teachError, teach]);
 
-  // Back and Next are disabled while marking (see the buttons below), so a
-  // mark response can never land on a different step or a different visit —
-  // that's what let the shown-step checks this guard used to need be
-  // removed. This ref only covers a same-frame double click on Answer that
-  // `disabled` alone can't catch, because React state updates aren't
-  // synchronous.
+  // Guards a same-frame double click on Answer, which `disabled` alone can't
+  // catch because React state updates aren't synchronous. Back and Next are
+  // disabled while marking (see the buttons below), so a mark response always
+  // lands on the step it was sent for.
   const submitting = useRef(false);
 
   async function submit() {

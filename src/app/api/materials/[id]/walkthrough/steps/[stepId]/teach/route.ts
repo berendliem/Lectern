@@ -59,11 +59,11 @@ export async function POST(
   }
 
   // Two callers can race to teach one step — StrictMode's double-run mount
-  // effect is the everyday case, Task 7's runner fires this from one. Only the
-  // first writer's update lands; the loser's write is dropped rather than
-  // overwriting it, and both callers re-read below so they return the same
-  // stored pair instead of one holding a question the other's row disagrees
-  // with by the time Task 6 grades it.
+  // effect is the everyday case, and the walkthrough runner fires this from
+  // one. Only the first writer's update lands; the loser's write is dropped
+  // rather than overwriting it, and both callers re-read below so they return
+  // the same stored pair instead of one holding a question the other's row
+  // disagrees with by the time the recall route grades it.
   await db.walkthroughStep.updateMany({
     where: { id: stepId, explanation: null },
     data: { explanation: parsed.explanation, recallPrompt: parsed.recallPrompt },
