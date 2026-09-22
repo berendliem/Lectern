@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError, markStageFailed } from "@/lib/api-utils";
-import { assertSingleParent } from "@/lib/cards";
+import { assertSingleParent, generatedCardFilter } from "@/lib/cards";
 import { callLLMJSON } from "@/lib/llm";
 import { FLASHCARDS_SYSTEM_PROMPT, buildFlashcardsUserPrompt } from "@/lib/prompts/flashcards";
 import { flashcardsResponseSchema } from "@/lib/validation";
@@ -26,7 +26,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     });
     const parsed = await flashcardsResponseSchema.parseAsync(raw);
 
-    await db.flashcard.deleteMany({ where: { pageId: id } });
+    // Cards the student earned by missing something are kept: generation
+    // never recreates them.
+    await db.flashcard.deleteMany({ where: { pageId: id, ...generatedCardFilter } });
     await db.flashcard.createMany({
       data: parsed.flashcards.map((card) => ({
         ...assertSingleParent({ pageId: id }),

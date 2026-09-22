@@ -15,8 +15,8 @@ export type MaterialSummary = {
   slideCount: number | null;
   createdAt: Date;
   flashcardCount: number;
-  /** Cards born from walkthrough misses: regenerating keeps them. */
-  walkthroughCardCount: number;
+  /** Cards born from the student's own misses: regenerating keeps them. */
+  earnedCardCount: number;
   quizCount: number;
   /** Whether this material has a walkthrough, so delete can say it goes too. */
   hasWalkthrough: boolean;
@@ -89,11 +89,12 @@ export function MaterialList({
     // material with cards that means the scheduling those cards carry —
     // intervals, ease, the review history behind them — goes with them, and
     // the button that does it is labelled with the count, one click away.
-    // Walkthrough cards are the exception the flashcard route leaves alone, so
-    // `existing` counts only what is replaced and `kept` names what survives.
+    // Cards earned from the student's own misses are the exception the
+    // flashcard route leaves alone, so `existing` counts only what is replaced
+    // and `kept` names what survives.
     const keptNote =
       kept > 0
-        ? ` Your ${kept} walkthrough card${kept === 1 ? " is" : "s are"} kept.`
+        ? ` The ${kept} card${kept === 1 ? "" : "s"} made from your own misses ${kept === 1 ? "is" : "are"} kept.`
         : "";
     if (
       existing > 0 &&
@@ -303,8 +304,8 @@ export function MaterialList({
                       material.id,
                       material.title,
                       "flashcards",
-                      material.flashcardCount - material.walkthroughCardCount,
-                      material.walkthroughCardCount
+                      material.flashcardCount - material.earnedCardCount,
+                      material.earnedCardCount
                     )
                   }
                   disabled={generating !== null}

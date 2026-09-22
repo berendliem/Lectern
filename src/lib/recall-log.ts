@@ -11,7 +11,7 @@
  */
 
 import { db } from "./db";
-import { assertSingleParent } from "./cards";
+import { assertSingleParent, missedSourceTerm } from "./cards";
 import {
   RECALL_LEDGER_SINCE,
   RESOLVE_QUALITY,
@@ -197,14 +197,12 @@ async function maybeCardFromMisconception(event: RecallEvent, scope: Scope): Pro
   });
   if (existing) return;
 
-  const sourceTerm = `Missed ${strikes}×`;
-
   await db.flashcard.create({
     data: {
       ...assertSingleParent(parent),
       prompt: `You have missed this ${strikes} times. Explain it in your own words: ${correction}`,
       idealExplanation: correction,
-      sourceTerm,
+      sourceTerm: missedSourceTerm(strikes),
     },
   });
 }

@@ -19,6 +19,7 @@ import { InterviewLaunch } from "@/components/interview/InterviewLaunch";
 import { LectureActions } from "@/components/page-detail/LectureActions";
 import { PretestReveal, type PretestRevealEntry } from "@/components/page/PretestReveal";
 import { isVideoExtension } from "@/lib/audio-storage";
+import { earnedCardFilter } from "@/lib/cards";
 import { RECALL_LEDGER_SINCE } from "@/lib/recall";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
@@ -54,6 +55,9 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
 
   // Distinct questions this lecture has been failed on — the drill button's
   // subject matter, and the reason it is offered at all.
+  // Regenerating keeps these, so its confirm counts them apart.
+  const earnedCardCount = await db.flashcard.count({ where: { pageId: page.id, ...earnedCardFilter } });
+
   const missedCount = await db.quizQuestion.count({
     where: { pageId: page.id, attempts: { some: { isCorrect: false } } },
   });
@@ -134,6 +138,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
               page.flashcards.length > 0 ? (
                 <FlashcardsTab
                   pageId={page.id}
+                  earnedCount={earnedCardCount}
                   flashcards={page.flashcards.map(({ _count, ...card }) => ({ ...card, misses: _count.reviewLogs }))}
                 />
               ) : (

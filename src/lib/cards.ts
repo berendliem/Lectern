@@ -5,6 +5,8 @@
  * assertSingleParent, and every course-scoped read through courseScopeFilter.
  */
 
+import { WALKTHROUGH_SOURCE_TERM } from "./walkthrough.ts";
+
 export type CardParent = { pageId?: string | null; materialId?: string | null };
 
 export function assertSingleParent(
@@ -46,6 +48,32 @@ export function quizlessMaterialsFilter(folderId: string) {
     quizQuestions: { none: {} },
   };
 }
+
+/** Marks a card born from a blurt, so a deck shows where it came from. */
+export const BLURT_SOURCE_TERM = "From a blurt";
+
+/** Marks a card the ledger wrote after the student missed one thing `strikes` times. */
+export const missedSourceTerm = (strikes: number) => `Missed ${strikes}×`;
+
+/**
+ * Cards the student earned by getting something wrong: a walkthrough step, a
+ * blurt, a miss the ledger saw repeatedly. Generation never recreates them, so
+ * regenerating a set replaces only the rest.
+ */
+export const earnedCardFilter = {
+  OR: [
+    { sourceTerm: WALKTHROUGH_SOURCE_TERM },
+    { sourceTerm: BLURT_SOURCE_TERM },
+    { sourceTerm: { startsWith: "Missed ", endsWith: "×" } },
+  ],
+};
+
+/**
+ * Every card a regenerate replaces. `NOT` alone would skip a null sourceTerm,
+ * since SQL's NOT of a comparison with NULL is NULL, and a null one is a
+ * generated card too.
+ */
+export const generatedCardFilter = { OR: [{ sourceTerm: null }, { NOT: earnedCardFilter }] };
 
 export type CardSource =
   | { kind: "lecture"; id: string; title: string; course: string | null }
