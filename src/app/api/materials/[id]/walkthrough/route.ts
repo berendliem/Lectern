@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
-import { splitSections, splitSlides, type WalkthroughStepSeed } from "@/lib/walkthrough";
+import { splitSections, splitSlides, toStepView, type WalkthroughStepSeed } from "@/lib/walkthrough";
 import {
   WALKTHROUGH_OUTLINE_SYSTEM_PROMPT,
   buildWalkthroughOutlineUserPrompt,
@@ -31,14 +31,7 @@ function view(walkthrough: {
   return {
     id: walkthrough.id,
     stepIndex: walkthrough.stepIndex,
-    steps: walkthrough.steps.map((step) => ({
-      id: step.id,
-      ordinal: step.ordinal,
-      label: step.label,
-      sourceText: step.sourceText,
-      explanation: step.explanation,
-      recallPrompt: step.recallPrompt,
-    })),
+    steps: walkthrough.steps.map(toStepView),
   };
 }
 

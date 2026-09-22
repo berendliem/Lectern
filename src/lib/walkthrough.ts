@@ -20,6 +20,18 @@ export type WalkthroughStepView = {
   recallPrompt: string | null;
 };
 
+/** The one place a step row becomes what the client sees. */
+export function toStepView(step: WalkthroughStepView): WalkthroughStepView {
+  return {
+    id: step.id,
+    ordinal: step.ordinal,
+    label: step.label,
+    sourceText: step.sourceText,
+    explanation: step.explanation,
+    recallPrompt: step.recallPrompt,
+  };
+}
+
 /**
  * A slide with less body text than this is a title card, a section divider, or a
  * lone image: it has nothing to teach on its own. A walkthrough that makes you

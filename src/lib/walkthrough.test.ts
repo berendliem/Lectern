@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { splitSections, splitSlides } from "./walkthrough.ts";
+import { splitSections, splitSlides, toStepView } from "./walkthrough.ts";
 import {
   walkthroughOutlineResponseSchema,
   walkthroughRecallResponseSchema,
@@ -141,6 +141,27 @@ test("the teaching prompt tells a deck and a reading apart", () => {
   });
   assert.match(deck, /bullets are shorthand/i);
   assert.match(reading, /move in an argument/i);
+});
+
+test("toStepView strips wider row fields down to the six client fields", () => {
+  const row = {
+    id: "step-1",
+    walkthroughId: "wt-1",
+    ordinal: 0,
+    label: "Slide 1",
+    sourceText: "Slide 1: Intro",
+    explanation: "It introduces the topic.",
+    recallPrompt: "What does slide 1 introduce?",
+    walkthrough: { id: "wt-1", materialId: "mat-1", stepIndex: 0 },
+  };
+  assert.deepEqual(toStepView(row), {
+    id: "step-1",
+    ordinal: 0,
+    label: "Slide 1",
+    sourceText: "Slide 1: Intro",
+    explanation: "It introduces the topic.",
+    recallPrompt: "What does slide 1 introduce?",
+  });
 });
 
 test("the teaching prompt truncates a step's source text at MAX_STEP_CHARS", () => {
