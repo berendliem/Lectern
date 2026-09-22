@@ -12,6 +12,7 @@ import {
   defaultSelection,
   runImport,
   selectAllState,
+  setDefaults,
   type AnnotatedModule,
   type ImportOutcome,
   type ImportSummary,
@@ -141,12 +142,8 @@ export function OnqImportButton({ folderId, folderName }: { folderId: string; fo
     });
   }
 
-  /** Ticking adds the new and changed files; unticking clears every tick, so one file is two clicks away. */
   function setAll(on: boolean) {
-    setView((v) => {
-      if (v.step !== "pick") return v;
-      return { ...v, selected: on ? new Set([...v.selected, ...defaultSelection(v.modules)]) : new Set<number>() };
-    });
+    setView((v) => (v.step === "pick" ? { ...v, selected: setDefaults(v.selected, defaults, on) } : v));
   }
 
   const defaults = view.step === "pick" ? defaultSelection(view.modules) : [];
