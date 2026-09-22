@@ -60,16 +60,17 @@ export function NotesTab({
   const editTask = task(editKey);
   const busy = editTask?.status === "running" || undoBusy;
   const summarizeKey = `page:${pageId}:summarize`;
-  const resummarizing = task(summarizeKey)?.status === "running";
+  const summarizeTask = task(summarizeKey);
+  const resummarizing = summarizeTask?.status === "running";
 
   async function regenerate() {
-    await run(
+    const outcome = await run(
       { key: summarizeKey, label: "Rewriting the notes with the recording…", href: `/pages/${pageId}` },
       async () => {
         await postTask(`/api/pages/${pageId}/summarize`, "Could not rewrite these notes. Try again.");
       }
     );
-    router.refresh();
+    if (outcome.status === "done") router.refresh();
   }
 
   // Server refreshes (router.refresh after an edit or another pipeline step)
@@ -194,16 +195,21 @@ export function NotesTab({
   return (
     <div className="flex flex-col gap-4">
       {staleMessage && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-soft">
-          <span>{staleMessage}</span>
-          <Button variant="secondary" onClick={regenerate} disabled={busy || resummarizing} className="ml-auto">
-            {resummarizing ? (
-              <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-            ) : (
-              <Wand2 className="h-4 w-4" strokeWidth={2} />
-            )}
-            Rewrite with the recording
-          </Button>
+        <div className="flex flex-col gap-2 rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-soft">
+          <div className="flex flex-wrap items-center gap-3">
+            <span>{staleMessage}</span>
+            <Button variant="secondary" onClick={regenerate} disabled={busy || resummarizing} className="ml-auto">
+              {resummarizing ? (
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
+              ) : (
+                <Wand2 className="h-4 w-4" strokeWidth={2} />
+              )}
+              Rewrite with the recording
+            </Button>
+          </div>
+          {summarizeTask?.error && (
+            <p className="text-[12.5px] text-red-600">{summarizeTask.error}</p>
+          )}
         </div>
       )}
       <form
