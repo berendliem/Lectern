@@ -23,6 +23,8 @@ export function TranscriptTab({
   cleanText,
   chapters,
   segments,
+  materials,
+  hasContext,
 }: {
   pageId: string;
   pageTitle: string;
@@ -32,9 +34,15 @@ export function TranscriptTab({
   cleanText: string | null;
   chapters: Chapter[];
   segments: TranscriptSegment[];
+  /** The course's decks and readings, for attaching one as this lecture's context. */
+  materials: { id: string; title: string; kind: string }[];
+  /** Whether a deck or reading is already attached. */
+  hasContext: boolean;
 }) {
   const router = useRouter();
   const [view, setView] = useState<"clean" | "raw">(cleanText ? "clean" : "raw");
+  const [attaching, setAttaching] = useState(false);
+  const [attachError, setAttachError] = useState<string | null>(null);
   const { run, task, clear } = useTasks();
   const { session, audioBlob } = useRecording();
   const chapterKey = `page:${pageId}:chapters`;
@@ -70,6 +78,40 @@ export function TranscriptTab({
     router.refresh();
   }
 
+  async function attachContext(materialId: string) {
+    if (!materialId) return;
+    const material = materials.find((m) => m.id === materialId);
+    // Replacing a context layer throws away the text already attached, and on a
+    // page whose material has since been deleted this page is its only holder.
+    if (
+      hasContext &&
+      !confirm(
+        `Replace the slides attached to this lecture with "${material?.title ?? "that material"}"? The text currently attached is discarded.`
+      )
+    ) {
+      return;
+    }
+    setAttaching(true);
+    setAttachError(null);
+    try {
+      const res = await fetch(`/api/pages/${pageId}/context`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materialId, replace: hasContext }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setAttachError(data.error ?? "Could not attach that material.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setAttachError("Network error talking to the local server.");
+    } finally {
+      setAttaching(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {hasAudio && isVideo && <video controls src={src} className="max-h-80 w-full rounded-xl bg-black" />}
@@ -89,6 +131,33 @@ export function TranscriptTab({
           {!hasAudio && <UrlImport pageId={pageId} />}
         </div>
       )}
+
+      {transcript && materials.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line px-3 py-2.5 text-[13px] text-ink-soft">
+          <span>
+            {hasContext
+              ? "Slides are attached to this lecture — the notes use both."
+              : "Taught from a deck? Attach it and the notes will follow its structure."}
+          </span>
+          <select
+            value=""
+            onChange={(e) => attachContext(e.target.value)}
+            disabled={attaching}
+            aria-label="Attach a deck or reading as this lecture's context"
+            className="ml-auto rounded-lg border border-line bg-surface px-2 py-1 text-[12.5px]"
+          >
+            <option value="" disabled>
+              {hasContext ? "Replace with…" : "Use a deck as context…"}
+            </option>
+            {materials.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {attachError && <p className="text-[13px] font-medium text-red-700">{attachError}</p>}
 
       {transcript && (
         <div className="flex flex-wrap items-center gap-2">

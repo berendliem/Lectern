@@ -64,6 +64,16 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
     ? await buildPretestReveal(page.id, page.folderId)
     : [];
 
+  // The course's decks and readings, for attaching one to this lecture as the
+  // text it was taught over.
+  const materials = page.folderId
+    ? await db.material.findMany({
+        where: { folderId: page.folderId, kind: { in: ["SLIDES", "READING"] } },
+        select: { id: true, title: true, kind: true },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
   return (
     <div className="flex max-w-4xl flex-col gap-5">
       <PageDetailHeader
@@ -111,6 +121,8 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
                 cleanText={page.transcript?.cleanText ?? null}
                 chapters={page.transcript?.chapters ? JSON.parse(page.transcript.chapters) : []}
                 segments={segments}
+                materials={materials}
+                hasContext={!!page.transcript?.contextText}
               />
             ),
           },

@@ -5,6 +5,7 @@ import {
   importOnqTopicSchema,
   learnMoreResponseSchema,
   quizResponseSchema,
+  setPageContextSchema,
   updateFlashcardSchema,
   updateFolderSchema,
 } from "./validation.ts";
@@ -109,4 +110,15 @@ test("an onQ import names one topic by integer id", async () => {
   await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: -1 }));
   await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: 2 ** 40 }));
   await assert.rejects(importOnqTopicSchema.parseAsync({ topicId: 7, moduleTitle: "x".repeat(301) }));
+});
+
+test("attaching a deck as context names one material and defaults to not replacing", () => {
+  assert.deepEqual(setPageContextSchema.parse({ materialId: "cm123" }), {
+    materialId: "cm123",
+    replace: false,
+  });
+});
+
+test("an empty material id is rejected", () => {
+  assert.throws(() => setPageContextSchema.parse({ materialId: "  " }));
 });
