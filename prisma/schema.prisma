@@ -81,6 +81,7 @@ enum RecallKind {
   INTERVIEW
   BLURT
   PRETEST
+  WALKTHROUGH
 }
 
 /// What a calendar event is to a student. Set by the classifier in
@@ -130,6 +131,7 @@ model Material {
   flashcards    Flashcard[]
   quizQuestions QuizQuestion[]
   reviewLogs    ReviewLog[]
+  walkthrough   Walkthrough?
 
   @@unique([folderId, onqTopicId])
   @@index([folderId, kind])
@@ -467,4 +469,39 @@ model CalendarEvent {
 
   @@index([start])
   @@index([folderId, start])
+}
+
+/// A material walked one step at a time: one step per slide for a deck, one per
+/// section for a reading. Steps are derived from the material's text and never
+/// rewritten, so there is nothing here to overwrite and no regenerate action.
+model Walkthrough {
+  id         String   @id @default(cuid())
+  materialId String   @unique
+  /// Which step the student is on. The whole point of persisting anything.
+  stepIndex  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  material Material          @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  steps    WalkthroughStep[]
+}
+
+model WalkthroughStep {
+  id            String @id @default(cuid())
+  walkthroughId String
+  ordinal       Int
+  /// "Slide 7" or "Slides 3-4" for a deck, the section heading for a reading.
+  label         String
+  /// The material's own text for this step, copied at split time. A character
+  /// offset into Material.text would rot the moment a file is re-extracted, and
+  /// this copy is what the recall grader marks the student's answer against.
+  sourceText    String
+  /// Model-written, filled on first visit to this step. Null until then.
+  explanation   String?
+  /// Asked before the explanation is revealed. Null until then.
+  recallPrompt  String?
+
+  walkthrough Walkthrough @relation(fields: [walkthroughId], references: [id], onDelete: Cascade)
+
+  @@unique([walkthroughId, ordinal])
 }

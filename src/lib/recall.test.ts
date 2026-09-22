@@ -193,3 +193,17 @@ test("an open misconception adds exactly one to a cram weight", () => {
     1
   );
 });
+
+test("normalizeQuality scores a walked step the way it scores a blurt", () => {
+  assert.equal(normalizeQuality({ kind: "WALKTHROUGH", covered: 0, missed: 3, wrong: 0 }), 0);
+  assert.equal(normalizeQuality({ kind: "WALKTHROUGH", covered: 2, missed: 2, wrong: 0 }), 3);
+  assert.equal(normalizeQuality({ kind: "WALKTHROUGH", covered: 4, missed: 0, wrong: 0 }), 5);
+  // Nothing to score against is a 0, not a division by zero.
+  assert.equal(normalizeQuality({ kind: "WALKTHROUGH", covered: 0, missed: 0, wrong: 0 }), 0);
+  // A wrong claim sits in the denominator beside what was missed.
+  assert.equal(normalizeQuality({ kind: "WALKTHROUGH", covered: 4, missed: 0, wrong: 4 }), 3);
+});
+
+test("a walked step is schedulable", () => {
+  assert.equal(isSchedulable("WALKTHROUGH"), true);
+});
