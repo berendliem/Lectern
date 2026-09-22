@@ -18,7 +18,7 @@
 - **`ReviewLog` never cascades.** Every relation on it is `SetNull` on purpose. This feature adds no relation to it.
 - **Every destructive action names what it destroys, before it happens.** The material delete confirm gains a clause for walkthrough progress.
 - **`RecallKind` is stored as TEXT on SQLite.** Adding an enum value needs a schema change and `prisma generate`, but no SQL.
-- **The generated Prisma client is tracked** (`src/generated/prisma`). Commit what `prisma generate` writes.
+- **The generated Prisma client is git-ignored** (`.gitignore:53`, since `b0a279b`). Run `npx prisma generate` after a schema change, but commit nothing from `src/generated/prisma`.
 - **Commit style:** `<type>: <imperative phrase>`, lowercase, one logical change per commit. End every commit message with `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
 
 ## File Structure
@@ -228,7 +228,7 @@ Expected: no errors.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add prisma/schema.prisma prisma/migrations/20260921120000_material_walkthrough src/lib/recall.ts src/lib/recall.test.ts src/generated/prisma
+git add prisma/schema.prisma prisma/migrations/20260921120000_material_walkthrough src/lib/recall.ts src/lib/recall.test.ts
 git commit -m "feat: walkthrough tables and a recall scale for a walked step
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
