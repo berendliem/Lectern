@@ -18,9 +18,23 @@ import { protectCurrency } from "@/lib/inline-math";
  */
 const FENCED_CODE = /(```[\s\S]*?```)/;
 
+// A link the model wrote is followed only by a click, but it still should not
+// hand the destination this page's URL or rank it.
+const LINK_DEFAULTS: Components = {
+  a: ({ href, title, children }) => (
+    <a href={href} title={title} rel="noopener noreferrer nofollow">
+      {children}
+    </a>
+  ),
+};
+
 export function Markdown({ children, components }: { children: string; components?: Components }) {
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={components}>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm, remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={{ ...LINK_DEFAULTS, ...components }}
+    >
       {children
         .split(FENCED_CODE)
         .map((part, i) => (i % 2 === 1 ? part : protectCurrency(part)))
