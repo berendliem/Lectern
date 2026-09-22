@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { splitSections, splitSlides } from "./walkthrough.ts";
+import {
+  walkthroughOutlineResponseSchema,
+  walkthroughRecallResponseSchema,
+  walkthroughStepIndexSchema,
+  walkthroughTeachResponseSchema,
+} from "./validation.ts";
+import { buildWalkthroughTeachUserPrompt } from "./prompts/walkthrough.ts";
 
 const long = (word: string) => `${word} `.repeat(40).trim();
 
@@ -93,4 +100,46 @@ test("splitSections skips a heading that only ever appears mid-line", () => {
   const steps = splitSections("Some prose mentioning Bar in passing.", ["Bar"]);
   assert.equal(steps.length, 1);
   assert.equal(steps[0].label, "The whole text");
+});
+
+test("walkthroughOutlineResponseSchema defaults a missing heading list to empty", () => {
+  assert.deepEqual(walkthroughOutlineResponseSchema.parse({}).headings, []);
+});
+
+test("walkthroughTeachResponseSchema requires both halves of a step", () => {
+  assert.throws(() => walkthroughTeachResponseSchema.parse({ explanation: "because" }));
+  const parsed = walkthroughTeachResponseSchema.parse({
+    explanation: "Light reactions make ATP.",
+    recallPrompt: "What do the light reactions produce?",
+  });
+  assert.equal(parsed.recallPrompt, "What do the light reactions produce?");
+});
+
+test("walkthroughRecallResponseSchema fills in the arrays a model left out", () => {
+  const parsed = walkthroughRecallResponseSchema.parse({ covered: ["ATP"] });
+  assert.deepEqual(parsed.missed, []);
+  assert.deepEqual(parsed.wrong, []);
+});
+
+test("walkthroughStepIndexSchema rejects a negative step", () => {
+  assert.throws(() => walkthroughStepIndexSchema.parse({ stepIndex: -1 }));
+  assert.equal(walkthroughStepIndexSchema.parse({ stepIndex: 4 }).stepIndex, 4);
+});
+
+test("the teaching prompt tells a deck and a reading apart", () => {
+  const deck = buildWalkthroughTeachUserPrompt({
+    materialTitle: "Week 4",
+    kind: "SLIDES",
+    label: "Slide 7",
+    sourceText: "Slide 7: Enzymes\n- lower activation energy",
+  });
+  const reading = buildWalkthroughTeachUserPrompt({
+    materialTitle: "Chapter 2",
+    kind: "READING",
+    label: "Subsets",
+    sourceText: "Subsets\nA is a subset of B when…",
+  });
+  assert.match(deck, /slide/i);
+  assert.match(reading, /section/i);
+  assert.notEqual(deck, reading);
 });

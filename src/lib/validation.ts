@@ -465,3 +465,40 @@ export const pretestDetailSchema = z.object({
 export const updateCalendarEventSchema = z.object({
   folderId: z.string().trim().min(1).nullable(),
 });
+
+/**
+ * A walkthrough's three model responses, and its two request bodies. Every
+ * string is capped, not just every array: this text becomes flashcards and
+ * ledger rows, and the model wrote it after reading course material it does
+ * not control.
+ */
+export const walkthroughOutlineResponseSchema = z.object({
+  headings: z.array(z.string().trim().min(1).max(200)).max(60).default([]),
+});
+
+export const walkthroughTeachResponseSchema = z.object({
+  explanation: z.string().trim().min(1).max(4000),
+  recallPrompt: z.string().trim().min(1).max(500),
+});
+
+export const walkthroughRecallResponseSchema = z.object({
+  covered: z.array(z.string().trim().min(1).max(500)).max(40).default([]),
+  missed: z.array(z.string().trim().min(1).max(500)).max(6).default([]),
+  wrong: z
+    .array(
+      z.object({
+        claim: z.string().trim().min(1).max(500),
+        correction: z.string().trim().min(1).max(1000),
+      })
+    )
+    .max(6)
+    .default([]),
+});
+
+export const walkthroughRecallSubmitSchema = z.object({
+  answer: z.string().trim().min(1).max(4000),
+});
+
+export const walkthroughStepIndexSchema = z.object({
+  stepIndex: z.number().int().min(0),
+});
