@@ -19,6 +19,13 @@ ${UNTRUSTED_CONTENT_CLAUSE}`;
 /** One reading is sent in full, once, to plan its sections. */
 const MAX_OUTLINE_CHARS = 40_000;
 
+/**
+ * A step is one slide or one section — normally small. The backstop is
+ * `splitSections`' single-step fallback: when the outline call returns no
+ * usable headings, the whole reading becomes one step's `sourceText`.
+ */
+const MAX_STEP_CHARS = 12_000;
+
 export function buildWalkthroughOutlineUserPrompt(title: string, text: string): string {
   return `Reading: "${title}"\n\nDivide it into sections following the required JSON shape.\n\nTEXT:\n"""\n${text.slice(0, MAX_OUTLINE_CHARS)}\n"""`;
 }
@@ -53,7 +60,7 @@ export function buildWalkthroughTeachUserPrompt(input: {
   label: string;
   sourceText: string;
 }): string {
-  return `Material: "${input.materialTitle}"\nStep: ${input.label}\n\n${KIND_GUIDANCE[input.kind]}\n\nWrite this step following the required JSON shape.\n\nTHIS STEP'S TEXT:\n"""\n${input.sourceText}\n"""`;
+  return `Material: "${input.materialTitle}"\nStep: ${input.label}\n\n${KIND_GUIDANCE[input.kind]}\n\nWrite this step following the required JSON shape.\n\nTHIS STEP'S TEXT:\n"""\n${input.sourceText.slice(0, MAX_STEP_CHARS)}\n"""`;
 }
 
 export const WALKTHROUGH_RECALL_SYSTEM_PROMPT = `You are marking what a student recalled about one step of their course material, answered from memory.
@@ -81,5 +88,5 @@ export function buildWalkthroughRecallUserPrompt(
   explanation: string,
   answer: string
 ): string {
-  return `Here is the step, then what it was explained to say, then what the student wrote from memory. Mark the answer following the required JSON shape.\n\nSTEP TEXT:\n"""\n${sourceText}\n"""\n\nEXPLANATION GIVEN:\n"""\n${explanation}\n"""\n\nWHAT THE STUDENT REMEMBERED:\n"""\n${answer}\n"""`;
+  return `Here is the step, then what it was explained to say, then what the student wrote from memory. Mark the answer following the required JSON shape.\n\nSTEP TEXT:\n"""\n${sourceText.slice(0, MAX_STEP_CHARS)}\n"""\n\nEXPLANATION GIVEN:\n"""\n${explanation}\n"""\n\nWHAT THE STUDENT REMEMBERED:\n"""\n${answer}\n"""`;
 }

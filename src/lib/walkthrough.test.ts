@@ -139,7 +139,17 @@ test("the teaching prompt tells a deck and a reading apart", () => {
     label: "Subsets",
     sourceText: "Subsets\nA is a subset of B when…",
   });
-  assert.match(deck, /slide/i);
-  assert.match(reading, /section/i);
-  assert.notEqual(deck, reading);
+  assert.match(deck, /bullets are shorthand/i);
+  assert.match(reading, /move in an argument/i);
+});
+
+test("the teaching prompt truncates a step's source text at MAX_STEP_CHARS", () => {
+  const long = "a".repeat(13_000) + "MARKER_PAST_CAP";
+  const prompt = buildWalkthroughTeachUserPrompt({
+    materialTitle: "Chapter 9",
+    kind: "READING",
+    label: "Long section",
+    sourceText: long,
+  });
+  assert.doesNotMatch(prompt, /MARKER_PAST_CAP/);
 });
