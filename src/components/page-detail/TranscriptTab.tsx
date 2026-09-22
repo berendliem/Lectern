@@ -109,10 +109,14 @@ export function TranscriptTab({
     const material = materials.find((m) => m.id === materialId);
     // Replacing a context layer throws away the text already attached, and on a
     // page whose material has since been deleted this page is its only holder.
+    // Attached text with no quotable first line — an image-only PDF that
+    // extracted blank — drops the quote rather than printing an empty one.
+    const preview = contextPreview(contextText);
+    const quoted = preview ? ` — “${preview}” —` : "";
     if (
       hasContext &&
       !confirm(
-        `Replace the ${kind} attached to this lecture — “${contextPreview(contextText)}” — with "${material?.title ?? "that material"}"? The text currently attached is discarded.`
+        `Replace the ${kind} attached to this lecture${quoted} with "${material?.title ?? "that material"}"? The text currently attached is discarded.`
       )
     ) {
       return;
