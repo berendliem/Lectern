@@ -64,12 +64,18 @@ export function WalkthroughRunner({
   // second synchronous call and let both POSTs through. This ref is mutated
   // synchronously at call time, so the second call sees it immediately; the
   // state exists only so the render below can show which step is teaching.
-  const teachingRef = useRef<string | null>(null);
+  //
+  // A Set, not a single id: teach() deliberately lets the student navigate
+  // freely while it runs, so more than one step can be mid-fetch at once —
+  // Next to an untaught step while an earlier one is still in flight, then
+  // Back before it resolves, must see that earlier step's own lock still
+  // held, not a single slot some other step has since taken over.
+  const teachingRef = useRef<Set<string>>(new Set());
 
   const teach = useCallback(async () => {
-    if (teachingRef.current === step.id) return;
+    if (teachingRef.current.has(step.id)) return;
     const forStepId = step.id;
-    teachingRef.current = forStepId;
+    teachingRef.current.add(forStepId);
     setTeachingStepId(forStepId);
     setTeachError(null);
     try {
@@ -82,6 +88,9 @@ export function WalkthroughRunner({
       // Cached by id unconditionally, even if the student has navigated away:
       // this is what makes a step they already left come back already taught.
       setSteps((prev) => prev.map((s) => (s.id === data.step.id ? data.step : s)));
+      // A success always takes the banner down, even one left by this same
+      // step's own earlier failed attempt.
+      if (shownStepId.current === forStepId) setTeachError(null);
     } catch (e) {
       // teachError is screen state: a late failure for a step the student
       // left must not paint an error banner over whatever they moved to.
@@ -89,10 +98,7 @@ export function WalkthroughRunner({
         setTeachError(e instanceof Error ? e.message : "Could not write this step.");
       }
     } finally {
-      // Only release the mutex if it's still ours: if the student has since
-      // moved on and that step's own teach() has already taken the ref, this
-      // stale finally must not clear a lock it doesn't hold.
-      if (teachingRef.current === forStepId) teachingRef.current = null;
+      teachingRef.current.delete(forStepId);
       if (shownStepId.current === forStepId) setTeachingStepId(null);
     }
   }, [materialId, step.id]);
@@ -113,22 +119,23 @@ export function WalkthroughRunner({
     if (!step.recallPrompt && !teachError) void teach();
   }, [step.recallPrompt, teachError, teach]);
 
-  // Same reasoning as teachingRef above, and keyed the same way: a plain
-  // boolean would block step 4's Answer click while step 3's request is
-  // still in flight, even though step 4's own marking state shows the
-  // button as enabled — a silent no-op is worse than a disabled button.
-  const submittingStepId = useRef<string | null>(null);
+  // Back and Next are disabled while marking (see the buttons below), so a
+  // mark response can never land on a different step or a different visit —
+  // that's what let the shown-step checks this guard used to need be
+  // removed. This ref only covers a same-frame double click on Answer that
+  // `disabled` alone can't catch, because React state updates aren't
+  // synchronous.
+  const submitting = useRef(false);
 
   async function submit() {
     if (!answer.trim()) return;
-    if (submittingStepId.current === step.id) return;
-    const forStepId = step.id;
-    submittingStepId.current = forStepId;
+    if (submitting.current) return;
+    submitting.current = true;
     setMarking(true);
     setMarkError(null);
     try {
       const data = (await postTask(
-        `/api/materials/${materialId}/walkthrough/steps/${forStepId}/recall`,
+        `/api/materials/${materialId}/walkthrough/steps/${step.id}/recall`,
         "Could not mark your answer.",
         {
           headers: { "Content-Type": "application/json" },
@@ -136,21 +143,16 @@ export function WalkthroughRunner({
         },
         "Network error talking to the local server."
       )) as Marked;
-      // The server graded this and wrote the ledger row regardless. Only the
-      // screen paint is guarded: a late score for a step the student left
-      // must not reveal a step they haven't answered.
-      if (shownStepId.current !== forStepId) return;
       setMarked(data);
       setRevealed(true);
     } catch (e) {
-      if (shownStepId.current !== forStepId) return;
       // The answer stays in the box and the Answer button re-enables: a
       // failed marking must not cost the typing, and pressing Answer again
       // is the retry, not a separate Retry button.
       setMarkError(e instanceof Error ? e.message : "Could not mark your answer.");
     } finally {
-      if (submittingStepId.current === forStepId) submittingStepId.current = null;
-      if (shownStepId.current === forStepId) setMarking(false);
+      submitting.current = false;
+      setMarking(false);
     }
   }
 
@@ -162,10 +164,6 @@ export function WalkthroughRunner({
     setRevealed(false);
     setTeachError(null);
     setMarkError(null);
-    // The step this screen is leaving no longer owns "Marking…": submit()'s
-    // own guard above will skip touching this once its response lands, so
-    // nothing would otherwise undo a stuck spinner for an abandoned request.
-    setMarking(false);
     // Position is persisted so a refresh lands here again. A failure is silent
     // on purpose: the student has already moved, and a message about
     // bookkeeping would interrupt studying to report nothing they can act on.
@@ -287,10 +285,14 @@ export function WalkthroughRunner({
       )}
 
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => move(index - 1)} disabled={index === 0}>
+        <Button variant="ghost" onClick={() => move(index - 1)} disabled={index === 0 || marking}>
           Back
         </Button>
-        <Button variant="ghost" onClick={() => move(index + 1)} disabled={index === steps.length - 1}>
+        <Button
+          variant="ghost"
+          onClick={() => move(index + 1)}
+          disabled={index === steps.length - 1 || marking}
+        >
           Next
         </Button>
       </div>
