@@ -12,6 +12,7 @@ import { TranscriptView } from "@/components/page-detail/TranscriptView";
 import { SyncedTranscriptPlayer } from "@/components/page-detail/SyncedTranscriptPlayer";
 import { useTasks } from "@/components/tasks/TaskProvider";
 import { postTask } from "@/lib/tasks";
+import { contextKind, contextPreview } from "@/lib/transcript-layer";
 import type { Chapter, TranscriptSegment } from "@/types";
 
 export function TranscriptTab({
@@ -23,6 +24,10 @@ export function TranscriptTab({
   cleanText,
   chapters,
   segments,
+  materials,
+  contextText,
+  contextSource,
+  recordingBlocked,
 }: {
   pageId: string;
   pageTitle: string;
@@ -32,9 +37,20 @@ export function TranscriptTab({
   cleanText: string | null;
   chapters: Chapter[];
   segments: TranscriptSegment[];
+  /** The course's decks and readings, for attaching one as this lecture's context. */
+  materials: { id: string; title: string; kind: string }[];
+  /** The attached deck or reading, and which of the two it is. */
+  contextText: string | null;
+  contextSource: string | null;
+  /** Set when this page's transcript is imported text and a context layer is
+   *  already attached: a recording would overwrite the only copy of that text,
+   *  and the transcribe route refuses it. Don't offer what can't be done. */
+  recordingBlocked: boolean;
 }) {
   const router = useRouter();
-  const [view, setView] = useState<"clean" | "raw">(cleanText ? "clean" : "raw");
+  const [view, setView] = useState<"clean" | "raw" | "context">(cleanText ? "clean" : "raw");
+  const [attaching, setAttaching] = useState(false);
+  const [attachError, setAttachError] = useState<string | null>(null);
   const { run, task, clear } = useTasks();
   const { session, audioBlob } = useRecording();
   const chapterKey = `page:${pageId}:chapters`;
@@ -43,11 +59,29 @@ export function TranscriptTab({
   const cleaning = task(cleanKey)?.status === "running";
   const error = task(chapterKey)?.error ?? task(cleanKey)?.error ?? null;
 
+  const hasContext = contextText !== null;
+  const kind = contextKind(contextSource);
+  // "Cleaned" and "Raw" both describe the audio. The third view is the deck or
+  // reading the lecture was taught over, which nothing else on the page shows.
+  const views = (["clean", "raw", "context"] as const).filter((v) =>
+    v === "clean" ? !!cleanText : v === "context" ? hasContext : true
+  );
+  const viewLabels = {
+    clean: "Cleaned",
+    raw: "Raw + timestamps",
+    context: kind === "slides" ? "Slides" : "Reading",
+  };
+
   const src = `/api/pages/${pageId}/audio`;
   // Audio + timestamped segments get the synced player (click a line to seek,
   // live highlight); it renders both the player and the transcript.
   const synced = hasAudio && !isVideo && !!transcript && segments.length > 0;
+  // An unsaved take belonging to this page keeps the panel on screen even when
+  // recording is otherwise not on offer — it is the only way to save or
+  // download that audio. See the comment on the panel below.
+  const holdingTake = session?.pageId === pageId && audioBlob !== null;
   const showClean = view === "clean" && !!cleanText;
+  const showContext = view === "context" && hasContext;
 
   async function detectChapters() {
     clear([chapterKey]);
@@ -70,31 +104,106 @@ export function TranscriptTab({
     router.refresh();
   }
 
+  async function attachContext(materialId: string) {
+    if (!materialId) return;
+    const material = materials.find((m) => m.id === materialId);
+    // Replacing a context layer throws away the text already attached, and on a
+    // page whose material has since been deleted this page is its only holder.
+    // Attached text with no quotable first line — an image-only PDF that
+    // extracted blank — drops the quote rather than printing an empty one.
+    const preview = contextPreview(contextText);
+    const quoted = preview ? ` — “${preview}” —` : "";
+    if (
+      hasContext &&
+      !confirm(
+        `Replace the ${kind} attached to this lecture${quoted} with "${material?.title ?? "that material"}"? The text currently attached is discarded.`
+      )
+    ) {
+      return;
+    }
+    setAttaching(true);
+    setAttachError(null);
+    try {
+      const res = await fetch(`/api/pages/${pageId}/context`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materialId, replace: hasContext }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setAttachError(data.error ?? "Could not attach that material.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setAttachError("Network error talking to the local server.");
+    } finally {
+      setAttaching(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {hasAudio && isVideo && <video controls src={src} className="max-h-80 w-full rounded-xl bg-black" />}
-      {hasAudio && !isVideo && (!synced || showClean) && <audio controls src={src} className="w-full" />}
+      {hasAudio && !isVideo && (!synced || showClean || showContext) && (
+        <audio controls src={src} className="w-full" />
+      )}
 
       {/* The panel also has to be here when audio already exists but this
           lecture still holds an unsaved take: on the transcribe-failure path the
           upload succeeded and `hasAudio` flipped, and the shell bar sends the
           user here to download or re-save the recording. Without this the link
           lands on a page with no panel on it. */}
-      {(!hasAudio || (session?.pageId === pageId && audioBlob !== null)) && (
+      {(holdingTake || (!hasAudio && !recordingBlocked)) && (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <RecordingPanel pageId={pageId} pageTitle={pageTitle} />
-            {!hasAudio && <AudioUploadDropzone pageId={pageId} />}
+            {!hasAudio && !recordingBlocked && <AudioUploadDropzone pageId={pageId} />}
           </div>
-          {!hasAudio && <UrlImport pageId={pageId} />}
+          {!hasAudio && !recordingBlocked && <UrlImport pageId={pageId} />}
         </div>
       )}
 
+      {recordingBlocked && (
+        <p className="rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-soft">
+          This page&rsquo;s transcript was imported, and {kind === "slides" ? "slides are" : "a reading is"}{" "}
+          already attached to it. A recording here would have to overwrite one of them, so record on a
+          new lecture page instead.
+        </p>
+      )}
+
+      {transcript && materials.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line px-3 py-2.5 text-[13px] text-ink-soft">
+          <span>
+            {hasContext
+              ? `${kind === "slides" ? "Slides are" : "A reading is"} attached to this lecture — the notes use both.`
+              : "Taught from a deck or a reading? Attach it and the notes will follow its structure."}
+          </span>
+          <select
+            value=""
+            onChange={(e) => attachContext(e.target.value)}
+            disabled={attaching}
+            aria-label="Attach a deck or reading as this lecture's context"
+            className="ml-auto rounded-lg border border-line bg-surface px-2 py-1 text-[12.5px]"
+          >
+            <option value="" disabled>
+              {hasContext ? "Replace with…" : "Use a deck as context…"}
+            </option>
+            {materials.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {attachError && <p className="text-[13px] font-medium text-red-700">{attachError}</p>}
+
       {transcript && (
         <div className="flex flex-wrap items-center gap-2">
-          {cleanText && (
+          {views.length > 1 && (
             <div className="flex rounded-lg border border-line p-0.5 text-[12.5px] font-medium">
-              {(["clean", "raw"] as const).map((v) => (
+              {views.map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
@@ -103,7 +212,7 @@ export function TranscriptTab({
                     view === v ? "bg-brand-soft text-brand-ink" : "text-muted hover:text-ink-soft"
                   )}
                 >
-                  {v === "clean" ? "Cleaned" : "Raw + timestamps"}
+                  {viewLabels[v]}
                 </button>
               ))}
             </div>
@@ -143,7 +252,9 @@ export function TranscriptTab({
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {showClean && cleanText ? (
+      {showContext && contextText ? (
+        <TranscriptView rawText={contextText} segments={[]} />
+      ) : showClean && cleanText ? (
         <TranscriptView rawText={cleanText} segments={[]} />
       ) : synced ? (
         <SyncedTranscriptPlayer src={src} segments={segments} chapters={chapters} />

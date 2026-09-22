@@ -16,10 +16,17 @@ export async function upsertSearchIndex(pageId: string) {
     .map((f) => `${f.prompt} ${f.idealExplanation}`)
     .join(" ");
 
+  // The raw transcript, not the cleaned one: cleanup cuts filler, tangents and
+  // restated points, and a word the lecturer said only in what it cut must stay
+  // findable. The context layer goes in beside it so slide-only words match too.
+  const transcriptText = [page.transcript?.rawText, page.transcript?.contextText]
+    .filter(Boolean)
+    .join("\n\n");
+
   await db.$executeRaw`DELETE FROM page_search WHERE pageId = ${pageId}`;
   await db.$executeRaw`
     INSERT INTO page_search (pageId, title, transcriptText, notesText, flashcardsText)
-    VALUES (${pageId}, ${page.title}, ${page.transcript?.rawText ?? ""}, ${page.notes?.markdown ?? ""}, ${flashcardsText})
+    VALUES (${pageId}, ${page.title}, ${transcriptText}, ${page.notes?.markdown ?? ""}, ${flashcardsText})
   `;
 }
 

@@ -20,6 +20,7 @@ import { LectureActions } from "@/components/page-detail/LectureActions";
 import { PretestReveal, type PretestRevealEntry } from "@/components/page/PretestReveal";
 import { isVideoExtension } from "@/lib/audio-storage";
 import { RECALL_LEDGER_SINCE } from "@/lib/recall";
+import { recordingWouldDestroyImport, staleNotesMessage } from "@/lib/transcript-layer";
 import type { TranscriptSegment, KeyTerm } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -61,6 +62,16 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
   // Build the pretest reveal: topics this lecture covers, and student's held answers
   const pretestRevealEntries = page.folderId
     ? await buildPretestReveal(page.id, page.folderId)
+    : [];
+
+  // The course's decks and readings, for attaching one to this lecture as the
+  // text it was taught over.
+  const materials = page.folderId
+    ? await db.material.findMany({
+        where: { folderId: page.folderId, kind: { in: ["SLIDES", "READING"] } },
+        select: { id: true, title: true, kind: true },
+        orderBy: { createdAt: "desc" },
+      })
     : [];
 
   return (
@@ -110,6 +121,10 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
                 cleanText={page.transcript?.cleanText ?? null}
                 chapters={page.transcript?.chapters ? JSON.parse(page.transcript.chapters) : []}
                 segments={segments}
+                materials={materials}
+                contextText={page.transcript?.contextText ?? null}
+                contextSource={page.transcript?.contextSource ?? null}
+                recordingBlocked={recordingWouldDestroyImport(page.transcript)}
               />
             ),
           },
@@ -122,6 +137,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
                 markdown={page.notes.markdown}
                 canUndo={page.notes.previousMarkdown !== null}
                 keyTerms={keyTerms}
+                staleMessage={staleNotesMessage(page.notes, page.transcript, !!page.audioFilePath)}
               />
             ) : (
               <EmptyState message="Notes will appear here once the transcript has been summarized." />

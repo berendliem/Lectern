@@ -19,6 +19,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const page = await db.page.findUnique({ where: { id }, include: { transcript: true } });
   if (!page) return jsonError("Page not found", 404);
   if (!page.transcript) return jsonError("This page has no transcript to summarize yet", 422);
+  const existingNotes = await db.notes.findUnique({ where: { pageId: id }, select: { markdown: true } });
 
   await db.page.update({ where: { id }, data: { status: "SUMMARIZING", errorMessage: null } });
 
@@ -32,15 +33,40 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     // Prefer the cleaned transcript when the user generated one — fewer
     // ASR errors and no filler makes for better notes.
     const transcript = page.transcript.cleanText ?? page.transcript.rawText;
-    // A page made from slides (no recording) gets a prompt that may fill gaps
-    // in marked callouts; a transcript's prompt adds nothing.
-    const { systemPrompt, buildUserPrompt, buildReduceUserPrompt } = summarizePromptsFor(page.transcript.modelUsed);
 
     // Long lectures overflow small (especially local) model context windows:
     // map-reduce them — condense each portion, then summarize the condensates.
     const MAP_REDUCE_THRESHOLD = 28_000;
     const CHUNK_CHARS = 14_000;
     const MAX_CHUNKS = 40;
+
+    // A deck longer than one chunk would crowd the recording out of the final
+    // prompt, so it goes through the same map step the transcript uses.
+    if (page.transcript.contextText && page.transcript.contextText.length > CHUNK_CHARS) {
+      const contextChunks = splitTextIntoChunks(page.transcript.contextText, CHUNK_CHARS);
+      if (contextChunks.length > MAX_CHUNKS) {
+        throw new Error(
+          `This lecture's slides are too long to summarize in one go (${contextChunks.length} chunks, max ${MAX_CHUNKS}).`
+        );
+      }
+      const condensed: string[] = [];
+      for (let i = 0; i < contextChunks.length; i++) {
+        condensed.push(
+          await callLLMText({
+            model,
+            stage: "summary",
+            messages: [
+              { role: "system", content: SUMMARIZE_MAP_SYSTEM_PROMPT },
+              { role: "user", content: buildSummarizeMapUserPrompt(contextChunks[i], i, contextChunks.length) },
+            ],
+          })
+        );
+      }
+      page.transcript.contextText = condensed.join("\n\n");
+    }
+
+    const { systemPrompt, buildUserPrompt, buildReduceUserPrompt } = summarizePromptsFor(page.transcript);
+
     let userPrompt: string;
     if (transcript.length > MAP_REDUCE_THRESHOLD) {
       const chunks = splitTextIntoChunks(transcript, CHUNK_CHARS);
@@ -81,7 +107,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         markdown: parsed.markdown,
         keyTerms: JSON.stringify(parsed.keyTerms),
         modelUsed,
-        previousMarkdown: null,
+        // The notes being replaced may hold the student's own edits; Undo in the
+        // Notes tab reads this.
+        previousMarkdown: existingNotes?.markdown ?? null,
       },
       create: {
         pageId: id,

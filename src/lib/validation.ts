@@ -56,6 +56,14 @@ export const createMaterialSchema = z.object({
   slideCount: z.number().int().min(0).max(10_000).optional(),
 });
 
+/** Attaching a course material to a lecture page as the text it was taught
+ *  over. `replace` is explicit because overwriting a context layer throws away
+ *  text this page may be the only holder of. */
+export const setPageContextSchema = z.object({
+  materialId: z.string().trim().min(1).max(64),
+  replace: z.boolean().default(false),
+});
+
 /** One onQ topic to import. The module title only feeds the kind guess. */
 export const importOnqTopicSchema = z.object({
   topicId: z.number().int().positive().max(2_147_483_647),

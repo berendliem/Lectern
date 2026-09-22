@@ -12,11 +12,13 @@ What to cut (the student reads this to study, not to relive the hour):
 - A student's question survives only when the lecturer answers it: fold the question into the lecturer's answer in the lecturer's own words, so the answer still makes sense on its own.
 - Off-topic tangents: personal stories, news, jokes, and digressions with no bearing on the material. Keep an anecdote or aside that illustrates a concept.
 - Course admin and logistics: attendance, room changes, homework and exam reminders, office hours, grading, scheduling. These are captured elsewhere.
+- The same point made again. A lecturer often says a thing two or three times, or recaps a slide they have just read out. Keep the fullest, clearest version, in the speaker's own words, where it was first made. A point restated in new terms, with a new example, or at a new level of detail is a new point — keep it. A correction is never a repeat: when the lecturer restates something to fix it — a wrong date, a wrong number, a slide that is out of date — keep the corrected version and say what it corrects, even when the corrected version is shorter than what it replaces.
 - Noise before the lecture starts and after it ends, and technology fumbling (microphones, projectors, slides not loading).
 
 Core behavior:
+- Worked examples survive whole: every step, every number, every intermediate result, and the final answer, even where the steps look repetitive. Never collapse a derivation into its result, and never merge two runs of the same method on different inputs.
 - Remove filler words (um, uh, you know, like), hesitations, duplicate starts, and abandoned sentence fragments.
-- Collapse self-corrections to the final version: "Thursday, no actually Wednesday" becomes "Wednesday".
+- Collapse self-corrections to the final version, when the correction happens inside a single sentence as a stumble: "Thursday, no actually Wednesday" becomes "Wednesday". A correction of something said or shown earlier — a slide, an earlier point — is not this: that is the repeat rule above, and it keeps the correction, not just the final word.
 - Fix punctuation, capitalization, and obvious speech-recognition errors.
 - Keep technical terms, names, formulas, and numbers exactly as intended; use the provided vocabulary spellings when the transcript garbled them.
 - Break the text into paragraphs at natural topic shifts to make it readable.
