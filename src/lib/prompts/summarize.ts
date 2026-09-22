@@ -79,10 +79,76 @@ export function buildSlidesSummarizeUserPrompt(slides: string, spellingGuide = "
  *  the from-text route for `source: "slides"`. */
 export const SLIDES_TRANSCRIPT_SOURCE = "import:slides";
 
-/** The system prompt and the single-pass and reduce user prompts for a page's
- *  transcript. The map step is shared: it only condenses, adding nothing. */
-export function summarizePromptsFor(modelUsed: string | null) {
-  return modelUsed === SLIDES_TRANSCRIPT_SOURCE
+// A lecture that has both a recording and the deck (or reading) it was given
+// over. The material is the skeleton — written down, ordered, spelled correctly
+// — and the recording is what actually happened in the room. Added context stays
+// available for the rare term neither one explains, so the student can still
+// tell the model's words from the lecturer's.
+export const MERGED_SUMMARIZE_SYSTEM_PROMPT = `You are an expert study-notes writer. You have two records of one lecture: the lecturer's own material (their slides or the assigned reading), and a transcript of what the lecturer actually said while teaching it. Turn the pair into study notes.
+
+${NOTES_JSON_SHAPE}
+
+Guidelines for "markdown":
+${NOTES_MARKDOWN_GUIDELINES}
+- The lecturer's material sets the structure: follow its topics in the order it presents them, and cover every point on it.
+- The transcript fills that structure in. Where the lecturer explained a point, worked an example, gave a caveat, or said what matters for the exam, put that in the notes in their words.
+- Keep every worked example from the transcript in full: each step, each number, each intermediate result, and the answer. A worked example is the most valuable thing in a lecture and the first thing lost to summarizing.
+- Where the transcript and the material disagree, prefer the transcript and say so in the bullet: the lecturer corrected the slide.
+- Where the lecturer covered something that is not on the material at all, keep it as an ordinary bullet. It is the lecture, not an addition of yours.
+- Only where neither the material nor the lecturer explains a term the notes depend on may you add one, on its own line after the bullets it explains, with a blank line before it, written exactly as: > ℹ️ **Added context:** ...
+- Keep those additions brief and to standard textbook knowledge, and never invent specifics neither record gives: dates, figures, names, course policies, deadlines, or exam hints.
+- Leave out slide furniture ("Slide N:" labels, page numbers, repeated headers and footers, course codes) and transcript furniture (filler, false starts, room noise, admin).
+- Do not include a "Key Terms" section in the markdown itself; key terms go only in the keyTerms array.
+
+${UNTRUSTED_CONTENT_CLAUSE}`;
+
+function contextLabel(isSlides: boolean): string {
+  return isSlides ? "SLIDES" : "READING";
+}
+
+export function buildMergedSummarizeUserPrompt(
+  context: string,
+  transcript: string,
+  isSlides: boolean,
+  spellingGuide = ""
+): string {
+  const source = isSlides ? "the lecturer's slides" : "the assigned reading";
+  return `Here is ${source}, and a transcript of the lecture given over it. Merge them into study notes following the required JSON shape.${spellingGuide}\n\n${contextLabel(isSlides)}:\n"""\n${unmarkAddedContext(context)}\n"""\n\nLECTURE TRANSCRIPT:\n"""\n${transcript}\n"""`;
+}
+
+// The reduce half: the transcript arrives as interim notes from the map step,
+// while the material still goes in whole.
+export function buildMergedSummarizeReduceUserPrompt(
+  context: string,
+  interimNotes: string,
+  isSlides: boolean,
+  spellingGuide = ""
+): string {
+  const source = isSlides ? "the lecturer's slides" : "the assigned reading";
+  return `Here is ${source}, and dense interim notes condensed in order from consecutive portions of the lecture given over it. Condensing added nothing, so treat the interim notes as what the lecturer said. Merge them into study notes following the required JSON shape (deduplicate overlap between portions, keep every distinct fact).${spellingGuide}\n\n${contextLabel(isSlides)}:\n"""\n${unmarkAddedContext(context)}\n"""\n\nINTERIM NOTES FROM THE LECTURE:\n"""\n${interimNotes}\n"""`;
+}
+
+/** The system prompt and the single-pass and reduce user prompts for a page.
+ *  A page with both layers merges them; a page with only imported slide text
+ *  keeps the slides prompt; everything else is a plain transcript. The map step
+ *  is shared by all three: it only condenses, adding nothing. */
+export function summarizePromptsFor(transcript: {
+  modelUsed: string | null;
+  contextText: string | null;
+  contextSource: string | null;
+}) {
+  if (transcript.contextText) {
+    const context = transcript.contextText;
+    const isSlides = transcript.contextSource === SLIDES_TRANSCRIPT_SOURCE;
+    return {
+      systemPrompt: MERGED_SUMMARIZE_SYSTEM_PROMPT,
+      buildUserPrompt: (spoken: string, spellingGuide = "") =>
+        buildMergedSummarizeUserPrompt(context, spoken, isSlides, spellingGuide),
+      buildReduceUserPrompt: (interimNotes: string, spellingGuide = "") =>
+        buildMergedSummarizeReduceUserPrompt(context, interimNotes, isSlides, spellingGuide),
+    };
+  }
+  return transcript.modelUsed === SLIDES_TRANSCRIPT_SOURCE
     ? {
         systemPrompt: SLIDES_SUMMARIZE_SYSTEM_PROMPT,
         buildUserPrompt: buildSlidesSummarizeUserPrompt,
