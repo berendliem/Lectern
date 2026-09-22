@@ -2,15 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
-import { assertSingleParent } from "@/lib/cards";
+import { BLURT_SOURCE_TERM, assertSingleParent } from "@/lib/cards";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
 import { BLURT_SYSTEM_PROMPT, buildBlurtUserPrompt } from "@/lib/prompts/blurt";
 import { blurtResponseSchema, blurtSubmitSchema } from "@/lib/validation";
 import { recallRow, settleMisconceptions, type RecallEvent } from "@/lib/recall-log";
 import { normalizeQuality } from "@/lib/recall";
-
-/** Marks a card as born from a blurt, so a deck shows where it came from. */
-const BLURT_SOURCE_TERM = "From a blurt";
 
 /**
  * The student writes what they remember about a lecture, unprompted, and what

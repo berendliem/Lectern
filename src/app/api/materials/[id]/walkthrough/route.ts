@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
 import {
+  sourceHash,
   splitSections,
   splitSlides,
   toStepView,
@@ -36,16 +37,23 @@ function view(walkthrough: { id: string; stepIndex: number; steps: WalkthroughSt
  * Idempotent on purpose: the button that calls this is the button a student
  * clicks to resume, and rebuilding would silently drop their position and every
  * explanation already paid for.
+ *
+ * `?rebuild=1` is the one exception, for a material whose text has changed
+ * underneath its walkthrough. The new steps are built first and swapped in
+ * with the old ones' delete in one transaction, so a failed outline call leaves
+ * the old walkthrough exactly as it was. Cards made from misses and the recall
+ * ledger hang off the material and stay.
  */
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const rebuild = req.nextUrl.searchParams.get("rebuild") === "1";
 
   const material = await db.material.findUnique({
     where: { id },
     include: { walkthrough: { include: { steps: { orderBy: { ordinal: "asc" } } } } },
   });
   if (!material) return jsonError("Material not found", 404);
-  if (material.walkthrough) return NextResponse.json({ walkthrough: view(material.walkthrough) });
+  if (material.walkthrough && !rebuild) return NextResponse.json({ walkthrough: view(material.walkthrough) });
 
   if (!WALKABLE.includes(material.kind)) {
     return jsonError("Only slide decks and readings can be walked through", 422);
@@ -82,9 +90,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   let walkthrough;
   try {
-    walkthrough = await db.walkthrough.create({
+    const create = db.walkthrough.create({
       data: {
         materialId: id,
+        sourceHash: sourceHash(material.text),
         steps: {
           create: seeds.map((seed) => ({
             ordinal: seed.ordinal,
@@ -95,6 +104,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       },
       include: { steps: { orderBy: { ordinal: "asc" } } },
     });
+    walkthrough = rebuild
+      ? (await db.$transaction([db.walkthrough.deleteMany({ where: { materialId: id } }), create]))[1]
+      : await create;
   } catch (e) {
     // Unique constraint on Walkthrough.materialId: two POSTs raced past the
     // "no walkthrough yet" check above. The loser didn't fail, it just lost —

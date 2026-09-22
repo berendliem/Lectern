@@ -1,6 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { assertSingleParent, cardSource, courseScopeFilter, quizlessMaterialsFilter } from "./cards.ts";
+import {
+  assertSingleParent,
+  cardSource,
+  courseScopeFilter,
+  isEarnedSourceTerm,
+  missedSourceTerm,
+  quizlessMaterialsFilter,
+} from "./cards.ts";
+import { flashcardsResponseSchema } from "./validation.ts";
 
 test("assertSingleParent accepts a lecture-parented card", () => {
   assert.deepEqual(assertSingleParent({ pageId: "p1" }), { pageId: "p1", materialId: null });
@@ -56,4 +64,38 @@ test("cardSource leaves the course blank when a lecture has no folder", () => {
 
 test("cardSource returns null when a card has lost its parent", () => {
   assert.equal(cardSource({ page: null, material: null }), null);
+});
+
+test("isEarnedSourceTerm recognises every label regenerate keeps, in any case SQLite's LIKE would", () => {
+  assert.equal(isEarnedSourceTerm("From a walkthrough"), true);
+  assert.equal(isEarnedSourceTerm("From a blurt"), true);
+  assert.equal(isEarnedSourceTerm(missedSourceTerm(3)), true);
+  assert.equal(isEarnedSourceTerm("missed 9×"), true);
+  // SQLite's LIKE `%` crosses a newline, so the guard has to as well.
+  assert.equal(isEarnedSourceTerm("Missed 3\n×"), true);
+  assert.equal(isEarnedSourceTerm("Mitosis"), false);
+  assert.equal(isEarnedSourceTerm(undefined), false);
+});
+
+test("a generated card cannot claim a label regenerate keeps", () => {
+  // Otherwise a prompt-injected material could make its cards survive every
+  // regenerate and be counted as the student's own misses.
+  const parsed = flashcardsResponseSchema.parse({
+    flashcards: [
+      { prompt: "p", idealExplanation: "e", sourceTerm: "From a walkthrough" },
+      { prompt: "p", idealExplanation: "e", sourceTerm: "Missed 3×" },
+      { prompt: "p", idealExplanation: "e", sourceTerm: "Mitosis" },
+    ],
+  });
+  assert.deepEqual(
+    parsed.flashcards.map((card) => card.sourceTerm),
+    [undefined, undefined, "Mitosis"]
+  );
+});
+
+test("an over-long generated label is trimmed, not a failed generation", () => {
+  const parsed = flashcardsResponseSchema.parse({
+    flashcards: [{ prompt: "p", idealExplanation: "e", sourceTerm: "x".repeat(300) }],
+  });
+  assert.equal(parsed.flashcards[0].sourceTerm?.length, 200);
 });

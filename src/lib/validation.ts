@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { MAX_SCAN_IMAGE_CHARS, MAX_TEXT_CHARS } from "./limits";
 import { MAX_MASTERY_ATTEMPTS } from "./grading";
+import { isEarnedSourceTerm } from "./cards";
 
 export const createFolderSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -159,23 +160,33 @@ export const blurtSubmitSchema = z.object({
 });
 
 /**
+ * The answer being graded is never empty, so a grade with no point in any list
+ * is the model failing. Scored, it would be a 0/5 on the ledger for an answer
+ * nobody marked; refused, the route's format error asks for a retry instead.
+ */
+const graded = (m: { covered: unknown[]; missed: unknown[]; wrong: unknown[] }) =>
+  m.covered.length + m.missed.length + m.wrong.length > 0;
+
+/**
  * What the reasoning tier returns when it marks a blurt. Every string is
  * capped, not just every array: these become flashcard text and ledger rows,
  * and the model wrote them after reading notes it does not control.
  */
-export const blurtResponseSchema = z.object({
-  covered: z.array(z.string().trim().min(1).max(500)).max(40).default([]),
-  missed: z.array(z.string().trim().min(1).max(500)).max(8).default([]),
-  wrong: z
-    .array(
-      z.object({
-        claim: z.string().trim().min(1).max(500),
-        correction: z.string().trim().min(1).max(1000),
-      })
-    )
-    .max(8)
-    .default([]),
-});
+export const blurtResponseSchema = z
+  .object({
+    covered: z.array(z.string().trim().min(1).max(500)).max(40).default([]),
+    missed: z.array(z.string().trim().min(1).max(500)).max(8).default([]),
+    wrong: z
+      .array(
+        z.object({
+          claim: z.string().trim().min(1).max(500),
+          correction: z.string().trim().min(1).max(1000),
+        })
+      )
+      .max(8)
+      .default([]),
+  })
+  .refine(graded);
 
 /**
  * What the free-text answer grader returns. Capped like every other model
@@ -364,7 +375,12 @@ export const flashcardsResponseSchema = z.object({
       z.object({
         prompt: z.string().min(1),
         idealExplanation: z.string().min(1),
-        sourceTerm: z.string().optional(),
+        // A label regenerate keeps is the student's, never the model's: a
+        // generated card wearing one would survive every regenerate.
+        sourceTerm: z
+          .string()
+          .optional()
+          .transform((term) => (isEarnedSourceTerm(term) ? undefined : term?.slice(0, 200))),
       })
     )
     .min(1),
@@ -502,17 +518,19 @@ export const walkthroughTeachResponseSchema = z.object({
 
 // `covered` is capped low because its length is the score: a padded list would
 // mark any answer 5/5 and close every open misconception on the material.
-export const walkthroughRecallResponseSchema = z.object({
-  covered: cappedArray(z.string().trim().min(1).max(500), 12),
-  missed: cappedArray(z.string().trim().min(1).max(500), 6),
-  wrong: cappedArray(
-    z.object({
-      claim: z.string().trim().min(1).max(500),
-      correction: z.string().trim().min(1).max(1000),
-    }),
-    6
-  ),
-});
+export const walkthroughRecallResponseSchema = z
+  .object({
+    covered: cappedArray(z.string().trim().min(1).max(500), 12),
+    missed: cappedArray(z.string().trim().min(1).max(500), 6),
+    wrong: cappedArray(
+      z.object({
+        claim: z.string().trim().min(1).max(500),
+        correction: z.string().trim().min(1).max(1000),
+      }),
+      6
+    ),
+  })
+  .refine(graded);
 
 export const walkthroughRecallSubmitSchema = z.object({
   answer: z.string().trim().min(1).max(4000),

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { db } from "@/lib/db";
+import { RebuildNotice } from "@/components/walkthrough/RebuildNotice";
 import { WalkthroughRunner } from "@/components/walkthrough/WalkthroughRunner";
-import { toStepView } from "@/lib/walkthrough";
+import { lastScores, sourceHash, toStepView } from "@/lib/walkthrough";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,22 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
   // The walkthrough is created by the button that links here, so arriving
   // without one means a stale link or a deleted material either way.
   if (!material || !material.walkthrough || material.walkthrough.steps.length === 0) notFound();
+  const { walkthrough } = material;
+
+  const attempts = await db.reviewLog.findMany({
+    where: { materialId: id, kind: "WALKTHROUGH" },
+    orderBy: { reviewedAt: "asc" },
+    select: { quality: true, detail: true },
+  });
+
+  // A walkthrough made before the fingerprint existed takes today's text as
+  // its own, on its first visit since: the column is younger than any
+  // re-import it could have missed.
+  const hash = sourceHash(material.text);
+  if (walkthrough.sourceHash === null) {
+    await db.walkthrough.update({ where: { id: walkthrough.id }, data: { sourceHash: hash } });
+  }
+  const stale = walkthrough.sourceHash !== null && walkthrough.sourceHash !== hash;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8">
@@ -34,11 +51,21 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
         <h1 className="text-xl font-semibold text-ink">{material.title}</h1>
       </div>
 
+      {stale && (
+        <RebuildNotice
+          materialId={material.id}
+          written={walkthrough.steps.filter((step) => step.explanation !== null).length}
+        />
+      )}
+
+      {/* Keyed so a rebuild, which is a new walkthrough, starts the runner over. */}
       <WalkthroughRunner
+        key={walkthrough.id}
         materialId={material.id}
         folderId={material.folderId}
-        startIndex={material.walkthrough.stepIndex}
-        steps={material.walkthrough.steps.map(toStepView)}
+        startIndex={walkthrough.stepIndex}
+        lastScores={lastScores(attempts, walkthrough.steps.map((step) => step.id))}
+        steps={walkthrough.steps.map(toStepView)}
       />
     </main>
   );

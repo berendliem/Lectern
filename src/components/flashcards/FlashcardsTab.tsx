@@ -40,7 +40,16 @@ function matches(card: FlashcardListItem, view: View, now: Date): boolean {
  * answers hidden until asked for, where a card can be edited or deleted. A view
  * per mastery state, and a rewrite of the whole set.
  */
-export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcards: FlashcardListItem[] }) {
+export function FlashcardsTab({
+  pageId,
+  flashcards,
+  earnedCount,
+}: {
+  pageId: string;
+  flashcards: FlashcardListItem[];
+  /** Cards born from the student's own misses, which regenerating keeps. */
+  earnedCount: number;
+}) {
   const router = useRouter();
   const { run, task, clear } = useTasks();
   const [view, setView] = useState<View>("all");
@@ -69,12 +78,19 @@ export function FlashcardsTab({ pageId, flashcards }: { pageId: string; flashcar
   }, [flashcards, view]);
 
   async function regenerate() {
-    // The route deletes every card before writing new ones. Intervals, ease and
-    // the review schedule behind them go too; the ledger of attempts stays.
-    const count = flashcards.length;
+    // The route deletes every generated card before writing new ones.
+    // Intervals, ease and the review schedule behind them go too; the ledger of
+    // attempts stays, and so do the cards earned from the student's own misses.
+    const count = flashcards.length - earnedCount;
+    const keptNote =
+      earnedCount > 0
+        ? ` The ${earnedCount} card${earnedCount === 1 ? "" : "s"} made from your own misses ${earnedCount === 1 ? "is" : "are"} kept.`
+        : "";
+    // Nothing generated to replace means nothing to warn about.
     if (
+      count > 0 &&
       !confirm(
-        `Regenerate flashcards for this lecture? Its ${count} existing card${count === 1 ? "" : "s"} will be replaced, and the review progress on them (intervals and ease) is lost.`
+        `Regenerate flashcards for this lecture? Its ${count} existing card${count === 1 ? "" : "s"} will be replaced, and the review progress on them (intervals and ease) is lost.${keptNote}`
       )
     ) {
       return;

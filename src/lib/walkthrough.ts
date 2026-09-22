@@ -8,12 +8,39 @@
  * model names that is not actually in the text is skipped rather than guessed at.
  */
 
+import { createHash } from "node:crypto";
+
 /**
- * Marks a card as born from a walkthrough, so a deck shows where it came from,
- * and so regenerating a material's cards knows these are the student's own
- * misses rather than generated cards it may replace.
+ * Fingerprint of the text a walkthrough was split from, so a re-import that
+ * changes the text can be noticed.
  */
-export const WALKTHROUGH_SOURCE_TERM = "From a walkthrough";
+export function sourceHash(text: string): string {
+  return createHash("sha256").update(text).digest("hex");
+}
+
+/**
+ * Each step's latest score, read back from the ledger rows the recall route
+ * writes, so a step answered on an earlier visit shows how it went instead of
+ * asking again. `attempts` is oldest first. Rows for steps not in `stepIds`
+ * (a walkthrough since rebuilt) are ignored.
+ */
+export function lastScores(
+  attempts: { quality: number; detail: string | null }[],
+  stepIds: string[]
+): Record<string, number> {
+  const wanted = new Set(stepIds);
+  const scores: Record<string, number> = {};
+  for (const { quality, detail } of attempts) {
+    let stepId: unknown;
+    try {
+      stepId = detail ? (JSON.parse(detail) as { stepId?: unknown }).stepId : undefined;
+    } catch {
+      continue;
+    }
+    if (typeof stepId === "string" && wanted.has(stepId)) scores[stepId] = quality;
+  }
+  return scores;
+}
 
 export type WalkthroughStepSeed = { ordinal: number; label: string; sourceText: string };
 

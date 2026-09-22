@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CheckCheck, GraduationCap, Lightbulb, MessagesSquare } from "lucide-react";
 import { db } from "@/lib/db";
-import { courseScopeFilter, quizlessMaterialsFilter } from "@/lib/cards";
+import { courseScopeFilter, earnedCardFilter, quizlessMaterialsFilter } from "@/lib/cards";
 import {
   classifyTopic,
   coverageThreshold,
@@ -12,7 +12,6 @@ import {
 } from "@/lib/coverage";
 import { scoreTopics } from "@/lib/embeddings";
 import { RECALL_LEDGER_SINCE } from "@/lib/recall";
-import { WALKTHROUGH_SOURCE_TERM } from "@/lib/walkthrough";
 import { CourseOverview, type TopicRow } from "@/components/course/CourseOverview";
 import { PageList } from "@/components/dashboard/PageList";
 import { NewPageButton } from "@/components/dashboard/NewPageButton";
@@ -46,7 +45,7 @@ export default async function FolderPage({
     topics,
     cards,
     openMisconceptions,
-    walkthroughCardCounts,
+    earnedCardCounts,
   ] = await Promise.all([
     db.page.findMany({
       where: { folderId },
@@ -105,7 +104,7 @@ export default async function FolderPage({
     // them apart. A second query because `_count` takes one count per relation.
     db.flashcard.groupBy({
       by: ["materialId"],
-      where: { sourceTerm: WALKTHROUGH_SOURCE_TERM, material: { folderId } },
+      where: { ...earnedCardFilter, material: { folderId } },
       _count: true,
     }),
   ]);
@@ -216,8 +215,8 @@ export default async function FolderPage({
                       slideCount: m.slideCount,
                       createdAt: m.createdAt,
                       flashcardCount: m._count.flashcards,
-                      walkthroughCardCount:
-                        walkthroughCardCounts.find((c) => c.materialId === m.id)?._count ?? 0,
+                      earnedCardCount:
+                        earnedCardCounts.find((c) => c.materialId === m.id)?._count ?? 0,
                       quizCount: m._count.quizQuestions,
                       hasWalkthrough: m.walkthrough !== null,
                     }))}

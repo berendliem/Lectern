@@ -5,8 +5,7 @@ import { jsonError } from "@/lib/api-utils";
 import { callLLMJSON } from "@/lib/llm";
 import { FLASHCARDS_SYSTEM_PROMPT, buildFlashcardsUserPrompt } from "@/lib/prompts/flashcards";
 import { flashcardsResponseSchema } from "@/lib/validation";
-import { assertSingleParent } from "@/lib/cards";
-import { WALKTHROUGH_SOURCE_TERM } from "@/lib/walkthrough";
+import { assertSingleParent, generatedCardFilter } from "@/lib/cards";
 
 // A material has no notes step, so its raw text is the source. Cap what goes
 // into one prompt: a 200-page reading would otherwise blow past a free model's
@@ -32,23 +31,20 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     });
     const parsed = await flashcardsResponseSchema.parseAsync(raw);
 
-    // Walkthrough cards are the student's own misses, and generation never
-    // recreates them, so only the generated cards are replaced. `not` alone
-    // would skip a null sourceTerm, which is a generated card too.
-    await db.flashcard.deleteMany({
-      where: {
-        materialId: id,
-        OR: [{ sourceTerm: null }, { sourceTerm: { not: WALKTHROUGH_SOURCE_TERM } }],
-      },
-    });
-    await db.flashcard.createMany({
-      data: parsed.flashcards.map((card) => ({
-        ...assertSingleParent({ materialId: id }),
-        prompt: card.prompt,
-        idealExplanation: card.idealExplanation,
-        sourceTerm: card.sourceTerm,
-      })),
-    });
+    // Cards the student earned by missing something are kept: generation
+    // never recreates them. One transaction, so a failed insert cannot leave
+    // the old cards deleted and nothing in their place.
+    await db.$transaction([
+      db.flashcard.deleteMany({ where: { materialId: id, ...generatedCardFilter } }),
+      db.flashcard.createMany({
+        data: parsed.flashcards.map((card) => ({
+          ...assertSingleParent({ materialId: id }),
+          prompt: card.prompt,
+          idealExplanation: card.idealExplanation,
+          sourceTerm: card.sourceTerm,
+        })),
+      }),
+    ]);
 
     return NextResponse.json({ count: parsed.flashcards.length });
   } catch (e) {

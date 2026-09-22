@@ -490,6 +490,10 @@ model Walkthrough {
   materialId String   @unique
   /// Which step the student is on. The whole point of persisting anything.
   stepIndex  Int      @default(0)
+  /// SHA-256 of the material text the steps were split from. A re-import that
+  /// changes the text leaves the steps describing the old file; this is how
+  /// the walkthrough notices. Null on rows made before it existed.
+  sourceHash String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

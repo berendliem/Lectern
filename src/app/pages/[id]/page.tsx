@@ -19,6 +19,7 @@ import { InterviewLaunch } from "@/components/interview/InterviewLaunch";
 import { LectureActions } from "@/components/page-detail/LectureActions";
 import { PretestReveal, type PretestRevealEntry } from "@/components/page/PretestReveal";
 import { isVideoExtension } from "@/lib/audio-storage";
+import { earnedCardFilter } from "@/lib/cards";
 import { RECALL_LEDGER_SINCE } from "@/lib/recall";
 import { recordingWouldDestroyImport, staleNotesMessage } from "@/lib/transcript-layer";
 import type { TranscriptSegment, KeyTerm } from "@/types";
@@ -52,6 +53,9 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
   const keyTerms: KeyTerm[] = page.notes ? JSON.parse(page.notes.keyTerms) : [];
   const audioExt = page.audioFilePath?.split(".").pop() ?? "";
   const isVideo = isVideoExtension(audioExt);
+
+  // Regenerating keeps these, so its confirm counts them apart.
+  const earnedCardCount = await db.flashcard.count({ where: { pageId: page.id, ...earnedCardFilter } });
 
   // Distinct questions this lecture has been failed on — the drill button's
   // subject matter, and the reason it is offered at all.
@@ -150,6 +154,7 @@ export default async function PageDetail({ params }: { params: Promise<{ id: str
               page.flashcards.length > 0 ? (
                 <FlashcardsTab
                   pageId={page.id}
+                  earnedCount={earnedCardCount}
                   flashcards={page.flashcards.map(({ _count, ...card }) => ({ ...card, misses: _count.reviewLogs }))}
                 />
               ) : (

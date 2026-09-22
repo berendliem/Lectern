@@ -18,9 +18,24 @@ import { protectCurrency } from "@/lib/inline-math";
  */
 const FENCED_CODE = /(```[\s\S]*?```)/;
 
+// Model-written markdown is untrusted. An image would be fetched on render,
+// so it shows as its alt text (the CSP in next.config.ts is the backstop). A
+// link is followed only by a click, but it still should not hand the
+// destination this page's URL or rank it.
+const UNTRUSTED_DEFAULTS: Components = {
+  img: ({ alt }) => <>{alt}</>,
+  // Every prop passes through (footnote ids and aria labels live on links)
+  // except the hast node, which is no DOM attribute.
+  a: (props) => <a {...{ ...props, node: undefined }} rel="noreferrer nofollow" />,
+};
+
 export function Markdown({ children, components }: { children: string; components?: Components }) {
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={components}>
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm, remarkMath]}
+      rehypePlugins={[rehypeKatex]}
+      components={{ ...UNTRUSTED_DEFAULTS, ...components }}
+    >
       {children
         .split(FENCED_CODE)
         .map((part, i) => (i % 2 === 1 ? part : protectCurrency(part)))

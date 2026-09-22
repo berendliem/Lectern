@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
     // audio. Lecture recordings and video uploads are routinely bigger.
     proxyClientMaxBodySize: "512mb",
   },
+  // Model-written markdown renders on almost every page, and an image in it is
+  // a request the browser makes on its own: a prompt-injected reading could
+  // put course content in an image URL and send it anywhere. Every image
+  // Lectern shows itself is same-origin, a data URL or a blob.
+  async headers() {
+    return [
+      { source: "/:path*", headers: [{ key: "Content-Security-Policy", value: "img-src 'self' data: blob:" }] },
+    ];
+  },
 };
 
 export default nextConfig;

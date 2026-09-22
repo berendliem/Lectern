@@ -47,6 +47,45 @@ export function quizlessMaterialsFilter(folderId: string) {
   };
 }
 
+/** Marks a card born from a walkthrough step, so a deck shows where it came from. */
+export const WALKTHROUGH_SOURCE_TERM = "From a walkthrough";
+
+/** Marks a card born from a blurt, so a deck shows where it came from. */
+export const BLURT_SOURCE_TERM = "From a blurt";
+
+/** Marks a card the ledger wrote after the student missed one thing `strikes` times. */
+export const missedSourceTerm = (strikes: number) => `Missed ${strikes}×`;
+
+/**
+ * Cards the student earned by getting something wrong: a walkthrough step, a
+ * blurt, a miss the ledger saw repeatedly. Generation never recreates them, so
+ * regenerating a set replaces only the rest.
+ */
+export const earnedCardFilter = {
+  OR: [
+    { sourceTerm: WALKTHROUGH_SOURCE_TERM },
+    { sourceTerm: BLURT_SOURCE_TERM },
+    { sourceTerm: { startsWith: "Missed ", endsWith: "×" } },
+  ],
+};
+
+/**
+ * The same labels as `earnedCardFilter`, for a label about to be written.
+ * Case-insensitive on "Missed" because Prisma's `startsWith` is SQLite LIKE,
+ * which ignores ASCII case.
+ */
+export function isEarnedSourceTerm(term: string | null | undefined): boolean {
+  if (!term) return false;
+  return term === WALKTHROUGH_SOURCE_TERM || term === BLURT_SOURCE_TERM || /^missed [\s\S]*×$/i.test(term);
+}
+
+/**
+ * Every card a regenerate replaces. `NOT` alone would skip a null sourceTerm,
+ * since SQL's NOT of a comparison with NULL is NULL, and a null one is a
+ * generated card too.
+ */
+export const generatedCardFilter = { OR: [{ sourceTerm: null }, { NOT: earnedCardFilter }] };
+
 export type CardSource =
   | { kind: "lecture"; id: string; title: string; course: string | null }
   | { kind: "material"; id: string; title: string; course: string | null };
