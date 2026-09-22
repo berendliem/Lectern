@@ -91,19 +91,45 @@ export function splitSlides(text: string): WalkthroughStepSeed[] {
   }));
 }
 
+type Line = { start: number; content: string };
+
+function linesOf(text: string): Line[] {
+  const lines: Line[] = [];
+  for (const match of text.matchAll(/^.*$/gm)) {
+    lines.push({ start: match.index, content: match[0] });
+  }
+  return lines;
+}
+
+/**
+ * The line a heading names, anchored to a whole line rather than a bare
+ * substring — the same anchoring `^Slide N:` gives splitSlides. A heading
+ * that also shows up mid-sentence in an earlier section's prose ("as Bar
+ * covers below") cannot masquerade as the heading itself; only a line whose
+ * trimmed content equals or starts with the heading counts.
+ */
+function findHeadingLine(lines: Line[], heading: string, from: number): Line | null {
+  const candidates = lines.filter((line) => line.start >= from);
+  const exact = candidates.find((line) => line.content.trim() === heading);
+  if (exact) return exact;
+  return candidates.find((line) => line.content.trim().startsWith(heading)) ?? null;
+}
+
 export function splitSections(text: string, headings: string[]): WalkthroughStepSeed[] {
   const trimmed = text.trim();
   if (trimmed.length === 0) return [];
+
+  const lines = linesOf(trimmed);
 
   // Each heading is looked for after the previous one, so a phrase that also
   // appears in an earlier paragraph cannot cut the reading backwards.
   const cuts: { index: number; heading: string }[] = [];
   let from = 0;
   for (const heading of headings) {
-    const at = trimmed.indexOf(heading, from);
-    if (at < 0) continue;
-    cuts.push({ index: at, heading });
-    from = at + heading.length;
+    const line = findHeadingLine(lines, heading, from);
+    if (!line) continue;
+    cuts.push({ index: line.start, heading });
+    from = line.start + line.content.length;
   }
 
   if (cuts.length === 0) return [{ ordinal: 0, label: "The whole text", sourceText: trimmed }];

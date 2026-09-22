@@ -79,3 +79,18 @@ test("splitSections falls back to one step when no heading matches", () => {
 test("splitSections returns nothing for empty text", () => {
   assert.deepEqual(splitSections("   \n  ", ["Anything"]), []);
 });
+
+test("splitSections does not let a heading mentioned in earlier prose cut mid-sentence", () => {
+  const reading =
+    "Foo\nThis references Bar informally.\n\nBar\nReal Bar content.";
+  const steps = splitSections(reading, ["Foo", "Bar"]);
+  assert.equal(steps.length, 2);
+  assert.match(steps[0].sourceText, /This references Bar informally\.$/);
+  assert.match(steps[1].sourceText, /^Bar\n/);
+});
+
+test("splitSections skips a heading that only ever appears mid-line", () => {
+  const steps = splitSections("Some prose mentioning Bar in passing.", ["Bar"]);
+  assert.equal(steps.length, 1);
+  assert.equal(steps[0].label, "The whole text");
+});
