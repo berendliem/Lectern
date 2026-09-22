@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { jsonError, withValidation } from "@/lib/api-utils";
 import { callLLMJSON, reasoningModel } from "@/lib/llm";
@@ -89,19 +90,33 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   }
   if (seeds.length === 0) return jsonError("This material has no text to walk through", 422);
 
-  const walkthrough = await db.walkthrough.create({
-    data: {
-      materialId: id,
-      steps: {
-        create: seeds.map((seed) => ({
-          ordinal: seed.ordinal,
-          label: seed.label,
-          sourceText: seed.sourceText,
-        })),
+  let walkthrough;
+  try {
+    walkthrough = await db.walkthrough.create({
+      data: {
+        materialId: id,
+        steps: {
+          create: seeds.map((seed) => ({
+            ordinal: seed.ordinal,
+            label: seed.label,
+            sourceText: seed.sourceText,
+          })),
+        },
       },
-    },
-    include: { steps: { orderBy: { ordinal: "asc" } } },
-  });
+      include: { steps: { orderBy: { ordinal: "asc" } } },
+    });
+  } catch (e) {
+    // Unique constraint on Walkthrough.materialId: two POSTs raced past the
+    // "no walkthrough yet" check above. The loser didn't fail, it just lost —
+    // it resumes the winner's walkthrough instead of erroring.
+    if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")) throw e;
+    const existing = await db.walkthrough.findUnique({
+      where: { materialId: id },
+      include: { steps: { orderBy: { ordinal: "asc" } } },
+    });
+    if (!existing) return jsonError("Material not found", 404);
+    walkthrough = existing;
+  }
 
   return NextResponse.json({ walkthrough: view(walkthrough) });
 }
