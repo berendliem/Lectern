@@ -72,6 +72,7 @@ export async function POST(
     materialId: id,
     misconception: parsed.wrong[0]?.correction ?? parsed.missed[0] ?? null,
     detail: {
+      stepId: step.id,
       step: step.label,
       covered: parsed.covered.length,
       missed: parsed.missed.length,
@@ -79,16 +80,36 @@ export async function POST(
     },
   };
 
-  const cards = [
+  const where = `${step.label} of "${step.walkthrough.material.title}"`;
+  const candidates = [
     ...parsed.missed.map((point) => ({
-      prompt: `You didn't mention this on ${step.label} of "${step.walkthrough.material.title}". Explain it: ${point}`,
+      prompt: `You didn't mention this in ${where}. Explain it: ${point}`,
       idealExplanation: point,
     })),
     ...parsed.wrong.map((item) => ({
-      prompt: `You said: "${item.claim}". Explain what is actually the case.`,
+      prompt: `In ${where}, you said: "${item.claim}". Explain what is actually the case.`,
       idealExplanation: item.correction,
     })),
   ];
+
+  // Revisiting a step asks again, so the same miss comes back on every visit;
+  // a card the material already has is not made twice.
+  const seen = new Set(
+    (
+      await db.flashcard.findMany({
+        where: {
+          materialId: id,
+          idealExplanation: { in: candidates.map((card) => card.idealExplanation) },
+        },
+        select: { idealExplanation: true },
+      })
+    ).map((card) => card.idealExplanation)
+  );
+  const cards = candidates.filter((card) => {
+    if (seen.has(card.idealExplanation)) return false;
+    seen.add(card.idealExplanation);
+    return true;
+  });
 
   // Advancing is part of the same write: a student whose answer was graded and
   // whose cards were made should not land back on the step they just finished.
