@@ -26,7 +26,10 @@ export function WalkthroughRunner({
 }) {
   const [steps, setSteps] = useState(initialSteps);
   const [index, setIndex] = useState(Math.min(startIndex, initialSteps.length - 1));
-  const [teaching, setTeaching] = useState(false);
+  // Which step's teach POST is in flight, or null. Keyed by id (not a plain
+  // boolean) so step 4's render never reads step 3's still-in-flight call as
+  // its own — see the `teaching` derivation below.
+  const [teachingStepId, setTeachingStepId] = useState<string | null>(null);
   const [marking, setMarking] = useState(false);
   const [answer, setAnswer] = useState("");
   const [marked, setMarked] = useState<Marked | null>(null);
@@ -41,35 +44,65 @@ export function WalkthroughRunner({
   const step = steps[index];
   const recallPromptId = useId();
 
-  // React state updates aren't synchronous, so StrictMode's double-run mount
-  // effect (or a fast Retry click) can fire two teach POSTs for the same step
-  // before `teaching` state re-renders. The server is first-writer-wins, but
-  // each duplicate call still pays for a model completion.
-  const teachingStepId = useRef<string | null>(null);
+  // Whatever step is on screen right now. submit() and teach() capture the
+  // step they started for and check this ref before touching screen state,
+  // so a slow response for a step the student has since left via Next/Back
+  // cannot paint over the step now showing. Synced from an effect rather
+  // than written directly during render (react-hooks/refs forbids mutating a
+  // ref in the render body); a passive effect still flushes long before any
+  // network response it needs to beat, since the user can't click ahead of
+  // their own browser's paint.
+  const shownStepId = useRef(step.id);
+  useEffect(() => {
+    shownStepId.current = step.id;
+  }, [step.id]);
+
+  // A synchronous mutex, kept separate from the teachingStepId state above.
+  // StrictMode's double-run mount effect calls this effect's body twice back
+  // to back, before either call's setTeachingStepId has committed a
+  // re-render — a state-only check would still read stale (null) on the
+  // second synchronous call and let both POSTs through. This ref is mutated
+  // synchronously at call time, so the second call sees it immediately; the
+  // state exists only so the render below can show which step is teaching.
+  const teachingRef = useRef<string | null>(null);
 
   const teach = useCallback(async () => {
-    if (teachingStepId.current === step.id) return;
-    teachingStepId.current = step.id;
-    setTeaching(true);
+    if (teachingRef.current === step.id) return;
+    const forStepId = step.id;
+    teachingRef.current = forStepId;
+    setTeachingStepId(forStepId);
     setTeachError(null);
     try {
       const data = (await postTask(
-        `/api/materials/${materialId}/walkthrough/steps/${step.id}/teach`,
+        `/api/materials/${materialId}/walkthrough/steps/${forStepId}/teach`,
         "Could not write this step.",
         undefined,
         "Network error talking to the local server."
       )) as { step: WalkthroughStepView };
+      // Cached by id unconditionally, even if the student has navigated away:
+      // this is what makes a step they already left come back already taught.
       setSteps((prev) => prev.map((s) => (s.id === data.step.id ? data.step : s)));
     } catch (e) {
-      setTeachError(e instanceof Error ? e.message : "Could not write this step.");
+      // teachError is screen state: a late failure for a step the student
+      // left must not paint an error banner over whatever they moved to.
+      if (shownStepId.current === forStepId) {
+        setTeachError(e instanceof Error ? e.message : "Could not write this step.");
+      }
     } finally {
-      teachingStepId.current = null;
-      setTeaching(false);
+      // Only release the mutex if it's still ours: if the student has since
+      // moved on and that step's own teach() has already taken the ref, this
+      // stale finally must not clear a lock it doesn't hold.
+      if (teachingRef.current === forStepId) teachingRef.current = null;
+      if (shownStepId.current === forStepId) setTeachingStepId(null);
     }
   }, [materialId, step.id]);
 
   // A step is written once, on arrival. A failure leaves it unwritten and the
-  // Retry button visible; it never advances on its own.
+  // Retry button visible; it never advances on its own. `teachingRef` (not
+  // teachingStepId state) is what actually blocks a duplicate fetch for this
+  // step, so neither is in this condition or its deps: gating on the state
+  // would make step 4's effect wait for step 3's still-in-flight teach to
+  // settle before firing its own, well after step 4 is on screen.
   useEffect(() => {
     // react-hooks/set-state-in-effect flags this as a synchronous setState in
     // an effect because `teach` sets state before its first await. That's the
@@ -77,10 +110,10 @@ export function WalkthroughRunner({
     // the same via a locally-scoped async function); `teach` is only pulled
     // out of the effect via useCallback so the Retry button can reuse it.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!step.recallPrompt && !teaching && !teachError) void teach();
-  }, [step.recallPrompt, teaching, teachError, teach]);
+    if (!step.recallPrompt && !teachError) void teach();
+  }, [step.recallPrompt, teachError, teach]);
 
-  // Same reasoning as teachingStepId above: `marking` state lags a fast
+  // Same reasoning as teachingRef above: `marking` state lags a fast
   // double click, and a duplicate POST here would write two recall attempts
   // to the ledger for one answer, counting as two strikes toward a card.
   const submitting = useRef(false);
@@ -88,12 +121,13 @@ export function WalkthroughRunner({
   async function submit() {
     if (!answer.trim()) return;
     if (submitting.current) return;
+    const forStepId = step.id;
     submitting.current = true;
     setMarking(true);
     setMarkError(null);
     try {
       const data = (await postTask(
-        `/api/materials/${materialId}/walkthrough/steps/${step.id}/recall`,
+        `/api/materials/${materialId}/walkthrough/steps/${forStepId}/recall`,
         "Could not mark your answer.",
         {
           headers: { "Content-Type": "application/json" },
@@ -101,16 +135,21 @@ export function WalkthroughRunner({
         },
         "Network error talking to the local server."
       )) as Marked;
+      // The server graded this and wrote the ledger row regardless. Only the
+      // screen paint is guarded: a late score for a step the student left
+      // must not reveal a step they haven't answered.
+      if (shownStepId.current !== forStepId) return;
       setMarked(data);
       setRevealed(true);
     } catch (e) {
+      if (shownStepId.current !== forStepId) return;
       // The answer stays in the box and the Answer button re-enables: a
       // failed marking must not cost the typing, and pressing Answer again
       // is the retry, not a separate Retry button.
       setMarkError(e instanceof Error ? e.message : "Could not mark your answer.");
     } finally {
       submitting.current = false;
-      setMarking(false);
+      if (shownStepId.current === forStepId) setMarking(false);
     }
   }
 
@@ -122,6 +161,10 @@ export function WalkthroughRunner({
     setRevealed(false);
     setTeachError(null);
     setMarkError(null);
+    // The step this screen is leaving no longer owns "Marking…": submit()'s
+    // own guard above will skip touching this once its response lands, so
+    // nothing would otherwise undo a stuck spinner for an abandoned request.
+    setMarking(false);
     // Position is persisted so a refresh lands here again. A failure is silent
     // on purpose: the student has already moved, and a message about
     // bookkeeping would interrupt studying to report nothing they can act on.
@@ -135,6 +178,8 @@ export function WalkthroughRunner({
       // ignored, deliberately
     }
   }
+
+  const teaching = teachingStepId === step.id;
 
   return (
     <div className="flex flex-col gap-4">
