@@ -5,9 +5,21 @@ import { callLLMText, type ChatMessage } from "@/lib/llm";
 import { CHAT_DIAGRAM_CLAUSE, UNTRUSTED_CONTENT_CLAUSE, WEB_SEARCH_CLAUSE } from "@/lib/prompts/shared";
 import { retrieve } from "@/lib/retrieval";
 import { chatRequestSchema } from "@/lib/validation";
-import { lectureText } from "@/lib/transcript-layer";
+import { joinWithinBudget, lectureLayers } from "@/lib/transcript-layer";
 
 const MAX_CONTEXT_CHARS = 24_000;
+
+/** The whole-lecture prompt, in priority order: the notes, then what the
+ *  lecturer said, then the deck or reading it was said over. The spoken
+ *  transcript is what a student asking about the lecture means, so it takes its
+ *  share of the budget before the context layer does. */
+function fallbackContext(
+  notes: string | null,
+  transcript: Parameters<typeof lectureLayers>[0]
+): string {
+  const { context, spoken } = lectureLayers(transcript);
+  return joinWithinBudget([notes ? `NOTES:\n${notes}` : "", spoken, context], MAX_CONTEXT_CHARS);
+}
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,13 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const context =
     mode === "semantic" && hits.length > 0
       ? hits.map((h) => `### ${h.title}\n${h.text}`).join("\n\n---\n\n")
-      : [
-          page.notes ? `NOTES:\n${page.notes.markdown}` : "",
-          lectureText(page.transcript),
-        ]
-          .filter(Boolean)
-          .join("\n\n")
-          .slice(0, MAX_CONTEXT_CHARS);
+      : fallbackContext(page.notes?.markdown ?? null, page.transcript);
 
   const systemPrompt = `You are a study assistant for the lecture "${page.title}". Answer the student's questions using the lecture material below. Be concise and concrete. If the material doesn't cover something, say so plainly instead of inventing an answer — you may then add general knowledge, clearly labeled as outside the lecture. ${CHAT_DIAGRAM_CLAUSE}${result.data.web ? ` ${WEB_SEARCH_CLAUSE}` : ""}\n\n${UNTRUSTED_CONTENT_CLAUSE}\n\n${context}`;
 

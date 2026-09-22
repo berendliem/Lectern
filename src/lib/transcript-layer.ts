@@ -74,17 +74,44 @@ export function planTranscribeWrite(existing: ExistingTranscript | null): Transc
 }
 
 /**
- * Both layers as one block, for the readers that just need everything the
- * lecture covered — chat and the FTS index. The notes prompt does not use this:
- * it keeps the layers apart on purpose, so the deck can supply structure while
- * the recording supplies what was actually said.
+ * Each layer as its own labelled block, empty when the layer is absent. Both
+ * layers are always labelled, even when only one exists, so a prompt that
+ * labels its other sections is not asymmetric.
+ *
+ * Callers join these themselves: chat spends a character budget on them in its
+ * own order, and the notes prompt keeps them apart on purpose, so the deck can
+ * supply structure while the recording supplies what was actually said.
  */
-export function lectureText(transcript: TranscriptLayers | null | undefined): string {
-  if (!transcript) return "";
+export function lectureLayers(transcript: TranscriptLayers | null | undefined): {
+  context: string;
+  spoken: string;
+} {
+  if (!transcript) return { context: "", spoken: "" };
   const spoken = transcript.cleanText ?? transcript.rawText;
-  if (!transcript.contextText) return spoken;
   const label = contextKind(transcript.contextSource) === "slides" ? "SLIDES" : "SOURCE TEXT";
-  return `${label}:\n${transcript.contextText}\n\nLECTURE TRANSCRIPT:\n${spoken}`;
+  return {
+    context: transcript.contextText ? `${label}:\n${transcript.contextText}` : "",
+    spoken: spoken.trim() ? `LECTURE TRANSCRIPT:\n${spoken}` : "",
+  };
+}
+
+/**
+ * Joins blocks under a total character budget, spending it in the order given
+ * and dropping what no longer fits. Chat's fallback prompt uses it to put the
+ * spoken transcript ahead of the context layer: slicing the joined text instead
+ * would let a long deck push the recording out of the prompt entirely, and the
+ * answers would then come from the slides the student did not ask about.
+ */
+export function joinWithinBudget(blocks: string[], budget: number): string {
+  const kept: string[] = [];
+  let left = budget;
+  for (const block of blocks) {
+    if (!block || left <= 0) continue;
+    const slice = block.slice(0, left);
+    kept.push(slice);
+    left -= slice.length + 2; // the "\n\n" that joins it to the next block
+  }
+  return kept.join("\n\n");
 }
 
 /** Why the notes on screen are behind the transcript, or null when they aren't. */

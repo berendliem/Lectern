@@ -4,7 +4,8 @@ import {
   contextKind,
   contextPreview,
   isImported,
-  lectureText,
+  joinWithinBudget,
+  lectureLayers,
   planTranscribeWrite,
   recordingWouldDestroyImport,
   staleNotesMessage,
@@ -90,32 +91,48 @@ test("a context preview is one line, short enough to quote", () => {
   assert.equal(long, `${"x".repeat(60)}…`);
 });
 
-test("both layers join under labels, and the cleaned transcript wins", () => {
-  const text = lectureText({
+test("both layers come back labelled, and the cleaned transcript wins", () => {
+  const layers = lectureLayers({
     rawText: "so uh today, Bayes",
     cleanText: "Today: Bayes' rule.",
     contextText: "Slide 1: Bayes' rule",
     contextSource: "import:slides",
   });
-  assert.equal(text, "SLIDES:\nSlide 1: Bayes' rule\n\nLECTURE TRANSCRIPT:\nToday: Bayes' rule.");
+  assert.deepEqual(layers, {
+    context: "SLIDES:\nSlide 1: Bayes' rule",
+    spoken: "LECTURE TRANSCRIPT:\nToday: Bayes' rule.",
+  });
 });
 
 test("a reading is labelled as source text, not as slides", () => {
-  const text = lectureText({
+  const { context } = lectureLayers({
     rawText: "spoken",
     cleanText: null,
     contextText: "chapter three",
     contextSource: "import",
   });
-  assert.equal(text, "SOURCE TEXT:\nchapter three\n\nLECTURE TRANSCRIPT:\nspoken");
+  assert.equal(context, "SOURCE TEXT:\nchapter three");
 });
 
-test("one layer alone is returned unlabelled", () => {
-  assert.equal(
-    lectureText({ rawText: "spoken", cleanText: null, contextText: null, contextSource: null }),
-    "spoken"
+test("one layer alone is still labelled", () => {
+  assert.deepEqual(
+    lectureLayers({ rawText: "spoken", cleanText: null, contextText: null, contextSource: null }),
+    { context: "", spoken: "LECTURE TRANSCRIPT:\nspoken" }
   );
-  assert.equal(lectureText(null), "");
+  assert.deepEqual(lectureLayers(null), { context: "", spoken: "" });
+});
+
+test("the budget is spent in order, so a long deck can't crowd out the transcript", () => {
+  const transcript = "t".repeat(10);
+  const deck = "d".repeat(100);
+  // The earlier block is served whole; the later one takes what is left.
+  assert.equal(joinWithinBudget([transcript, deck], 20), `${transcript}\n\n${"d".repeat(8)}`);
+  // Joining first and slicing afterwards would have dropped the transcript.
+  assert.equal(joinWithinBudget([deck, transcript], 20).includes("t"), false);
+  // An exhausted budget drops the rest rather than slicing from the end.
+  assert.equal(joinWithinBudget([transcript, deck], 10), transcript);
+  assert.equal(joinWithinBudget(["", transcript], 100), transcript);
+  assert.equal(joinWithinBudget([], 100), "");
 });
 
 const older = { updatedAt: new Date("2026-09-20T10:00:00Z") };
