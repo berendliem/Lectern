@@ -25,6 +25,7 @@ export function TranscriptTab({
   segments,
   materials,
   hasContext,
+  recordingBlocked,
 }: {
   pageId: string;
   pageTitle: string;
@@ -38,6 +39,10 @@ export function TranscriptTab({
   materials: { id: string; title: string; kind: string }[];
   /** Whether a deck or reading is already attached. */
   hasContext: boolean;
+  /** Set when this page's transcript is imported text and a context layer is
+   *  already attached: a recording would overwrite the only copy of that text,
+   *  and the transcribe route refuses it. Don't offer what can't be done. */
+  recordingBlocked: boolean;
 }) {
   const router = useRouter();
   const [view, setView] = useState<"clean" | "raw">(cleanText ? "clean" : "raw");
@@ -55,6 +60,10 @@ export function TranscriptTab({
   // Audio + timestamped segments get the synced player (click a line to seek,
   // live highlight); it renders both the player and the transcript.
   const synced = hasAudio && !isVideo && !!transcript && segments.length > 0;
+  // An unsaved take belonging to this page keeps the panel on screen even when
+  // recording is otherwise not on offer — it is the only way to save or
+  // download that audio. See the comment on the panel below.
+  const holdingTake = session?.pageId === pageId && audioBlob !== null;
   const showClean = view === "clean" && !!cleanText;
 
   async function detectChapters() {
@@ -122,14 +131,21 @@ export function TranscriptTab({
           upload succeeded and `hasAudio` flipped, and the shell bar sends the
           user here to download or re-save the recording. Without this the link
           lands on a page with no panel on it. */}
-      {(!hasAudio || (session?.pageId === pageId && audioBlob !== null)) && (
+      {(holdingTake || (!hasAudio && !recordingBlocked)) && (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <RecordingPanel pageId={pageId} pageTitle={pageTitle} />
-            {!hasAudio && <AudioUploadDropzone pageId={pageId} />}
+            {!hasAudio && !recordingBlocked && <AudioUploadDropzone pageId={pageId} />}
           </div>
-          {!hasAudio && <UrlImport pageId={pageId} />}
+          {!hasAudio && !recordingBlocked && <UrlImport pageId={pageId} />}
         </div>
+      )}
+
+      {recordingBlocked && (
+        <p className="rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[13px] text-ink-soft">
+          This page&rsquo;s transcript was imported, and slides or a reading are already attached to it.
+          A recording here would have to overwrite one of them, so record on a new lecture page instead.
+        </p>
       )}
 
       {transcript && materials.length > 0 && (

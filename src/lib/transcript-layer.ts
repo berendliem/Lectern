@@ -24,15 +24,39 @@ export function isImported(modelUsed: string | null): boolean {
   return modelUsed?.split(":")[0] === "import";
 }
 
+/** What the attached context layer is, for the copy that has to name it. */
+export function contextKind(contextSource: string | null | undefined): "slides" | "reading" {
+  return contextSource === SLIDES_TRANSCRIPT_SOURCE ? "slides" : "reading";
+}
+
+/**
+ * Whether recording here would destroy text that exists nowhere else.
+ *
+ * The page still holds imported text in `rawText`, and the context layer that
+ * text would move down into is already holding a deck or a reading. Both layers
+ * are the user's only copy — `prisma/dev.db` has no server backup — so the
+ * transcribe route refuses instead of picking one to overwrite.
+ */
+export function recordingWouldDestroyImport(existing: ExistingTranscript | null | undefined): boolean {
+  return (
+    !!existing &&
+    isImported(existing.modelUsed) &&
+    existing.rawText.trim() !== "" &&
+    existing.contextText !== null
+  );
+}
+
 /**
  * What a new transcription writes on top of an existing transcript row.
  *
  * Imported text is never destroyed: it moves down into the context layer, where
  * the notes prompt reads it as the slides or the reading the lecture was given
- * over. `cleanText` and `chapters` go either way — both described text that is
- * being replaced, and the Transcript tab opens on the cleaned view whenever
- * `cleanText` exists, so a stale one shows the old text labelled as the cleaned
- * version of the new recording.
+ * over. A context layer already in place is never overwritten — that state is
+ * refused up front by `recordingWouldDestroyImport`, and this function stays
+ * safe on its own besides. `cleanText` and `chapters` go either way — both
+ * described text that is being replaced, and the Transcript tab opens on the
+ * cleaned view whenever `cleanText` exists, so a stale one shows the old text
+ * labelled as the cleaned version of the new recording.
  */
 export function planTranscribeWrite(existing: ExistingTranscript | null): TranscriptWrite {
   const write: TranscriptWrite = { cleanText: null, chapters: null };

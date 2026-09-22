@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isImported, lectureText, planTranscribeWrite, staleNotesMessage } from "./transcript-layer.ts";
+import {
+  contextKind,
+  isImported,
+  lectureText,
+  planTranscribeWrite,
+  recordingWouldDestroyImport,
+  staleNotesMessage,
+} from "./transcript-layer.ts";
 
 const imported = { rawText: "Slide 1: Bayes' rule", modelUsed: "import:slides", contextText: null };
 const recorded = { rawText: "so today we look at Bayes", modelUsed: "apple-speech+fluidaudio", contextText: null };
@@ -35,9 +42,9 @@ test("a page with no transcript yet writes no context", () => {
   assert.deepEqual(planTranscribeWrite(null), { cleanText: null, chapters: null });
 });
 
-test("an existing context layer is never overwritten by a re-record", () => {
-  const already = { rawText: "spoken words", modelUsed: "import", contextText: "the deck" };
-  assert.deepEqual(planTranscribeWrite(already), { cleanText: null, chapters: null });
+test("a re-record leaves an attached deck alone", () => {
+  const withDeck = { ...recorded, contextText: "the deck" };
+  assert.deepEqual(planTranscribeWrite(withDeck), { cleanText: null, chapters: null });
 });
 
 test("empty imported text is not worth keeping as a layer", () => {
@@ -45,6 +52,33 @@ test("empty imported text is not worth keeping as a layer", () => {
     cleanText: null,
     chapters: null,
   });
+});
+
+test("unmoved imported text under an attached deck refuses the recording", () => {
+  // Both layers hold irreplaceable text: the import has nowhere left to move to.
+  const already = { rawText: "spoken words", modelUsed: "import", contextText: "the deck" };
+  assert.equal(recordingWouldDestroyImport(already), true);
+});
+
+test("a plain re-record over audio is allowed", () => {
+  assert.equal(recordingWouldDestroyImport(recorded), false);
+  assert.equal(recordingWouldDestroyImport({ ...recorded, contextText: "the deck" }), false);
+});
+
+test("a first recording on imported text with no context is allowed", () => {
+  assert.equal(recordingWouldDestroyImport(imported), false);
+  assert.equal(recordingWouldDestroyImport(null), false);
+  // Empty imported text is nothing to lose.
+  assert.equal(
+    recordingWouldDestroyImport({ rawText: "  ", modelUsed: "import", contextText: "the deck" }),
+    false
+  );
+});
+
+test("the context layer is named from where it came", () => {
+  assert.equal(contextKind("import:slides"), "slides");
+  assert.equal(contextKind("import"), "reading");
+  assert.equal(contextKind(null), "reading");
 });
 
 test("both layers join under labels, and the cleaned transcript wins", () => {
