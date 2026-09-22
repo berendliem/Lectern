@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-21
 **Branch:** `feat/material-learn-button`
-**Status:** Approved design, awaiting spec review
+**Status:** Implemented
 
 ## Goal
 
@@ -31,7 +31,7 @@ this, one piece at a time."
 | Persistence | Steps, the explanation written for each, and the current step index all persist |
 | Recall | Answering a step writes one `ReviewLog` (`RecallKind.WALKTHROUGH`) and turns missed points into flashcards |
 | Kind tailoring | Same engine, different prompt: a deck's bullets are shorthand to expand, a reading is an argument to follow |
-| Regeneration | None in v1. Steps derive from immutable material text, so there is nothing to overwrite |
+| Regeneration | None in v1. Steps are split once, from the material's text at the time; an onQ re-import that rewrites `Material.text` leaves the walkthrough on its old steps (see Out of scope) |
 
 Rejected: generating every step in one completion and storing it as JSON on the
 material (a sixty-slide deck becomes one huge, slow, truncation-prone call, and
@@ -145,9 +145,11 @@ step actually reached, plus the single outline call for a reading.
 ### Recall
 
 `recall` follows the shape `src/app/api/pages/[id]/blurt/route.ts` already
-established: one `callLLMJSON` grading call, then a `RecallEvent` through
-`writeRecall` in `src/lib/recall-log.ts`, then cards for the missed points via
-the existing card-creation path with `assertSingleParent`. The event carries
+established: one `callLLMJSON` grading call, then the cards for the missed
+points (via `assertSingleParent`) and the ledger row built by `recallRow` in
+`src/lib/recall-log.ts`, written in one transaction, with
+`settleMisconceptions` called after it commits — the same split blurt uses,
+rather than `writeRecall`. The event carries
 `materialId` and `kind: "WALKTHROUGH"`; quality is normalised by
 `normalizeQuality` like every other grader.
 
@@ -208,3 +210,17 @@ Verification section says what was walked and what the recall wrote.
 Prefetching the next step's teaching call; a regenerate action; walkthroughs for
 SYLLABUS and OTHER materials; spoken playback of a step. Prefetching is the first
 one worth revisiting, and only once a step's wait is actually annoying.
+
+Known gap: a re-imported material keeps its old walkthrough. An onQ re-import
+rewrites `Material.text`, but the walkthrough's steps were split from the text
+as it was, and nothing rebuilds them; rebuilding is a follow-up.
+
+## Changes during implementation
+
+- Heading search is line-anchored: a heading counts only where a whole line equals or starts with it, so a heading named mid-sentence in earlier prose cannot cut there.
+- Steps are capped at 12,000 characters (`MAX_STEP_CHARS`, one export shared by the splitter and the prompts); a longer step is split on paragraph boundaries into "Label (2 of 3)" steps.
+- Teach is first-writer-wins: concurrent teach calls on one step both return the pair that was stored first.
+- Back and Next are disabled while an answer is being marked.
+- One `toStepView` in `src/lib/walkthrough.ts` shapes a step row for the client, used by every route and the learn page.
+- Regenerating a material's flashcards keeps its walkthrough cards, and the confirm counts them apart.
+

@@ -10,6 +10,20 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-21-material-walkthrough-design.md`
 
+## Amendments
+
+The tasks below are kept as written; the built code departs from them in these places. The spec's "Changes during implementation" section is the current account.
+
+- `splitSections` finds headings on whole lines rather than with `indexOf`.
+- `MAX_STEP_CHARS` (12,000) lives in `src/lib/walkthrough.ts`; the splitters break an over-cap step into paragraph-bounded steps, and the prompts import the same constant.
+- `splitSlides` runs only for `SLIDES` materials, keeps text before the first marker, and measures the final slide alone when folding backwards.
+- The teach route writes first-writer-wins (`updateMany where explanation: null`, then re-reads), and picks its slide/prose guidance from the step's label, not the material's kind.
+- `toStepView` is shared instead of each route mapping steps inline.
+- The recall route writes through `recallRow` + `settleMisconceptions` like blurt, not `writeRecall`; it skips cards the material already has and records `stepId` in the ledger detail.
+- The walkthrough prompts sanitize every untrusted value, and the recall schema truncates over-cap arrays (`covered` capped at 12) instead of rejecting them.
+- The runner disables Back and Next while marking and ends with a link back to the course.
+- Regenerating flashcards keeps walkthrough cards.
+
 ## Global Constraints
 
 - **`main` is protected.** Work stays on `feat/material-learn-button`; the change reaches `main` through a pull request. See `AGENTS.md`.
