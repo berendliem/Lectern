@@ -58,7 +58,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       endSec: i + 1 < starts.length ? starts[i + 1].startSec : lastEnd,
     }));
 
-    await db.transcript.update({ where: { pageId: id }, data: { chapters: JSON.stringify(chapters) } });
+    // Written raw on purpose: `Transcript.updatedAt` is `@updatedAt`, which
+    // Prisma stamps on every model write, and the Notes tab reads it as "the
+    // text these notes came from has changed". Chapters are derived from the
+    // transcript and change none of it, so bumping the row would light the
+    // stale-notes banner on every page with notes for nothing. Raw SQL skips
+    // the stamp; the notes stay honestly up to date.
+    await db.$executeRaw`UPDATE "Transcript" SET "chapters" = ${JSON.stringify(chapters)} WHERE "pageId" = ${id}`;
 
     return NextResponse.json({ chapters });
   } catch (e) {
