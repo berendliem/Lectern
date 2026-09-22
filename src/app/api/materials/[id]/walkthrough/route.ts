@@ -59,7 +59,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return jsonError("There is no extracted text in this material to walk through", 422);
   }
 
-  let seeds: WalkthroughStepSeed[] = splitSlides(material.text);
+  // Only a deck is split on slide markers: a reading that happens to contain a
+  // "Slide 3:" line is still prose, and a deck split would drop what precedes it.
+  let seeds: WalkthroughStepSeed[] = material.kind === "SLIDES" ? splitSlides(material.text) : [];
   if (seeds.length === 0) {
     // A reading, or a deck that arrived as flat text with no slide markers.
     let headings: string[];

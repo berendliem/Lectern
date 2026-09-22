@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { splitSections, splitSlides, toStepView } from "./walkthrough.ts";
+import { MAX_STEP_CHARS, splitSections, splitSlides, toStepView } from "./walkthrough.ts";
 import {
   walkthroughOutlineResponseSchema,
   walkthroughRecallResponseSchema,
@@ -173,4 +173,72 @@ test("the teaching prompt truncates a step's source text at MAX_STEP_CHARS", () 
     sourceText: long,
   });
   assert.doesNotMatch(prompt, /MARKER_PAST_CAP/);
+});
+
+test("splitSlides keeps text before the first marker in the first step", () => {
+  const deck = [
+    "Course code BIO 101 — lecture handout",
+    `Slide 1: Photosynthesis\n${long("light")}`,
+    `Slide 2: The Calvin cycle\n${long("carbon")}`,
+  ].join("\n");
+  const steps = splitSlides(deck);
+  assert.equal(steps.length, 2);
+  assert.equal(steps[0].label, "Slide 1");
+  assert.match(steps[0].sourceText, /^Course code BIO 101/);
+  assert.match(steps[0].sourceText, /Slide 1: Photosynthesis/);
+});
+
+test("splitSlides folds two short trailing slides backwards, measuring the last one alone", () => {
+  const deck = [
+    `Slide 1: Intro\n${long("alpha")}`,
+    `Slide 2: Body\n${long("beta")}`,
+    `Slide 3: Summary\n${"s".repeat(80)}`,
+    `Slide 4: Questions\n${"q".repeat(80)}`,
+  ].join("\n");
+  const steps = splitSlides(deck);
+  assert.equal(steps.length, 2);
+  assert.equal(steps[1].label, "Slides 2-4");
+});
+
+test("an over-cap step splits into capped steps on paragraph boundaries", () => {
+  const para = (ch: string) => ch.repeat(5_000);
+  const reading = [para("a"), para("b"), para("c")].join("\n\n");
+  const steps = splitSections(reading, []);
+  assert.equal(steps.length, 2);
+  assert.deepEqual(
+    steps.map((s) => s.label),
+    ["The whole text (1 of 2)", "The whole text (2 of 2)"]
+  );
+  assert.deepEqual(
+    steps.map((s) => s.ordinal),
+    [0, 1]
+  );
+  for (const step of steps) assert.ok(step.sourceText.length <= MAX_STEP_CHARS);
+  // The cut falls between paragraphs, not mid-way through one.
+  assert.equal(steps[0].sourceText, `${para("a")}\n\n${para("b")}`);
+  assert.equal(steps[1].sourceText, para("c"));
+});
+
+test("an over-cap step hard-cuts only a single paragraph longer than the cap", () => {
+  const reading = `Subsets\n${"x".repeat(MAX_STEP_CHARS * 2)}\n\nCardinality\nHow big a set is.`;
+  const steps = splitSections(reading, ["Subsets", "Cardinality"]);
+  assert.deepEqual(
+    steps.map((s) => s.label),
+    ["Subsets (1 of 3)", "Subsets (2 of 3)", "Subsets (3 of 3)", "Cardinality"]
+  );
+  assert.deepEqual(
+    steps.map((s) => s.ordinal),
+    [0, 1, 2, 3]
+  );
+  for (const step of steps) assert.ok(step.sourceText.length <= MAX_STEP_CHARS);
+  assert.equal(steps.map((s) => s.sourceText).join("").replace(/\s/g, "").length,
+    `Subsets${"x".repeat(MAX_STEP_CHARS * 2)}CardinalityHowbigasetis.`.length);
+});
+
+test("an over-cap slide step is capped too", () => {
+  const deck = `Slide 1: Everything\n${"word ".repeat(3_000)}\n\n${"more ".repeat(3_000)}`;
+  const steps = splitSlides(deck);
+  assert.ok(steps.length > 1);
+  assert.equal(steps[0].label, `Slide 1 (1 of ${steps.length})`);
+  for (const step of steps) assert.ok(step.sourceText.length <= MAX_STEP_CHARS);
 });

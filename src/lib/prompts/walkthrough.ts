@@ -1,4 +1,5 @@
 import { UNTRUSTED_CONTENT_CLAUSE } from "@/lib/prompts/shared";
+import { MAX_STEP_CHARS } from "@/lib/walkthrough";
 
 /** A reading has no `Slide N:` marker, so its steps come from headings. */
 export const WALKTHROUGH_OUTLINE_SYSTEM_PROMPT = `You are dividing a piece of course reading into the sections a student should study one at a time.
@@ -18,13 +19,6 @@ ${UNTRUSTED_CONTENT_CLAUSE}`;
 
 /** One reading is sent in full, once, to plan its sections. */
 const MAX_OUTLINE_CHARS = 40_000;
-
-/**
- * A step is one slide or one section — normally small. The backstop is
- * `splitSections`' single-step fallback: when the outline call returns no
- * usable headings, the whole reading becomes one step's `sourceText`.
- */
-const MAX_STEP_CHARS = 12_000;
 
 export function buildWalkthroughOutlineUserPrompt(title: string, text: string): string {
   return `Reading: "${title}"\n\nDivide it into sections following the required JSON shape.\n\nTEXT:\n"""\n${text.slice(0, MAX_OUTLINE_CHARS)}\n"""`;

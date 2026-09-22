@@ -25,7 +25,7 @@ export async function POST(
 
   const step = await db.walkthroughStep.findUnique({
     where: { id: stepId },
-    include: { walkthrough: { include: { material: { select: { title: true, kind: true } } } } },
+    include: { walkthrough: { include: { material: { select: { title: true } } } } },
   });
   // The material in the path must own the step: otherwise a step id from one
   // course could be taught under another material's text.
@@ -40,7 +40,9 @@ export async function POST(
       systemPrompt: WALKTHROUGH_TEACH_SYSTEM_PROMPT,
       userPrompt: buildWalkthroughTeachUserPrompt({
         materialTitle: step.walkthrough.material.title,
-        kind: step.walkthrough.material.kind === "SLIDES" ? "SLIDES" : "READING",
+        // From how the step was split, not the material's kind: a deck with no
+        // slide markers is cut on headings, and its steps are sections.
+        kind: /^Slides? \d/.test(step.label) ? "SLIDES" : "READING",
         label: step.label,
         sourceText: step.sourceText,
       }),
