@@ -56,10 +56,19 @@ export async function POST(
     return jsonError(message, 502);
   }
 
-  const updated = await db.walkthroughStep.update({
-    where: { id: stepId },
+  // Two callers can race to teach one step — StrictMode's double-run mount
+  // effect is the everyday case, Task 7's runner fires this from one. Only the
+  // first writer's update lands; the loser's write is dropped rather than
+  // overwriting it, and both callers re-read below so they return the same
+  // stored pair instead of one holding a question the other's row disagrees
+  // with by the time Task 6 grades it.
+  await db.walkthroughStep.updateMany({
+    where: { id: stepId, explanation: null },
     data: { explanation: parsed.explanation, recallPrompt: parsed.recallPrompt },
   });
+
+  const updated = await db.walkthroughStep.findUnique({ where: { id: stepId } });
+  if (!updated) return jsonError("Step not found", 404);
 
   return NextResponse.json({ step: toStepView(updated) });
 }
