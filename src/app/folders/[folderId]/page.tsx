@@ -63,6 +63,7 @@ export default async function FolderPage({
         slideCount: true,
         createdAt: true,
         _count: { select: { flashcards: true, quizQuestions: true } },
+        walkthrough: { select: { id: true } },
       },
     }),
     db.courseTopic.findMany({ where: { folderId }, orderBy: { order: "asc" } }),
@@ -198,6 +199,7 @@ export default async function FolderPage({
                       createdAt: m.createdAt,
                       flashcardCount: m._count.flashcards,
                       quizCount: m._count.quizQuestions,
+                      hasWalkthrough: m.walkthrough !== null,
                     }))}
                   />
                 </div>

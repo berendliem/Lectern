@@ -16,6 +16,8 @@ export type MaterialSummary = {
   createdAt: Date;
   flashcardCount: number;
   quizCount: number;
+  /** Whether this material has a walkthrough, so delete can say it goes too. */
+  hasWalkthrough: boolean;
 };
 
 const ICONS: Record<string, typeof FileText> = {
@@ -150,13 +152,51 @@ export function MaterialList({
     else if (outcome.ran && pageId) router.push(`/pages/${pageId}`);
   }
 
-  async function remove(id: string, title: string, cards: number, questions: number) {
-    // Cascade: the material's flashcards, quiz questions and search chunks go
-    // with it. Every other delete in the app says what it takes; this one used
-    // to take it silently.
+  /** Opens the walkthrough for a deck or a reading, creating it on first click.
+   *  Under a task key like the other generators, so a double click makes one
+   *  walkthrough and one navigation, not two: the deduped caller's `outcome.ran`
+   *  is false, so only the caller that actually ran the POST navigates. The
+   *  destination is deterministic from `id` alone (unlike makeLecturePage's
+   *  pageId, which only the owning run learns), but navigating unconditionally
+   *  from both callers would still push the same route twice. */
+  async function learn(id: string, title: string) {
+    setError(null);
+    const outcome = await run(
+      {
+        key: `material:${id}:walkthrough`,
+        label: `Preparing a walkthrough of "${title}"…`,
+        href: `/folders/${folderId}`,
+      },
+      async () => {
+        await postTask(
+          `/api/materials/${id}/walkthrough`,
+          "Could not prepare a walkthrough of that material.",
+          undefined,
+          "Network error talking to the local server."
+        );
+      }
+    );
+    if (outcome.status === "error") {
+      setError(outcome.error ?? "Could not prepare a walkthrough of that material.");
+      return;
+    }
+    if (outcome.ran) router.push(`/materials/${id}/learn`);
+  }
+
+  async function remove(
+    id: string,
+    title: string,
+    cards: number,
+    questions: number,
+    hasWalkthrough: boolean
+  ) {
+    // Cascade: the material's flashcards, quiz questions, search chunks and
+    // walkthrough go with it. Every other delete in the app says what it takes;
+    // this one used to take it silently.
     const alsoGone = [
       cards > 0 ? `${cards} flashcard${cards === 1 ? "" : "s"}` : null,
       questions > 0 ? `${questions} quiz question${questions === 1 ? "" : "s"}` : null,
+      hasWalkthrough ? "its walkthrough and how far you got through it" : null,
     ].filter(Boolean);
     const tail =
       alsoGone.length > 0
@@ -200,6 +240,7 @@ export function MaterialList({
           const flashcardsError = task(`material:${material.id}:flashcards`)?.error;
           const quizError = task(`material:${material.id}:quiz`)?.error;
           const makingNotes = task(`material:${material.id}:notes`)?.status === "running";
+          const walking = task(`material:${material.id}:walkthrough`)?.status === "running";
           return (
             <li
               key={material.id}
@@ -223,14 +264,24 @@ export function MaterialList({
                   </p>
                 </button>
                 {(material.kind === "SLIDES" || material.kind === "READING") && (
-                  <button
-                    onClick={() => makeLecturePage(material.id, material.title, material.kind)}
-                    disabled={makingNotes}
-                    title={`Make a lecture page from this ${material.kind === "SLIDES" ? "deck" : "reading"}, for a lecture with no recording`}
-                    className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
-                  >
-                    {makingNotes ? "Creating…" : "Lecture notes"}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => learn(material.id, material.title)}
+                      disabled={walking}
+                      title={`Walk through this ${material.kind === "SLIDES" ? "deck one slide" : "reading one section"} at a time`}
+                      className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
+                    >
+                      {walking ? "Preparing…" : "Learn"}
+                    </button>
+                    <button
+                      onClick={() => makeLecturePage(material.id, material.title, material.kind)}
+                      disabled={makingNotes}
+                      title={`Make a lecture page from this ${material.kind === "SLIDES" ? "deck" : "reading"}, for a lecture with no recording`}
+                      className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
+                    >
+                      {makingNotes ? "Creating…" : "Lecture notes"}
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() =>
@@ -262,7 +313,8 @@ export function MaterialList({
                       material.id,
                       material.title,
                       material.flashcardCount,
-                      material.quizCount
+                      material.quizCount,
+                      material.hasWalkthrough
                     )
                   }
                   disabled={deleting === material.id}
