@@ -285,7 +285,7 @@ export function MaterialList({
                       title={`Walk through this ${material.kind === "SLIDES" ? "deck one slide" : "reading one section"} at a time`}
                       className="rounded-md px-2 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-brand-soft/50 hover:text-brand-ink disabled:opacity-50"
                     >
-                      {walking ? "Preparing…" : "Learn"}
+                      {walking ? "Preparing…" : material.hasWalkthrough ? "Resume" : "Learn"}
                     </button>
                     <button
                       onClick={() => makeLecturePage(material.id, material.title, material.kind)}

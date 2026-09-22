@@ -35,6 +35,7 @@ export default async function LearnMaterialPage({ params }: { params: Promise<{ 
 
       <WalkthroughRunner
         materialId={material.id}
+        folderId={material.folderId}
         startIndex={material.walkthrough.stepIndex}
         steps={material.walkthrough.steps.map((step) => ({
           id: step.id,

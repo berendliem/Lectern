@@ -1,26 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import type { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { postTask } from "@/lib/tasks";
+import type { walkthroughRecallResponseSchema } from "@/lib/validation";
 import type { WalkthroughStepView } from "@/lib/walkthrough";
 
-type Feedback = {
-  covered: string[];
-  missed: string[];
-  wrong: { claim: string; correction: string }[];
+type Marked = {
+  feedback: z.infer<typeof walkthroughRecallResponseSchema>;
+  quality: number;
+  cardsCreated: number;
 };
-
-type Marked = { feedback: Feedback; quality: number; cardsCreated: number; stepIndex: number };
 
 export function WalkthroughRunner({
   materialId,
+  folderId,
   startIndex,
   steps: initialSteps,
 }: {
   materialId: string;
+  folderId: string;
   startIndex: number;
   steps: WalkthroughStepView[];
 }) {
@@ -226,6 +229,7 @@ export function WalkthroughRunner({
             onChange={(e) => setAnswer(e.target.value)}
             disabled={marking || revealed}
             rows={5}
+            maxLength={4000}
             placeholder="What do you remember about this step?"
             aria-labelledby={recallPromptId}
           />
@@ -259,14 +263,14 @@ export function WalkthroughRunner({
                 <div>
                   <p className="font-medium text-ink">You didn&apos;t mention</p>
                   <ul className="list-disc pl-5 text-muted">
-                    {marked.feedback.missed.map((point) => (
-                      <li key={point}>{point}</li>
+                    {marked.feedback.missed.map((point, i) => (
+                      <li key={i}>{point}</li>
                     ))}
                   </ul>
                 </div>
               )}
-              {marked.feedback.wrong.map((item) => (
-                <p key={item.claim} className="text-muted">
+              {marked.feedback.wrong.map((item, i) => (
+                <p key={i} className="text-muted">
                   <span className="text-ink">{item.claim}</span> — {item.correction}
                 </p>
               ))}
@@ -280,6 +284,15 @@ export function WalkthroughRunner({
               </pre>
               <p className="text-sm leading-relaxed text-ink">{step.explanation}</p>
             </div>
+          )}
+
+          {revealed && index === steps.length - 1 && (
+            <p className="text-sm text-muted">
+              End of the walkthrough.{" "}
+              <Link href={`/folders/${folderId}`} className="font-medium text-brand-ink hover:underline">
+                Back to the course
+              </Link>
+            </p>
           )}
         </>
       )}
