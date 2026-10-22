@@ -21,7 +21,7 @@ uvicorn main:app --port 8000
 
 ## Model download
 
-The first transcription request triggers a download of the configured model (`WHISPER_MODEL_SIZE`, default `small`, ~465MB) from Hugging Face, cached under `~/.cache/huggingface`. This can take a minute or two depending on your connection; subsequent requests reuse the cached model and are fast.
+The first transcription request triggers a download of the configured model (`WHISPER_MODEL_SIZE`, default `medium`, ~1.5GB) from Hugging Face, cached under `~/.cache/huggingface`. This can take a minute or two depending on your connection; subsequent requests reuse the cached model and are fast.
 
 Model size options (set via `WHISPER_MODEL_SIZE` in `.env`):
 
@@ -29,8 +29,8 @@ Model size options (set via `WHISPER_MODEL_SIZE` in `.env`):
 |---|---|---|
 | `tiny` | ~75MB | Fastest, least accurate |
 | `base` | ~145MB | Good for low-resource machines |
-| `small` | ~465MB | Default — good accuracy/speed balance on CPU |
-| `medium` | ~1.5GB | Better accuracy, slower on CPU; consider if you have a GPU |
+| `small` | ~465MB | About twice as fast as `medium` on CPU; mishears the odd word |
+| `medium` | ~1.5GB | Default — better accuracy, slower on CPU |
 
 Set `WHISPER_DEVICE=cuda` and an appropriate `WHISPER_COMPUTE_TYPE` (e.g. `float16`) if you have an NVIDIA GPU available.
 
