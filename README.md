@@ -85,7 +85,7 @@ To run the two processes by hand instead of via `npm run dev:all`:
 
 ```bash
 # terminal 1
-cd whisper-service && source .venv/bin/activate && uvicorn main:app --port 8000
+cd whisper-service && source .venv/bin/activate && uvicorn main:app --port 8000 --env-file .env
 
 # terminal 2
 npm run dev

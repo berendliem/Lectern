@@ -16,12 +16,14 @@ Requires **ffmpeg** on your system PATH (used to decode whatever audio format ge
 ## Running
 
 ```bash
-uvicorn main:app --port 8000
+uvicorn main:app --port 8000 --env-file .env
 ```
+
+`--env-file` is what applies `.env`; the service reads only its environment.
 
 ## Model download
 
-The first transcription request triggers a download of the configured model (`WHISPER_MODEL_SIZE`, default `medium`, ~1.5GB) from Hugging Face, cached under `~/.cache/huggingface`. This can take a minute or two depending on your connection; subsequent requests reuse the cached model and are fast.
+The first transcription request triggers a download of the configured model (`WHISPER_MODEL_SIZE`, default `medium`, ~1.5GB) from Hugging Face, cached under `~/.cache/huggingface`. This can take a few minutes depending on your connection; subsequent requests reuse the cached model and are fast.
 
 Model size options (set via `WHISPER_MODEL_SIZE` in `.env`):
 

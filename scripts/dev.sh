@@ -8,4 +8,4 @@ bash scripts/setup.sh
 
 exec npx concurrently -n web,whisper -c blue,green \
   "next dev -H 127.0.0.1" \
-  "cd whisper-service && .venv/bin/uvicorn main:app --reload --port 8000"
+  "cd whisper-service && .venv/bin/uvicorn main:app --reload --port 8000 --env-file .env"
