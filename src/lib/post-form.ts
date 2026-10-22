@@ -4,11 +4,11 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 
-// ponytail: an hour without a byte covers a three-hour lecture on a slow
-// machine (~15 min here at 12x realtime). It exists so a wedged service cannot
-// pin a request open forever, not to bound honest work — raise it if a real
-// recording ever hits it.
-const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
+// ponytail: two hours without a byte covers a three-hour lecture on a slow
+// machine (~35 min here with whisper medium, ~15 with small). It exists so a
+// wedged service cannot pin a request open forever, not to bound honest work —
+// raise it if a real recording ever hits it.
+const IDLE_TIMEOUT_MS = 2 * 60 * 60 * 1000;
 
 /**
  * POSTs a form with node:http rather than fetch. Node's fetch gives up when
