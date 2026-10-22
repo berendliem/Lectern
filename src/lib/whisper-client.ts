@@ -5,6 +5,8 @@ import { postForm } from "@/lib/post-form";
 export type TranscribeResult = {
   language: string;
   text: string;
+  /** Whisper model size the service loaded; absent from an older service. */
+  model?: string;
   segments: TranscriptSegment[];
 };
 
@@ -25,8 +27,8 @@ export async function transcribeAudio(buffer: Buffer, filename: string, mimeType
   const hotwords = await getDictionaryHotwords().catch(() => "");
   if (hotwords) formData.append("hotwords", hotwords);
 
-  // The service answers only once the whole file is transcribed — about 15
-  // minutes for a three-hour lecture — so this must not be fetch; see postForm.
+  // The service answers only once the whole file is transcribed — about half an
+  // hour for a three-hour lecture with medium — so this must not be fetch; see postForm.
   let res: { status: number; body: string };
   try {
     res = await postForm(new URL(`${baseUrl}/transcribe`), formData);

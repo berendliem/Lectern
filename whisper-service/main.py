@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 
-from model import get_model
+from model import MODEL_SIZE, get_model
 
 # No CORS middleware on purpose: this service is only ever called server-side
 # by the Next.js app, never by a browser, so nothing should be granted
@@ -73,6 +73,8 @@ async def transcribe(file: UploadFile = File(...), hotwords: str | None = Form(N
 
     return {
         "language": info.language,
+        # The size actually loaded, which only this process knows; the app records it.
+        "model": MODEL_SIZE,
         "text": " ".join(full_text_parts),
         "segments": segments,
     }

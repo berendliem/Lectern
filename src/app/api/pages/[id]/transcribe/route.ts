@@ -42,7 +42,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     const modelUsed =
       result.provider === "apple"
         ? "apple-speech+fluidaudio"
-        : (process.env.WHISPER_MODEL_SIZE ?? "small");
+        : (result.model ?? process.env.WHISPER_MODEL_SIZE ?? "medium");
 
     // Imported slide or reading text is not overwritten by a recording: it moves
     // into the context layer, and the notes prompt reads both. cleanText and

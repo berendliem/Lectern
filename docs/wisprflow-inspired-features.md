@@ -24,8 +24,8 @@ structured summaries. **What it lacks** (and what we adopt):
 ## Current voice model
 
 Transcription is fully local already: `whisper-service/` wraps
-[faster-whisper](https://github.com/SYSTRAN/faster-whisper) running **Whisper `small`**
-(default; configurable `tiny`–`medium` via `WHISPER_MODEL_SIZE`, CPU int8 by default,
+[faster-whisper](https://github.com/SYSTRAN/faster-whisper) running **Whisper `medium`**
+(default; configurable `tiny`–`large-v3` via `WHISPER_MODEL_SIZE` in `whisper-service/.env`, CPU int8 by default,
 CUDA optional). Summaries/flashcards/quiz/chat use OpenRouter free-tier models
 (default `meta-llama/llama-3.3-70b-instruct:free`).
 

@@ -68,7 +68,7 @@ Three things to know:
    cd ..
    ```
 
-   The model (`small` by default, ~465MB) downloads automatically from Hugging Face the first time you transcribe something, and is cached afterward. If you're on a low-resource machine, set `WHISPER_MODEL_SIZE=base` (faster, smaller, somewhat less accurate) in `whisper-service/.env`. If you have a GPU, set `WHISPER_DEVICE=cuda`.
+   The model (`medium` by default, ~1.5GB) downloads automatically from Hugging Face the first time you transcribe something, and is cached afterward. Transcribing on CPU takes about twice as long as `small`; on a slow or low-resource machine, set `WHISPER_MODEL_SIZE=small` (or `base`, faster still and less accurate) in `whisper-service/.env`. If you have a GPU, set `WHISPER_DEVICE=cuda`.
 
 4. **Optional: on-device transcription with speakers (macOS 26+)**
 
@@ -85,7 +85,7 @@ To run the two processes by hand instead of via `npm run dev:all`:
 
 ```bash
 # terminal 1
-cd whisper-service && source .venv/bin/activate && uvicorn main:app --port 8000
+cd whisper-service && source .venv/bin/activate && uvicorn main:app --port 8000 --env-file .env
 
 # terminal 2
 npm run dev

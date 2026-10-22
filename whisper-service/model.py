@@ -3,7 +3,7 @@ from functools import lru_cache
 
 from faster_whisper import WhisperModel
 
-MODEL_SIZE = os.environ.get("WHISPER_MODEL_SIZE", "small")
+MODEL_SIZE = os.environ.get("WHISPER_MODEL_SIZE", "medium")
 DEVICE = os.environ.get("WHISPER_DEVICE", "cpu")
 COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")
 
